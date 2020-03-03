@@ -1,0 +1,2840 @@
+14 datatypes are divided into 3 categories:
+Fundamental: int, float, complex, bool, str
+sequence: range, list, tuple, bytearray, bytes
+collection: set, frozenset, dictionary
+None
+
+Equality Operators:
+--------------------
+
+== operator never gives any error, it's output is either true or false.
+chaining concept is applicable for equality operators.
+
+10==20==30 # False
+10==5+5==2*5 #True
+'a' == 97 # False because python compares the string and number but not unicode and number.
+(10+2j)==(10+2j)#True
+'durga'==(10+2j)#False
+
+Logical Operators:
+------------------
+for boolean data
+and : if both are True then true
+or : if anyone argument is True then True
+not : opposite
+
+for non-boolean
+
+0 means False, non-zero means true
+'' means False
+
+for x and y 
+-----------
+IF x is 0 or '' THEN x ELSE y (if x evalues to false then result is x else y)
+Eg: 0 and 20
+Out[8]: 0
+
+10 and 20
+Out[9]: 20
+
+'' and 10
+Out[10]: ''
+
+
+X or Y
+------
+If x is not 0 or '' then x else Y
+Eg: 0 or 20
+Out[11]: 20
+
+'utsav' or 0
+Out[12]: 'utsav'
+
+'utsav' or 'ramesh'
+Out[13]: 'utsav'
+
+not X : if 0 or '' is equivalent to False
+------
+not 0
+Out[14]: True
+
+not ''
+Out[15]: True
+
+not 10
+Out[16]: False
+
+Tricky example: 
+10 or 10/0
+Out[17]: 10
+out is 10 because in case of x or y if x is non-zero then x is printed and y is not even looken upon.
+
+
+Bitwise operators: applicable on int and boolean type.
+------------------
+& | ^ ~ << >>
+
+&: if both bits are one then 1 else  0
+|: if anyone bit is one then 1 else 0
+^: xor - if both bits are different then 1 else 0
+~: bitwise complement: 1==>0 and 0==>1
+<<: bitwise leftshift operator
+>> bitwise rightshift operator
+
+Eg: 4 & 5 --> 100 & 101 == 100 hence o/p: 4
+4|5 --> 5
+4^5 --> 1
+~4 --> complement bits needs to be applied for all # -5, negation means 2's complement
+~True
+Out[27]: -2
+
+shift operators
+---------------
+<< - Left shift operator - print(10<<2) #40
+>> - Right shift operator -- print(10 >> 2) #2
+
+
+Assignment Operators: =
+----------------------
+Compund assignment operators: += -= *= /= %= //= **= &= |= ^= >>= <<=
+++ -- operators are not available in python 
+
+Ternary operator: different from other languges ?:
+------------------
+x=10 if 10>20 else 20
+x
+Out[32]: 20
+
+input(): input() is used to read the data from keyboard.
+input considers the value in str format hence typecast it to int if your want.
+
+Eg: 
+a=int(input('1st Number: '))
+b=int(input('2st Number: '))
+min=a if a<b else b # ternary operator
+print ('Min number is', min)
+
+Eg: x=10 if a>b else 20 if b>c else 30
+print(x)
+
+Special Operators: 2
+------------------
+
+Identity Operators:
+-------------------
+Address comparision: is, is not
+a,b=10,20
+print(a is b) # False
+print(a is not b) # True
+
+list is mutable hence every time new object is created.
+
+Membership Operators:
+---------------------
+Two operators: in, not in
+
+list1=[10,20,30]
+10 in list1 #True
+
+s='Python is very easy language'
+print('Ramesh' not in s) #True
+
+Operator precedence:
+--------------------
+()
+**
+~ --> unary operator
+* / % //
++ -
+<< >>
+& ^ |
+> < >= <= == !=
+= += -= /= *=
+is is not
+in not in
+not
+and or
+ 
+
+module: A group of files, functions is called module. Similar to collections api etc in Java.
+Eg. math module
+usage: import math
+print(math.sqrt(4)) #2.0
+or: from math import pi,sqrt
+print(sqrt(4)) #2.0
+print(pi)#3.14159
+
+aliasing: renaming
+eg: import math as m
+print(m.pi) #3.14159
+#after creating alias we cannot use original name of module
+print(math.pi) #Nameerror: math is not defined
+
+few of the functions/constants in math module:
+sqrt(), ceil(), floor(), pow(), factorial(), gcd(), sin(), cos()
+pi, nan(Not a Number), e, infinity
+
+if __name__ == __main__:
+	print(linecount('wc.py'))
+
+__name__ is a builtin variable is set when the program starts. If the program starts as a script, __name__ has the value '__main__' in that case the test code runs. Otherwise if the module is imported then testcode is skipped.
+
+repr:
+------
+If we want to see the \r\n\t in the string then we can see these metacharacters using repr(string)
+
+Input and Output statements:
+----------------------------
+Read dynamic data from keyboard: 2 functions
+Python2:
+raw_input() --  takes value from keyboard in string form then we need to typecast it.
+input() -- takes value from keyboard in the provided data type.
+Python 3: Consists of only one function
+input() -- it behaves similar to raw_input function in P2.
+takes the input as str type.
+Eg:
+print(type(input('Read Number: '))) #str
+
+How to read multiple values from the keyboard in a single line?
+Steps 1: input('Enter two numbers')
+2. input('Enter two numbers').split() # split function to split the values
+3. for x in input('Enter two numbers').split() # assign the values to x one by one
+4. int (x) for x in input('Enter two numbers').split() # typecast x to int
+5. [int (x) for x in input('Enter two numbers').split()] # convert it into list since it needs to be assigned to a variable
+6. a,b = [int (x) for x in input('Enter two numbers').split()] # assign values to a variable
+7. print(a 'and' b) # Congrats you did it.
+
+a,b,c,d,e = [int(x) for x in input('Enter five numbers').split(',')]
+print(a, 'and', b, 'and', c, 'and', d, 'and', e) # 10 and 2 and 3 and 4 and 5
+
+split(): split function is used to split the string (default delimiter is space)
+eval(): eval() function takes string as input and evaluates the values
+Eg: print(eval("10+20.2+30")) #60.2
+It is very useful when we want to take any expression and evaluate it.
+Eg: print(eval(input("Enter an exp:"))) # Enter an exp:10*2+30/4//2**2 o/p: 21.0
+
+eval() also helps in keeping the datatype of the input value, if we input int it takes it as int, if list then list.
+Eg: print(type(eval(input("Enter Data:"))))
+Enter Data:10
+<class 'int'>
+Enter Data:10.5
+<class 'float'>
+Enter Data:[10,20]
+<class 'list'>
+Enter Data:{1:'utsav', 2:'ramesh'}
+<class 'dict'>
+
+Eg: 
+a,b,c = [eval(i) for i in input('Enter three values').split(',')]
+print('Sum: ', a+b+c)
+O/p: Enter three values10, 10.5, True
+Sum:  21.5
+
+Command Line Arguments:
+-----------------------
+argv(list type)(present in sys module): this variable stores all command line values
+
+Eg: 
+#!/anaconda3/bin/python
+from sys import argv
+print(argv) # prints name of file as well
+print(argv[1:]) # To print only args
+Utsavs-MacBook-Air:python_test utsav$ python test.py 1 2 3
+['test.py', '1', '2', '3']
+['1', '2', '3']
+
+len(): len() is used to provide length of provided argument.
+len([1,2,3,4])
+Out[62]: 4
+
+len('string')
+Out[63]: 6
+
+len((1,2,3,4))
+Out[64]: 4
+
+len({1:'abc', 2:'def'})
+Out[65]: 2
+
+By default, space is the delimiter between args but if we have a command line argument which contains space then we can pass the arg as string within quotes.
+Eg: python test.py 'Ramesh Wadhwa' or
+python test.py Ramesh\ Wadhwa
+python test.py "Ramesh Wadhwa"
+python test.py '''Ramesh Wadhwa'''
+
+Every command line argument is by default considered as string type.
+
+If we try to get an arg number which is not present like
+print(arg[100]) # IndexError: list index out of range
+For same case if we use slice then we won't get any error
+print(argv[10:100]) #Output: []
+
+Output Statements:
+===================
+TO print output to the console we should go for print().
+
+Form-1: print() without any arguments, an empty line will be inserted.
+
+Form-2: print('string') with one argument#print('Hello\nDurga ') #print("Utsav+Parashar")
+Eg:
+print('Utsav' + 'Parashar') # for + operator both args should be string
+UtsavParashar
+print('Utsav', 'Parashar')
+Utsav Parashar
+print('Utsav' * 2) # for * operator one arg should be int with another string
+UtsavUtsav
+
+Form-3: More than one args print(a,b,c)
+a,b,c=10,20,30
+print(a,b,c)
+10 20 30 
+
+sep attribute - if we want any other delimiter other than space, we can use sep option in print
+-------------
+print(a,b,c, sep=',')
+10,20,30
+
+end attribute - if we don't want newline for each print statement then we can use end attribute
+--------------
+print('Hello', end=',:')
+print('How are you doing?')
+O/p: Hello,:How are you doing?
+
+Use of sep and end attribute together
+print(10,20,30,40, sep=':', end='...')
+print(50,60,70,80, sep='-')
+O/p: 10:20:30:40...50-60-70-80
+
+Print can take any type(list, str, tuple) of arg as input
+print([1,2,3], end='::')
+print((1,2,3), end='--')
+print({1,2,3}, end='..')
+Op: [1, 2, 3]::(1, 2, 3)--{1, 2, 3}..
+
+Print with formatted string: %i%f%s
+-----------------------------
+%i --> integer
+%d --> integer
+%f --> float
+%s --> str, list
+Eg:
+a,b,c=10,10.5,'ramesh'
+print('Value of a is %i, b is %f, c is %s' %(a,b,c))
+Value of a is 10, b is 10.500000, c is ramesh
+
+Print statement with replacement {} : use it with format()
+---------------------------------------------
+We can replace the tuple numerics with strings
+Eg: 
+name,salary,gf='utsav',100000000,'Anjali'
+print('Hello {0}, your salary {1} is too high. Is that for {2}'.format(name,salary,gf))
+#Output: Hello utsav, your salary 100000000 is too high. Is that for Anjali
+
+Without specifying index also it will work
+print('Hello {}, your salary {} is too high. Is that for {}'.format(name,salary,gf))
+Hello utsav, your salary 100000000 is too high. Is that for Anjali
+
+We can use variables inside replacement operator and assign them value in format.
+print('Hello {x}, your salary {y} is too high. Is that for {z}'.format(z=gf, x=name, y=salary))
+Hello utsav, your salary 100000000 is too high. Is that for Anjali
+
+
+==============
+FLOW CONTROL:
+==============
+At runtime in which order the statements needs to be executed is called flowcontrol.
+3 types of flow controls:
+
+1. Conditional/Selection statements:
+------------------------------------
+if
+if .. else
+if .. elif 
+if .. elif .. elif .. else
+
+colon and indentation is mandatory in python 
+
+2. Iterative Statements:
+------------------------
+for loop:
+for each element in sequence(list, tuple, dict, range):
+   do some action
+
+Go for 'for' loop if we know number of iterations in advance else go for while loop.
+
+while loop:
+num=1
+while num<=10:
+    print (num)
+    num +=1
+
+Infinite loops:
+---------------
+
+chr(): chr is used to convert from ascii code to character.
+chr(97) == a
+ord(): ord() is used to convert character to ascii code.
+ord('a') == 97
+Above two functions can be used to increment characters in python.
+ch='A'
+for i in range(1, 4):
+   ch=chr(ord(ch)+1) 
+   print(ch)
+
+Print a pyramid:
+for i in range(1, n+1):
+    print(' '*(n-i),'*'*(2*i-1))
+
+Reverse Pyramid:
+for i in range(n+1,0,-1):
+    print(' '*(n-i), '*'*(2*i-1))
+
+
+
+3. Transfer statements(3): 
+--------------------------
+break, continue and pass :
+break: We can use break if we want to break loop execution based on some condition.
+continue: if we wanna skip an iteration based on condition then we can use continue.
+
+In python, else not only works with if but also
+for-else
+while-else
+try-except-else-finally
+
+else(loop without break)- if break is not executed then go for else.
+else is valid only with break but not with continue.
+if a loop does not contain break but contains else, then else will always be executed.
+
+pass: if an empty block is required then we can go for pass keyword.
+---- IT is more useful in OOPS.
+1. It is an empty statement.
+2. It is a null statement.
+3. It does not do anything.
+
+pass can be analogous to abstract in Java.
+Eg:
+class Vehicle{
+	public abstract int getNoOfWheels();
+}
+class Bus extends Vehicle{
+	public int getNoOfWheels(){
+		return 7;
+	}
+}
+class Car extends Vehicle{
+	public int getNoOfWheels(){
+		return 5;
+	}
+}
+Same thing in python:
+class Vehicle:
+	def getNoOfVehicles: pass # if we don't define pass then code won't compile
+class Bus(Vehicle):
+	def getNoOfVehicles:
+		return 7
+class Car(Veicle):
+	def getNoOfVehicles:
+		return 5
+ 
+if True:
+    pass
+else
+	print('vague use of pass')
+
+del statement:
+==============
+It is always good to delete a variable after it is used. So that the variable is eligible for GC. del is used for this purpose.
+
+x=10
+print(x)
+del x
+print(x)
+NameError: name 'x' is not defined
+Eg: del x,y
+
+Diffrence between del and None:
+-------------------------------
+If we don't want to object and the reference pointing to it then we can use del the object and reference.
+If we want to delete the object but want to keep the identifier for future use then we can assign None to that identifier.
+s="abc"
+s1="def"
+del s # both object and reference are deleted.
+s1 = None # object containing def is deleted but identifier now points to None
+if two reference are pointing to same object and one reference is deleted then only the reference will be deleted. Other refrence will still point to same object.
+
+String DataType:
+================
+Any sequence of characters within single double or triple(multiline) quotes is called String.
+
+slice operator:
+--------------
+s[begin:end:step]
+slicing is done from begin to end-1.
+step value can be positive or negative.
+1. if step value is positive then slicing is done from left to right.
+2. if step value is negative then slicing is done from right to left.
+
+Imp:
+s[begin:end:step]
+step: +ve forward direction from begin to end-1
+	  -ve backward direction from begin to end+1
+In forward direction:
+1. default value begin from 0
+2. default value end: length of string
+3. default value of step: 1
+
+In backward direction:
+1. default value to begin: -1
+2. default value end: -(length of String + 1) 
+3. default value step: -1
+
+slicing never gives error even with wrong expression
+print('Ramesh'[2:6:-1]) #'' output is empty because step does not match with index
+
+How to use slice operator to reverse a string:
+s[::-1] # if steps is negative then slice return values from right to left.
+Eg: print('Ramesh'[::-1]) # hsemaR
+Eg: '0123456789'[-1:-6:-1]
+Out[55]: '
+Eg:'0123456789'[2:-6:1]
+Out[57]: '23''
+Eg: '0123456789'[-1:6:-2]
+Out[59]: '97'
+'0123456789'[0:-5]
+Out[60]: '01234'
+'0123456789'[:0:-1]
+Out[61]: '987654321'
+
+Mathematical Operators on String: +, *
+---------------------------------
++: both arguments should be string
+*: one argument should be string and other one should be int 
+
+strip(): remove space from beginning and end,(similar to trim() in java)
+lstrip(): remove space from left of String
+rstrip(): remove space from end of the String
+
+find() in string: find(subString, [start], [end]) 
+-----------------
+find() is used to find the lowest index of substring in the string if the substring is present.
+If the substring is not present then it returns -1.
+start, end is useful to find substring in provided string like s[start:end], then the interpreter will search sustring within provided range using slice.
+
+rfind(): exactly similar to find but it returns the highest index which is useful if the substring is present more than once.
+
+index(): index(subString, [startingIndex], [endIndex]) 
+---------
+index() is used to provide lowest index of the substring in the string. If the index is not found then it raises ValueError exception.
+
+rindex(): exactly similar to find but it returns the highest index which is useful if the substring is present more than once.
+
+Difference between find() and index():
+---------------------------------------
+The only difference is that find() method returns -1 if the substring is not found, whereas index() throws an exception.
+
+Eg: s='Durga software classes'
+print(s.find('software'))
+print(s.index('software'))
+print(s.find('software',2,16))
+print(s.index('software',4,18))
+print(s.find('ramesh'))
+print(s.index('ramesh'))
+
+Eg: with rfind() and rindex()
+print(s.find('let'))
+print(s.rfind('let'))
+print(s.index('let'))
+print(s.rindex('let'))
+print(s.find('it',4,16))
+print(s.index('it',2,18))
+
+methods() is string:
+--------------------
+index() rindex(), find(), rfind(), 
+enumerate(): enumerate() is used to provide counter to an string. If we want to add a counter to iterating string we can do it through enumerate(). It is very widely used method.
+enumerate object needs to be converted to list or tuple which return list of tuple or tuple of tuple respectively.
+Eg:
+s='utsav'
+print(enumerate(s)) #<enumerate object at 0x11e2a8f78>
+print(list(enumerate(s)))#[(0, 'u'), (1, 't'), (2, 's'), (3, 'a'), (4, 'v')]
+print(list(enumerate(s,10)))#[(10, 'u'), (11, 't'), (12, 's'), (13, 'a'), (14, 'v')]
+for tag,value in list(enumerate(s)):
+    print (tag, value)
+
+format():
+
+count(substring): count is used to count the occurence of substring in the string.
+count(subString, start, end): count substring occurrence between start and end item index
+s[start:end]
+
+replace(): replace is used to replace substring from another string. New object is being created internally for it.
+
+
+split()
+rspilit()
+splitlines()
+join()
+
+upper()
+lower()
+swapcase(): swapcase is used to swap the case between lower and uppercase. Eg. s.swapcase()
+title(): The title() method returns a string with first letter of each word capitalized; a title cased string. Eg: s.title()
+capitalize(): capitalize function is used to convert first character of first word to uppercase rest all are lowercase. Eg: s.capitalize()
+
+isalnum()
+isalpha()
+isdigit()
+isdecimal()
+isidentifier()
+islower()
+isnumeric()
+isprintable()
+isspace()
+istitle()
+isupper()
+
+center()
+casefold()
+startswith()
+endswith(): 
+expandtabs()
+encode()
+
+ljust()
+rjust()
+
+lstrip()
+rstrip()
+strip()
+
+partition()
+rpartition()
+maketrans()
+translate()
+
+zfill()
+format_map()
+
+any()
+all()
+ascii()
+
+bool()
+bytearray()
+bytes()
+float()
+int()
+
+compile()
+complex()
+filter()
+input()
+iter()
+
+len()
+max()
+min()
+map()
+
+ord()
+chr()
+
+reversed()
+slice()
+sorted()
+sum()
+zip()
+
+
+===========
+DataType:
+===========
+Number Data Type:
+There are 3 number data types: int float and complex
+we can find the datatype of the identifier using type(), we can also check the data type of the variable using isinstance(10, int)
+accuracy of floating point number is till 15th place, from 16th place it may be inaccurate.
+
+Type Conversion/Coerce:
+We can convert one datatype of number to another, this is also called coercion.
+1+2.0 #3.0 operation with float internally converts the output to float.
+
+Surprise:
+2.2+1.1 != 3.3 in python, let's check
+(1.1+2.2)==3.3
+Out[12]: False
+This is because of hardware limitations. 1.1+2.2 return 3.3000000000000003 because  the numbers are internally stored as binary in python.
+
+we can use Decimal() in decimal class for using decimals
+
+from decimal import Decimal as d
+print(d(2.2)+d(1.1)) #3.300000000000000266453525910
+
+Floating point operations are carried out must faster than Decimal operations.
+When to use Decimal instead of float?
+We generally use Decimal in the following cases.
+
+When we are making financial applications that need exact decimal representation.
+When we want to control the level of precision required.
+When we want to implement the notion of significant decimal places.
+When we want the operations to be carried out like we did at school
+
+
+Fraction:
+If we want to get the fractional form(3/2) from decimal 1.5, then we can go for fraction.
+from fraction import Fraction as f
+print(f(1.5))#3/2
+
+math and random module are also useful for mathematics in python.
+randint(a,b)#a,b inclusive is used to generate random number between a and b(a,b inclusive)
+
+Difference between function and method in python?
+If the function is defined outside class then it is called function but if defined inside class then it is called method.
+Hence python is both object oriented and functional language.
+Eg. len() is a function and l.count() is a method which specified that count method is present in List class and is called by reference l.
+
+=====================================================================================
+Sequences in Python(Collection in Java)/Non Fundamental DataTypes/Compound DataTypes:
+=====================================================================================
+List:
+======
+In Python programming, a list is created by placing all the items (elements) inside a square bracket [ ], separated by commas.
+
+If we want to store a group of objects with same name then we can go for list.
+List maintains the insertion order of the objects.
+List is growable in nature.
+List stores heterogeneous objects but it is best suited for homogeneous objects(ans in tuple section).
+List is mutable.
+my_list=[1,2, 3.0, 'hello',('a','b'), [1,2,3]]
+
+Ways to create list:
+--------------------
+l=[]
+l=list()
+l=[10,20]
+l=list(10,20)
+l=eval(input('Enter a list'))
+l=s.split(','')
+
+How to access elements from a list?
+1. Using Index: l[] : if we try to access element out of the index then IndexError is raised. The index must be of int type.
+we can also use negative index to get elements from end of the list.
+slice operator can also be applied on list to get a sub-list of elements.
+slice operator can also be used to update the list.
+my_list=[1,2,3,45,5]
+my_list[1:3]=[11,22]
+print(my_list)# [1, 11, 22, 45, 5]
+
+Methods:
+========
+append(): if we want to add an element at the end of the list then we can use append. It does ---------not return a new list rather it modifies the existing list.
+my_list.append(34)
+print(my_list) #[1, 11, 22, 45, 5, 34]
+
+extend([list1]):if we want to add one or more than one element at the end of the list then we 
+-------can go for extend().
+list1.extend(list2)
+my_list.extend([11,22,33])
+print(my_list)#[1, 11, 22, 45, 5, 34, 11, 22, 33]
+
+difference between append() and extend():
+append() adds the content as a single element at the end of the list. we can append an item, tuple, another list, set to the list.
+extend() concatenates another list to existing list, even if we provide tuple or set, extend will convert it to list and add it to the existing list.
+
++: + can also be used to concatenate to lists.
+my_list = my_list+[21,22]
+print(my_list)#[1, 11, 22, 45, 5, (3, 2, 3), 1, 2, 3, 21, 22]
++ is used only to concatinate two lists, if we try to concatenate any object, say of int type then we'll get TyepError. #TypeError: can only concatenate list (not "int") to list
+
+append is used to append an element at the end of the list, then how can we add an element at the desired location?
+insert(index, element) is used to add an element at the desired location in a list.
+---------------------- Eg: my_list.insert(2,10000)
+if we provide an index which is out of range then the element will be added to the last index i.e insert will behave as append()
+l.insert(1999,'a')#'a' will be added to the end of the list.
+l.insert(-100,'b')#'b' will be added to 0th posision of the list.
+
+pop(index) is used to remove the element at the provided index. If the index in not provided ----------the the pop() removes element at -1 th index i.e last element of the list.
+If the index provided to the pop() is not present in the list then IndexError exception is thrown.
+Eg: val=my_list.pop()
+print(val, my_list)
+
+remove(element): remove() is used to remove provided FIRST element from the list. 
+----------------If provided element is not present in the list then ValueError exception is thrown.
+my_list.remove(11)
+print(my_list)
+remove() just removes the provided element, it does not return any value hence returns 'None'.
+
+index(element): index() is used to return FIRST index of the provided element. If element is not present in the list then ValueError exception is thrown.
+l=[(1,2),[4,5],6,7]
+print(l.index((1,2)))#0
+
+count(element): count() returns how many times an element occurred in the list and returns it.
+-------------- It returns 0 if the element is not present in the list.
+
+reverse(): reverse() is used to reverse the elements of the existing list. reverse() does not ---------- return any value. l.reverse()
+elements of the list can also be reversed using slice operator l[::-1]
+
+reversed(): if we want to access individual elements of the list in reverse order then we can ----------- go for reversed()
+for i in reversed(l):
+    print(i,end='')
+
+sort([key, reverse,]) and sorted(list, [key, reverse]): sort method is used to sort elements in ------------------------------------------------------- either ascending or descending order in existing list.
+Simple difference between sort and sorted is sort does not return any value but sorted returns an iteratable list.
+For sort method list must contain only homogeneous elements otherwise we'll get pipe error.
+Parameters:
+sort()/sorted() by default it does not require any parameter but if we want to reverse the elements then we can use reverse='True'#get output in descending order.
+if we want any other order other then ascending or descending then we can provide a function which provides customized sorting order.
+l.sort(reverse=True)
+l.sort(key=myfunction, reverse=True)
+Eg: 
+def takeSecond(elem):
+    return elem[1]
+# random list
+random = [(2, 2), (3, 4), (4, 1), (1, 3)]
+# sort list with key
+random.sort(key=takeSecond)
+# print list
+print('Sorted list:', random)
+
+
+copy(): we can use copy() for shallow copy means a new object is created containg the same -------- elements as existing list or we can for deep copy using = operator.
+While doing a deep copy if we change the elements of one list then other list is also updated.
+copy() return a new list which is present in different object.
+Shallow copy can also be done through slicing
+Eg: 
+l=[1,2,3]
+l1=l #Deep Copy using =
+print('l', id(l))
+print('l1', id(l1))
+l2=l.copy()#Shallow Copy using copy()
+print('l2', id(l2))
+l3=l2[:]#Shallow COpy using slice operator
+print(id(l3))
+print('l2', id(l2))
+
+clear(): clear() is used to clear all elements of the list.
+--------list.clear()
+The clear() does not take any parameter.
+clear() clears the list and does not return any value.
+del keyword can be used to delete the list
+del keyword along with slice can be used to clear all elements of the list.
+Eg: 
+l=[1,2,3]
+l.clear()
+print(l)
+l=[1,2,3]
+del l[:]
+print(l)
+del l
+
+List Comprehension: Elegant way to create new list ['expression' 'for x in sequence' 'condtn' ]
+---------------------------------------------------
+print ([2**i for i in range(10)]) #[1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+Above code is equivalent to:
+pow=[]
+for i in range(10):
+    pow.append(2**i)
+print(pow)
+
+A list comprehension can optionally contain more for or if statements
+print ([2**i for i in range(10) if i>5])#[64, 128, 256, 512]
+
+Print odd numbers from 1 to 9
+print([i for i in range(10) if i%2==1])#[1, 3, 5, 7, 9]
+
+in operator can be used to test if an element exists in list or not
+-----------
+print(8 in pow)#True
+
+x=[1,2,3]
+y=[1,2,3]
+== and !=: Content comparision in list.
+for == to return tr
+1. no of elements should be same.
+2. Order must be same
+3. content must be same.
+
+x==y: True
+x!=y: False
+x is y: False # for list each time a new object is created.
+
+We can also have comparision operation on list: >,<,<=,>=
+x=[10,20,30,40,50]
+y=[10,20]
+print(x>y)#True
+
+Nested List:
+print nested list as matrix:
+x=[[10,20,30], [40,50,60], [70,80,90]]
+for i in range(len(x)):
+    for j in range(len(x[i])):
+        print (x[i][j], end=' ')
+    print()
+Output:
+10 20 30 
+40 50 60 
+70 80 90
+
+
+
+======
+Tuple:()
+======
+Tuple is similar to that of list with the difference that list is mutable and tuple is immutable. i.e we can change the elements of the list but we cannot change the elements of a list.
+there are certain advantages of implementing a tuple over a list. Below listed are some of the main advantages:
+* We generally use tuple for heterogeneous (different) datatypes and list for homogeneous (similar) datatypes.
+* Since tuple are immutable, iterating through tuple is faster than with list. So there is a slight performance boost.
+* Tuples that contain immutable elements can be used as key for a dictionary. With list, this is not possible.
+* If you have data that doesn't change, implementing it as tuple will guarantee that it remains write-protected.
+
+Why tuple are best suited for heterogeneous objects and lists for homogeneous objects?
+The answer is psychological not technical, when we create a list we tend to create a list for homogeneous objects like food items list, office necessities list etc where we can add or remove items. But when we put heterogeneous information like aadhaar data of a person say id, firstname, lastname etc this does not change with time.
+In short, changes in size are more natural for homogenous collections than for heterogenous collections, so mutable types are more natural for homogenous collections. 
+
+* Tuple are immutable, hetrogeneous, growable and preseves insertion order.
+* Creating a tuple with single object is bit difficult because interpreter considers it as a single element of provided type therefore to create a tuple with single element we need to add a , to it.
+t=(1,)
+print(type(t))#<class 'tuple'>
+
+Accessing Elements in a tuple: Various ways
+-------------------------------------------
+1. Indexing: my_tuple(2) # providing index out of range with raise IndexError Exception.
+------------ The index must be integer otherwise it will result in TypeError Exception.
+fetch value from nested tuple.
+t=(1,[1,2,3],'anc', (11,22,33))
+print(t[1][1], ' ', t[2][2], ' ', t[3][0])#2   c   11
+
+2. Negative Indexing: 
+---------------------
+t=(1,[1,2,3],'anc', (11,22,33))
+print(t[-1][1], ' ', t[2][-2], ' ', t[-3][0])#22   n   1
+
+3. Slicing: We can access a range of items from tuple using slicing.
+-----------
+print(t[0:2], ' ', t[-1:-3:-1])#(1, [1, 2, 3])   ((11, 22, 33), 'anc')
+
+Changing a tuple:
+------------------
+A tuple cannot directly be changed but if we want to change a mutable object like list which is places inside tuple then it can be changed.
+t[1][1]=111
+print(t)#(1, [1, 111, 3], 'anc', (11, 22, 33))
+If we will try to change the value of immutable object inside tuple then we will get type error.
+Say, if we try to change string object inside tuple then we will get TypeError like this
+TypeError: 'str' object does not support item assignment
+
+= can be used for deep copy in tuple as well hence two tuple with point to same tuple object.
+--- t2=t1
+print(id(t1), ' ', id(t2) )#4693344616   4693344616
+
++ is used for concatination of tuples and * is used for repetition in tuples.
+--- t3=t1+t2
+t4=t1*2
+print(t4)
+
+del keyword is used to delete a tuple. Since tuple is immutable therefore it is not possible to delete elements of tuple.
+
+Methods in tuple:
+-----------------
+count(element): count() is used to return the occurrence of element in a tuple.
+index(element): index() is used to return the index of the first occurrence of element.
+
+Tuple Memebership:
+in: we can determine if an element exists in tuple using in operator
+if 1 in t:
+    t.index(1)#2
+
+Built-in functions in tuple:
+----------------------------
+all(iterable): all return false if any one element in the iterable(tuple,list, set, dict) is -------------false.
+For an empty iterable all returns True.
+all nonZero values are considered true in python.
+For strings all always returns true even '0' as string in True.
+In dictionary, all check keys and not values. if all keys are true then all returns True.
+print(all((1,2,0,4)))#False
+print(all('adfjkl0'))#True
+
+any(iterable): any returns true if any one element in th iterable in True.
+--------------For an empty iterable any returns False.
+
+enumerate(iterable, [counterStart]): enumerate method add counter to an iterable and return ---------------------------------- it(returns enumerate object).
+default of counterStart=0
+enumerate object can be converted to list or tuple using list() or tuple().
+enumerate is very widely used in projects.
+Eg: grocery = ['bread', 'milk', 'butter']
+enumerateGrocery = enumerate(grocery)
+print(type(enumerateGrocery))#<class 'enumerate'>
+print(list(enumerateGrocery))#[(0, 'bread'), (1, 'milk'), (2, 'butter')]
+enumerateGrocery = enumerate(grocery, 10)
+print(list(enumerateGrocery))#[(0, 'bread'), (1, 'milk'), (2, 'butter')]
+Looping over enumerate object:
+for counter,item in enumerate(grocery, 10):
+    print(counter, item)
+
+
+max(): max() return max value of the iterable or max value of provided object.
+print(max(10,20,30))# max of direct arguments
+print(max([10,200,300]))# max of list 
+
+min():
+
+
+sorted():
+
+
+
+sum():
+
+
+tuple(): is used to create a tuple in python. It can also be used to typecast another iterable to tuple type.
+
+=====
+Set:
+=====
+# take rest from office notes.
+
+Methods in set: 17
+1. add()
+
+2. update()
+
+3. None discard(element): discard() is used to remove an element from the set if the element is present, if the element is not present then it does not give any error
+
+4. None remove(element): remove() searches for an element and removes it. If the element is not present in set then it throws KeyError Exception.
+s.remove(10)#KeyError: 10
+
+5. element pop():pop method returns and removes arbitary element from set. We don't know which element will be removed because set is unordered.
+If we try to call pop method on empty set then TypeError exception is raised.
+s.pop() # TypeError: pop expected at least 1 arguments, got 0
+
+6. None clear(): The clear() method removes all elements from the set.
+s.clear()
+
+If we use deep copy =, then two reference point to same object and if any reference change the value of the object then it is reflected in other reference. Hence we can use copy() for shallow copy which creates a new object with same values.
+7. Set copy(): copy() method copies the existing set into a new object so that both reference points to different object.
+Eg: print(a.copy()) 
+
+Mathematical Methods:
+---------------------
+
+8. Set union(otherSets) or | : The union() method returns a new set with distinct elements from all the sets. If the argument is not passed then union() returns shallow copy. 
+Eg: print(a.union(b,c), ' ', a|b|c )
+d=a.union()
+print(id(a), ' ', id(d)) # Shallow Copy - 4656693032   4656691016
+
+Why union_update() is not present in python sets?
+This is because update() does the same thing.
+
+9. Set intersection(sets) or & : The intersection() method returns a new set with elements that are common to all sets. If the argument is not passed then intersection() returns shallow copy.
+print(a.intersection(b,c), ' ', a&b&c)
+
+10. None intersection_update(sets): The intersection_update() updates the set calling intersection_update() method with the intersection of sets.
+Say if set a is calling intersection_update(b,c) method then intersection elements of a.b and c will be updated in a. b and c will remain unchanged.
+a={1,2,3,8}
+b={3,4,5,8}
+c={5,6,7,8}
+a.intersection_update(b,c)
+print(a)#{8}
+print(b)#{8, 3, 4, 5}
+print(c)#{8, 5, 6, 7}
+
+11. Set difference(set) or - : The difference() method returns the set difference of two sets.
+It will return the items which are present in a and not in b.
+a={1,2,3,8}
+b={3,4,5,8}
+print(a.difference(b), ' ', a-b)#{1, 2}   {1, 2}
+
+12. None set_difference(set): The difference_update() updates the set calling difference_update() method with the difference of sets.
+If A and B are two sets. The set difference of A and B is a set of elements that exists only in set A but not in B.
+A and B are two sets. The difference_update() updates set A with the set difference of A-B.
+
+13. Set symmetric_difference or a^b: The symmetric_difference() returns a new set which is the symmetric difference of two sets.
+The symmetric difference of two sets A and B is the set of elements which are in either of the sets A or B but not in both.
+A.symmetric_difference(B)
+Eg: a={1,2,3,8}
+b={3,4,5,8}
+print(a.symmetric_difference(b), ' ', a^b)#{1, 2, 4, 5}   {1, 2, 4, 5}
+
+14. None symmetric_difference_update: The symmetric_difference_update() method updates the set calling the symmetric_difference_update() with the symmetric difference of sets.
+The symmetric difference of two sets is the set of elements that are in either of the sets but not in both.
+A.symmetric_difference_update(B)#A is updated with result.
+
+iterable=set/tuple/list/dictionary/string
+# isdisjoint, issubset, issuperset supports iterable but these methods must be applied on sets.
+like A.issuperset(B) # Here A must be set, B can be any iterable
+15: bool isdisjoint(set/tuple/list/dictionary/string): The isdisjoint() method returns True if two sets are disjoint sets. If not, it returns False.
+Two sets are said to be disjoint sets if they have no common elements.
+NOTE - You can also pass an iterable (list, tuple, dictionary and string) to disjoint(). The isdisjoint() method will automatically convert iterables to set and checks whether the sets are disjoint or not.
+
+a={1,2}
+b={3,4}
+d={1:'a', 2:'b'}
+print(a.isdisjoint(b))#True
+print(a.isdisjoint(d))#False - Checked with dictionary
+
+16: bool issubset(iterable): The issubset() method returns True if all elements of a set are present in another set (passed as an argument). If not, it returns False. It plays in two sets at a time.
+A.issubset(B)
+a={1,2}
+b={1,2,3,4}
+print(a.issubset(b))#True
+
+17. bool issuperset(iterable): The issuperset() method returns True if a set has every elements of another set (passed as an argument). If not, it returns False.
+a=(1,2)
+b={1,2,3,4}
+print(b.issuperset(a))
+
+Built is functions supported by sets: all(), any(), enumerate(), len(), max(), min(), sorted(), sum()
+
+===========
+Dictionary:
+===========
+
+
+Methods:
+
+* dictionary fromkeys(sequence[, value]): 
+=========================================
+The fromkeys() method creates a new dictionary from the given sequence of elements with a value provided by the user.
+If we want to assign a group of keys with None value or a default value then we can use fromKeys.
+Syntax: dict.fromKeys(sequence[,values])
+
+Case 1: when we want all values to be None.
+s={'a','e','i','o','u'}
+v=dict.fromkeys(s)
+print(v)#{'u': None, 'a': None, 'i': None, 'o': None, 'e': None}
+
+Case2: when we want all values to be default(Values are immutable)
+values='vowels'
+z=dict.fromkeys(s,values)
+print(z)#{'u': 'vowels', 'a': 'vowels', 'i': 'vowels', 'o': 'vowels', 'e': 'vowels'}
+
+Case 3: When values are mutable
+If the provided value is a mutable object (whose value can be modified) like list, dictionary, etc., when the mutable object is modified, each element of the sequence also gets updated.
+
+va=[1]
+print(dict.fromkeys(s,va))#{'u': [1], 'a': [1], 'i': [1], 'o': [1], 'e': [1]}
+va.append(2) # When mutable object is modified
+print(dict.fromkeys(s,va))# {'u': [1, 2], 'a': [1, 2], 'i': [1, 2], 'o': [1, 2], 'e': [1, 2]}
+
+This is because, each element is assigned a reference to the same object (points to the same object in the memory).
+
+To avoid this issue, we use dictionary comprehension.
+keys={'a','e','i'}
+val=[1] # Value object is created
+
+print(id(val))
+vowels= {key:list(val) for key in keys} # For each value a new list object is created
+print(vowels)
+for i in vowels.keys():
+    print(id(i))
+
+val.append(2) # Value object is modified
+print(vowels)
+print(id(val))
+
+* dict_keys keys(): 
+-------------------
+The keys() method returns a view object that displays a list of all the keys in the dictionary
+d={1:10,2:20,3:30}
+print(d.keys()) #dict_keys([1, 2, 3])
+The keys() returns a view object that displays a list of all the keys.
+When the dictionary is changed, the view object also reflect these changes.
+Eg: d.setdefault(4,40)
+print(d.keys()) #dict_keys([1, 2, 3, 4])
+
+* dict_values values():
+-----------------------
+The values() method returns a view object that displays a list of all the values in the dictionary.
+
+*dict_items items():
+--------------------
+The items() method returns a view object that displays a list of dictionary's (key, value) tuple pairs.
+dictionary.items() 
+print(d.items())
+for k,v in d.items():
+    print(k,v, sep=' '
+
+=============
+Functions:
+=============
+
+
+Kind of Parameters of functions:
+positional: based on position
+keyword: assigning same name to args and parameter
+default: assigning default values to args 
+var-args: variable arguments, *n, results in a tuple of arguments.
+keyword var-args: variable arguments in terms of dictionaries
+
+Rules:
+Positional Arguments should be followed by keyword arguments should be followed by default arguments.
+If var-args are used:
+1. Not necessarily but var-args  can be placed at the end.
+2. If var-args are placed first, then they should be followed by keyword or default args.
+
+Eg with all rules:
+def greet(a,*n,b,c='Suresh'):
+    print('{} borrowed Rs. {} from {}'.format(c,b,a))
+    print(sum(n,b))
+    
+greet('Ramesh',10,20,30,b=200, c='Chandresh')
+
+
+Keyword var-args: It takes the arguments and converts them to a dictionaey
+def greet(**kva):
+    for k,v in kva.items():
+        print(k,v,' ', end=' ')
+        
+greet(name='Ramesh', work='nothing') # if we won't give in = format then it will raise name error.
+greet(a='Chand', b='Dhando') 
+
+Funtions naming:
+Syntax:
+def function_name(parameters):
+	"""docstring"""
+	statement(s) 
+* Keyword def marks the start of function header.
+* A function name to uniquely identify it. Function naming follows the same rules of writing identifiers in Python.
+* Parameters (arguments) through which we pass values to a function. They are optional.
+* A colon (:) to mark the end of function header.
+* Optional documentation string (docstring) to describe what the function does.
+* One or more valid python statements that make up the function body. Statements must have same indentation level (usually 4 spaces).
+* An optional return statement to return a value from the function.
+
+Docstring:
+----------
+The first string after the function header is called the docstring and is short for documentation string. It is used to explain in brief, what a function does.
+Although optional, documentation is a good programming practice. Unless you can remember what you had for dinner last week, always document your code.
+In the above example, we have a docstring immediately below the function header. We generally use triple quotes so that docstring can extend up to multiple lines. This string is available to us as __doc__ attribute of the function.
+Eg: print(function_name.__doc__)
+
+The return statement:
+--------------------
+The return statement is used to exit a function and go back to the place from where it was called.
+return [expression_list]
+This statement can contain expression which gets evaluated and the value is returned. If there is no expression in the statement or the return statement itself is not present inside a function, then the function will return the None object.
+
+Scope and Lifetime of variables:
+--------------------------------
+Scope of a variable is the portion of a program where the variable is recognized. Parameters and variables defined inside a function is not visible from outside. Hence, they have a local scope.
+Lifetime of a variable is the period throughout which the variable exits in the memory. The lifetime of variables inside a function is as long as the function executes.
+They are destroyed once we return from the function. Hence, a function does not remember the value of a variable from its previous calls.
+variables outside of the function are visible from inside. They have a global scope.
+
+We can read these values from inside the function but cannot change (write) them. In order to modify the value of variables outside the function, they must be declared as global variables using the keyword global.
+
+BuiltIn/UserDefined/Library Functions:
+--------------------------------------
+Functions that we define ourselves to do certain specific task are referred as user-defined functions.
+Functions that readily come with Python are called built-in functions. If we use functions written by others in the form of library, it can be termed as library functions.
+All the other functions that we write on our own fall under user-defined functions. So, our user-defined function could be a library function to someone else.
+
+Python Function Arguments:
+--------------------------
+In Python, you can define a function that takes variable number of arguments. You will learn to define such functions using default, keyword and arbitrary arguments.
+Positional
+Keyword
+Default
+Variable Arguments/ Arbitary
+Keyword variable length arguments.
+
+What is recursion in Python?
+----------------------------
+Recursion is the process of defining something in terms of itself.
+A physical world example would be to place two parallel mirrors facing each other. Any object in between them would be reflected recursively.
+We know that in Python, a function can call other functions. It is even possible for the function to call itself. These type of construct are termed as recursive functions.
+In recusrion base condition is necessaey which helps recursion to stop.
+Every recursive function must have a base condition that stops the recursion or else the function calls itself infinitely.
+
+Advantages of Recursion
+-----------------------
+Recursive functions make the code look clean and elegant.
+A complex task can be broken down into simpler sub-problems using recursion.
+Sequence generation is easier with recursion than using some nested iteration.
+
+Disadvantages of Recursion
+--------------------------
+Sometimes the logic behind recursion is hard to follow through.
+Recursive calls are expensive (inefficient) as they take up a lot of memory and time.
+Recursive functions are hard to debug.
+
+Anonymous Functions:Lambda Functions.
+--------------------
+The functions which does not have name are called Anonymous function.
+These are useful if we want to use the function instantly which has only one time use.
+
+lambda is the keyword which needs to be used for Anonymous function.
+
+Lambda functions can have any number of arguments but only one expression. The expression is evaluated and returned. Lambda functions can be used wherever function objects are required.
+
+Use of Lambda Function in python
+We use lambda functions when we require a nameless function for a short period of time.
+In Python, we generally use it as an argument to a higher-order function (a function that takes in other functions as arguments). Lambda functions are used along with built-in functions like filter(), map() etc.
+
+Syntax: lambda arguments:expression
+Eg: lambda n:n*n
+Eg: s=lambda n:n*n; print(s(4)) #16
+Eg: s=lambda a,b:a+b; print(s(2,4)) #6
+Eg: s=lambda a,b,c,d:max(a,b,c,d);print(s(1,20,3,4)) #20
+Eg: s=lambda a,b:a if a<b else b; print(s(100,20)) #100 - Using ternary operator
+
+Functional Programming: A function can be passed as argument to another function. In such case lambda expression is the best choice.
+
+Few functions always require another function as argument. 
+Eg: filter(), map(), reduce()
+
+Filter filter(function, iterable): Filter from sequence based on some condition.Eg: Filter best students from class - iterable can be set, list, tuple
+----------------------------------
+The filter() method filters the given iterable with the help of a function that tests each element in the iterable to be true or not.
+filter is an inbuilt function whose required arguments are a function and a sequence.
+filter returns a filter object which needs to be converted to a sequence to print.
+
+Eg: Find even numbers from a list without using lambda:
+def iseven(x):
+    if x%2==0:
+        return True
+    else:
+        return False
+l=[10,20,30,25,10,15,40]
+
+print(list(filter(iseven, l)))
+
+By using lambda:
+print(list(filter(lambda x:x%2==0,l)))
+By using lambda: find odd numbers
+print(list(filter(lambda x:x%2!=0, l)))
+
+if no function is passed to filter() i.e if None is passed as function to filter method then filter function behaves as identity function and allows all True value from iterable.
+Eg: l=['a','z','u','b','i','m',0]
+print(list(filter(None,l))) #['a', 'z', 'u', 'b', 'i', 'm'] - 0 is not printed since 0==False.
+
+Map map(function, sequence1, sequencen): Map input to output based on some condition. Eg: Map $1000 bonus to each employees salary
+----------------------------
+Map can take more than one sequence at a time but only sequence with less number of elements will be considered.
+
+Without lambda:
+def doubleSalary(x):
+    return 2*x
+l=[1000,1500,2000,3000]
+print(list(map(doubleSalary, l)))
+
+With Lambda:
+print(list(map(lambda x:2*x, l)))
+
+Eg: Bonus in Bank of America
+def doubleSalary(x):
+    if x<=1500:
+        return 2*x
+    else:
+        return 3*x
+
+l=[1000,1500,2000,3000]
+print(list(map(doubleSalary, l)))
+
+With Lamda:
+print(list(map(lambda x:2*x if x<=1500 else 3*x, l)))
+
+Map with more than one sequence: map(lambda,list1, list2)
+--------------------------------
+Eg: l1=[1,2,3,4]
+l2=[10,20,30,40]
+print(list(map(lambda x,y:x+y, l1,l2)))
+
+reduce(function, iterable): 
+---------------------------
+The reduce(fun,seq) function is used to apply a particular function passed in its argument to all of the list elements mentioned in the sequence passed along.This function is defined in “functools” module.
+Working : 
+1. At first step, first two elements of sequence are picked and the result is obtained.
+2. Next step is to apply the same function to the previously attained result and the number just succeeding the second element and the result is again stored.
+3. This process continues till no more elements are left in the container.
+4. The final returned result is returned and printed on console.
+Eg: 
+from functools import reduce
+l=[1,2,3,4]
+print(reduce(lambda x,y:x*y, l))#24
+
+Question:
+Check if a number is prime?
+n=eval(input('Enter a number'))
+for i in range(2,n):
+    if n%i==0:
+        break
+else:
+    print('{} is prime'.format(n))
+
+Global, Local and NonLocal variable:
+------------------------------------
+Global Variable:
+----------------
+
+In Python, a variable declared outside of the function or in global scope is known as global variable. This means, global variable can be accessed inside or outside of the function.
+
+x= 'global'
+def foo():
+    print('Inside', x)
+foo()
+print('Outside', x)
+
+What if you want to change value of x inside a function?
+x = "global"
+
+def foo():
+    x = x * 2
+    print(x)
+foo()
+ERROR: UnboundLocalError: local variable 'x' referenced before assignment
+The output shows an error because Python treats x as a local variable and x is also not defined inside foo().
+Hence, below code works:
+x = "global"
+def foo():
+    global x
+    x = x * 2
+    print(x)
+foo()
+
+Local Variables:
+----------------
+A variable declared inside the function's body or in the local scope is known as local variable.
+
+NonLocal Variables:
+Non local variables are used inside nested functions.
+If we want to use/modify the variable of outer function then we can make that variable as nonlocal so that the interpreter can understand that it is nonlocal variable and it is not local or global variable.
+When using nonlocal keyword with a variable in inner function there should be a variable with same name in outer method otherwise we'll get 'SyntaxError: no binding for nonlocal'
+Eg:
+def outer():
+    x=100
+    print('Outer Before', x) 
+    def inner():
+        nonlocal x
+        x=50
+        print('inner',x)
+    inner()
+    print('Outer After',x)
+
+x=10
+outer()
+print('Global', x)
+
+Output: 
+Outer Before 100
+inner 50
+Outer After 50
+Global 10
+
+Fuctions can be returned from a function:
+-----------------------------------------
+Inner function can be returned as an object from another function and then we can use inner function in the outside world.
+
+def outer():
+    print('Outer function')
+    def inner(a,b):
+        print('Inner function')
+        return a+b
+    print('Outer function ends')
+    return inner;
+
+
+f=outer() # This will run outer() and assign inner() to f, since outer() is returning inner()
+print(f(10,20))
+
+Output:
+Outer function
+Outer function ends
+Inner function
+30
+
+So we want to execte inner function from outside this is possible only if outer function returns inner function.
+
+Hence,
+1. A function can be passed as argument to another function.
+2. A function can be returned from another function.
+
+Hence f1=outer() // return of outer() is assigned to f1
+f1= outer # aliasing, outer function is assigned to inner function.
+
+====================
+Function Decorators:
+====================
+Bride===BeautyParlor==>Heroine
+BeautyParlor(Bride):
+	return Heroine
+
+Hence function Decorators take input as Input function and returns an output function with added features.
+
+The purpose of decorator function is to increase the functionality of existing function without changing existing function.
+
+Decorators helps out code to be short and more pythonic.
+
+Eg:
+def decorator_wish(func_wish):
+    def inner(name):
+        if name=='Chandu':
+            print('Hello Chandu, bad morning')
+        else:
+            func_wish(name)
+    return inner
+
+@decorator_wish
+def wish(name):
+    print('Hello {}, Good Morning'.format(name))
+    
+    
+wish('Ramesh')
+wish('Suresh')
+wish('Chandu')
+
+If we don't want to use annotation and want to use either main or decor function then we can assign inner function to a variable and use it accordingly.
+
+def decorator_wish(func_wish):
+    def inner(name):
+        if name=='Chandu':
+            print('Hello Chandu, bad morning')
+        else:
+            func_wish(name)
+    return inner
+
+
+def wish(name):
+    print('Hello {}, Good Morning'.format(name))
+
+dec_wish=decorator_wish(wish) # Inner function is assigned to a new variable    
+    
+wish('Ramesh')
+dec_wish('Suresh')
+dec_wish('Chandu')
+
+Eg:
+def decor_beautiparlor(func_beautiparlor):
+    def inner(name):
+        if name == 'Niharika':
+            print('{} You cannot be heroine'.format(name))
+        else:
+            func_beautiparlor(name)
+    return inner
+
+
+def beautiparlor(name):
+    print('{} converted from girl to heroine'.format(name))
+
+f_beautiparlor=decor_beautiparlor(beautiparlor)
+
+
+beautiparlor('Priya')
+beautiparlor('Seema')
+f_beautiparlor('Megha')
+f_beautiparlor('Niharika')
+
+Eg:
+def decor_div(func_div):
+    def inner(a,b):
+        if b==0:
+            print('Division by 0 is not allowed')
+        else:
+            return func_div(a,b)
+    return inner
+
+@decor_div
+def div(a,b):
+    return(a/b)
+    
+print(div(10,2))
+print(div(100,2))
+print(div(10,0))
+
+Python has an interesting feature called decorators to add functionality to an existing code.
+This is also called metaprogramming as a part of the program tries to modify another part of the program at compile time.
+
+The functions which take other functions as arguments are called higher order functions.
+Eg: Your personal higher order function
+def operate(func, a):
+    res=func(a)
+    return res
+
+def add(a):
+    return a+a
+
+def mul(a):
+    return a*a
+
+print(operate(add,10))
+
+Functions and methods are called callable as they can be called.
+In fact, any object which implements the special method __call__() is termed callable. So, in the most basic sense, a decorator is a callable that returns a callable.
+Basically, a decorator takes in a function, adds some functionality and returns it. 
+
+Chaining Decorators in python:
+------------------------------
+One Method can be decorated by more than one decorators.
+
+def decor1(func_beautypar):
+    def inner(name):
+        if name == 'Niharika':
+            return('{} no one can help you'.format(name))
+        return func_beautypar(name)
+    return inner
+
+def decor2(func_beautypar):
+    def inner(name):
+        if name == 'Megha':
+            return "Megha you don't need modification"
+        return func_beautypar(name)
+    return inner
+
+@decor1
+@decor2
+def beautypar(name):
+    return ('{} can be modified here'.format(name))
+    
+print(beautypar('Ramesh'))
+print(beautypar('Niharika'))
+print(beautypar('Megha'))
+
+Eg: 
+def star(func):
+    def inner(*args, **kwargs):
+        print('*'*30)
+        func(*args, **kwargs)
+        print('*'*30)
+    return inner
+
+def percent(func):
+    def inner(*args, **kwargs):
+        print('%'*30)
+        func(*args, **kwargs)
+        print('%'*30)
+    return inner
+
+@star
+@percent
+def printer(msg):
+    print(msg)
+    
+printer('Hello')
+
+Output:
+******************************
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Hello
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+******************************
+
+=========
+Closures:
+=========
+When an inner function is returned from an outer function and that function is assigned to another function with some value then that value gets attached to the code. This is called closure.
+Eg:
+def f1(a):
+    print('Outer')
+    def inner(b):
+        return (a*b)
+    return inner
+
+f2=f1(10)
+print(f2(5))#50
+print(f1(10))#Outer
+del f1
+print(f2(5)) #50
+print(f1(10)) #NameError - f1 is not defined 
+
+f2=f1(10) # Here f2 is a CLOSURE which has value 10 attached to it. Even if f1 is deleted now then also f2 will behave as it is.
+
+When do we have a closure?
+we have a closure in Python when a nested function references a value in its enclosing scope.
+
+The criteria that must be met to create closure in Python are summarized in the following points.
+We must have a nested function (function inside a function).
+The nested function must refer to a value defined in the enclosing function.
+The enclosing function must return the nested function.
+
+When to use closures?
+Closures can avoid the use of global values and provides some form of data hiding. It can also provide an object oriented solution to the problem.
+
+When there are few methods (one method in most cases) to be implemented in a class, closures can provide an alternate and more elegant solutions. But when the number of attributes and methods get larger, better implement a class.
+
+On a concluding note, it is good to point out that the values that get enclosed in the closure function can be found out.
+All function objects have a __closure__ attribute that returns a tuple of cell objects if it is a closure function
+>>> times3.__closure__[0].cell_contents
+3
+
+==========
+Modules:
+==========
+What are modules in Python?
+Modules refer to a file containing Python statements and definitions i.e a group of variables, functions and classes stored in a file
+A file containing Python code, for e.g.: example.py, is called a module and its module name would be example.
+We use modules to break down large programs into small manageable and organized files. Furthermore, modules provide reusability of code.
+We can define our most used functions in a module and import it, instead of copying their definitions into different programs.
+
+Reloading a module:
+-------------------
+We can use the reload() function inside the imp module to reload a module. This is how its done.
+import imp
+import my_module
+imp.reload(my_module)
+
+The dir() built-in function:
+-----------------------------
+We can use the dir() function to find out names that are defined inside a module.
+For example, we have defined a function add() in the module example that we had in the beginning.
+Eg:
+>>> import example
+>>> dir(example)
+['__builtins__', '__cached__', '__doc__', '__file__', '__loader__', '__name__', '__package__', '__spec__', 'add']
+
+=============
+Python Files:
+=============
+File is a named location on disk to store related information. It is used to permanently store data in a non-volatile memory (e.g. hard disk).
+Since, random access memory (RAM) is volatile which loses its data when computer is turned off, we use files for future use of the data.
+When we want to read from or write to a file we need to open it first. When we are done, it needs to be closed, so that resources that are tied with the file are freed.
+Hence, in Python, a file operation takes place in the following order.
+Open a file
+Read or write (perform operation)
+Close the file
+
+How to open and close a file?
+try:
+   f = open("test.txt",encoding = 'utf-8')
+   # perform file operations
+finally:
+   f.close()
+
+with open("test.txt",encoding = 'utf-8') as f:
+
+Read and write from a file:
+with open('/Users/utsav/Technology/Languages/python/abc.txt', 'w') as f:
+    print(f.write('This is a sentence which I want to write \n'))
+    f.write('This is an apple sentence\n')
+    f.write('M very sad because of Jeff and McKenzies divorse\n')
+    
+
+with open('/Users/utsav/Technology/Languages/python/abc.txt', 'r') as f:
+    for line in f:
+        if 'apple' in line:
+            print(line ,end='')
+        if 'Jeff' not in line:
+            print(line, end='')
+
+Check if a file is present or not?
+We can check if a file is present or not using os.path.isfile() method present in os module.
+
+WAP to check number of lines, words and characters in a file?
+import os
+
+line_count=0
+words_count=0
+char_count=0
+if os.path.isfile('/Users/utsav/Technology/Languages/python/abc.tx'):
+    with open('/Users/utsav/Technology/Languages/python/abc.txt') as f:
+        for line in f:
+            line_count +=1
+            words = line.split()
+            words_count += len(words) 
+            char_count += len(line)
+        print('Number of lines:', line_count)
+        print('Number of words:', words_count)
+        print('Number of characters:', char_count)
+else:
+    print('File does not exist')
+
+------------
+Binary Data:
+------------
+Write a program to read an image file and then write that image file to some other place:
+with open ('/Users/utsav/Downloads/WarrenSuits.jpg', 'rb') as f1:
+    b=f1.read()
+
+with open ('/Users/utsav/Downloads/WarrenSuitsPython.jpg', 'wb') as f1:
+    f1.write(b)
+
+-------------------
+Handling CSV files: import csv
+-------------------
+WAP to write a csv file:
+
+import csv
+
+with open('/Users/utsav/Technology/Languages/python/student.csv','w', newline='') as f:
+    w=csv.writer(f)
+    w.writerow(['Name', 'Rollno'])
+    while True:
+        name=input('Enter Name')
+        rollno=int(input('Enter RollNo'))
+        w.writerow([name, rollno])
+        option=input('Do you wanna continue? YES|No')
+        if option.lower() == 'no':
+            break
+print('CSV saved')
+
+WAP to read data from a csv file
+=====================
+Directory in python:
+====================
+os.getcwd():
+os.getcwdb():
+os.chdir(path): Change directory
+os.listdir([path]): list sub-dirs and files in a dir, it returns a list
+os.mkdir('test'): make new directory
+os.rename('test','new_one'): rename a file or dir
+os.remove('file'): can be used to remove file and empty dir
+os.rmdir('dir'): to delete an empty dir
+os.rmtree('dir'): to remove a non-empty dir
+os.path.exists('abc.csv'): check if a file exists at provided path/current path.
+os.path.abspath('abc.txt'): generate absolute path of a file
+os.path.isdir('dirName'): checks if it is a dir
+os.path.isfile('fileName'): checks if it is a dir
+os.path.join(): takes a file and a directory name and joins them
+os.popen('shell command'): shell command is used to run shell commands then can be read
+
+
+
+We can get the present working directory using the getcwd() method.
+This method returns the current working directory in the form of a string. We can also use the getcwdb() method to get it as bytes object
+Eg:
+import os
+print(os.getcwd()) #/Users/utsav/.spyder-py3
+print(os.getcwdb()) #/Users/utsav/.spyder-py3
+os.chdir('/Users/utsav/Technology/Languages/python')
+print(os.getcwd()) #/Users/utsav/Technology/Languages/python
+print(os.listdir()) #['update.py', 'config.py', 'abc.txt']
+
+Eg:
+Get all sub dirs and files in a given dir
+def walk(dirname):
+    for name in os.listdir(dirname):
+        path=os.path.join(dirname,name)
+        
+        if os.path.isfile(path):
+            print(path)
+        else:
+            walk(path)
+            
+walk('/Users/utsav/Technology/')
+
+===========
+Exceptions:
+===========
+Errors can also occur at runtime and these are called exceptions. They occur, for example, when a file we try to open does not exist (FileNotFoundError), dividing a number by zero (ZeroDivisionError), module we try to import is not found (ImportError) etc.
+Whenever these type of runtime error occur, Python creates an exception object. If not handled properly, it prints a traceback to that error along with some details about why that error occurred.
+
+Eg: 1/0
+Traceback (most recent call last):
+  File "<ipython-input-32-9e1622b385b6>", line 1, in <module>
+    1/0
+ZeroDivisionError: division by zero
+
+Eg: open('ram')
+Traceback (most recent call last):
+  File "<ipython-input-33-ff3cdecc50e8>", line 1, in <module>
+    open('ram')
+FileNotFoundError: [Errno 2] No such file or directory: 'ram'
+
+Built-in exceptions:
+--------------------
+Illegal operations can raise exceptions. There are plenty of built-in exceptions in Python that are raised when corresponding errors occur. We can view all the built-in exceptions using the local() built-in functions as follows.
+
+==================
+Exception handling:
+==================
+Python has many built-in exceptions which forces your program to output an error when something in it goes wrong.
+When these exceptions occur, it causes the current process to stop and passes it to the calling process until it is handled. If not handled, our program will crash.
+For example, if function A calls function B which in turn calls function C and an exception occurs in function C. If it is not handled in C, the exception passes to B and then to A.
+If never handled, an error message is spit out and our program come to a sudden, unexpected halt.
+
+# import module sys to get the type of exception
+import sys
+
+randomList = ['a', 0, 2]
+
+for entry in randomList:
+    try:
+        print("The entry is", entry)
+        r = 1/int(entry)
+    except (ZeroDivisionError, ValueError):
+        print("Oops!",sys.exc_info()[0],"occured.")
+        print("Next entry.")
+        print()
+    else:
+        print('Program is running well')
+print("The reciprocal of",entry,"is",r)
+
+Raise Exception:
+---------------
+We can raise an exception using raise keyword.
+Eg:
+a=-10
+if a<0:
+    raise ValueError('Enter a positive number')
+else:
+    print(a)
+
+Try....Finally:
+--------------
+The try statement in Python can have an optional finally clause. This clause is executed no matter what, and is generally used to release external resources.
+
+For example, we may be connected to a remote data center through the network or working with a file or working with a Graphical User Interface (GUI).
+
+In all these circumstances, we must clean up the resource once used, whether it was successful or not. These actions (closing a file, GUI or disconnecting from network) are performed in the finally clause to guarantee execution.
+
+try:
+   f = open("test.txt",'w', encoding = 'utf-8')
+   # perform file operations
+finally:
+   f.close()
+
+Custom Exceptions/UserDefined Exceptions:
+-----------------------------------------
+Python has many built-in exceptions which forces your program to output an error when something in it goes wrong.
+However, sometimes you may need to create custom exceptions that serves your purpose.
+In Python, users can define such exceptions by creating a new class. This exception class has to be derived, either directly or indirectly, from Exception class. Most of the built-in exceptions are also derived form this class.
+
+When we are developing a large Python program, it is a good practice to place all the user-defined exceptions that our program raises in a separate file. Many standard modules do this. They define their exceptions separately as exceptions.py or errors.py (generally but not always).
+
+User-defined exception class can implement everything a normal class can do, but we generally make them simple and concise. Most implementations declare a custom base class and derive others exception classes from this base class.
+
+
+===================
+Regular Expression:
+===================
+Methods useful for regular expression:
+compile('pattern'): requires the pattern to be matched
+finditer('source'): source from where pattern is to be matched. 
+finditer('pattern', source): we can use both pattern and source in finditer()
+start(): provides the starting index of the pattern in matched string
+end(): provides the end+1 index of the pattern in matched string
+group(): provides the matched pattern, similar to grep -o
+
+Eg: import re
+
+pattern=re.compile('ab')
+count=0
+matcher=pattern.finditer('This is an ab example of abes')
+matcher=re.finditer('ab', 'ababbacalkjfacalfkhaab')
+for match in matcher:
+    count += 1
+    print('start: {}, end: {}, group: {}'.format(match.start(), match.end(), 
+          match.group()))
+print('Occurence', count)
+
+Character classes
+------------------
+[abc] ==> seach for abc
+[^abc] ==> except for abc
+[a-z]
+[A-Z]
+[0-9]
+[a-zA-Z0-9] ==> expect special characters
+[^a-zA-Z0-9]
+
+Eg: import re
+
+matcher = re.finditer('[^a-zA-Z0-9]','fdakl351$#&*dalgh')
+for m in matcher:
+    print('start: {}, end: {}, group:{}'.format(m.start(), m.end(), m.group()))
+  
+Predefined character classes:
+-----------------------------
+\s --> space character
+\S --> Not space character 
+\d --> [0-9] -- Digits
+\D --> [^0-9] -- Non Digits
+\w --> alpha numeric character
+\W --> Except alphanumeric characters like special characters
+.  --> every character including spaces # To search dot use \.
+
+Eg: import re
+
+matcher = re.finditer('.','fdakl351 $#&*dalgh')
+for m in matcher:
+    print('start: {}, end: {}, group:{}'.format(m.start(), m.end(), m.group()))
+
+Quantifiers: The number of occurences to be matched
+------------
+'a'  : search for 'a' in the string
+'a+' : seach for one or more a
+'a*' : any number of a as well as non-a
+'a?' : atmost one a i.e one a or non-a
+'a{n}': exactly n number of 'a'
+'a{m,n}': minimum m number of a's or max n number of a's
+'^a': starts with a
+'a$': ends with a or not
+
+More Important functions of re module:
+--------------------------------------
+match(): The given pattern is present at the start given of target string or not, if available provide --------matched pattern
+Eg: import re
+
+s=input('Enter a string: ')
+m=re.match(s, 'ramesh')
+if m != None:
+    print('Wow! start matched')
+    print('Start:{}, end:{}, group:{}'.format(m.start(), m.end(), m.group()))
+else:
+    print('Did not match')
+
+fullmatch(): Matches complete string
+------------
+import re
+
+s=input('Enter a string: ')
+m=re.fullmatch(s, 'ramesh')
+if m != None:
+    print('Wow! start matched')
+    print('Start:{}, end:{}, group:{}'.format(m.start(), m.end(), m.group()))
+else:
+    print('Did not match')
+
+search(): search for the pattern, if matched return first occurence.
+---------
+m=re.search('Ame', 'Ramesh', re.IGNORECASE)
+if m != None:
+    print('Search ', m.group())
+
+list findall(): find all matches and returns a list
+----------
+s=input('Enter a string: ')
+m=re.findall(s, 'resameshes')
+if m != None:
+    print('Wow! start matched')
+    print(m)
+else:
+    print('Did not match')
+
+finditer('pattern', 'targetsting'): find iterators is used to find pattern from target string, it returns all matched objects in the form of iterator. That's why we need to apply for loop.
+----------
+
+pattern sub('pattern','replacement', 'targetstring'): substitute provided pattern with provided string. Similar to CTRL+H
+------
+
+tuple subn('pattern','replacement', 'targetstring'): substitute the pattern with provided --------------------------value. Returns changed string and the number of changes.
+
+import re
+match=re.sub('\d','#','Rakesh123Ramesh321') #Rakesh###Ramesh###
+match=re.subn('\d','#','Rakesh123Ramesh321') #('Rakesh###Ramesh###', 6)
+print(match)
+
+
+list split('dilimiter', 'string'): splits the string based on a dilimiter.
+----------------------------------
+
+Q. Write a program which takes below parameters as input.
+The allowed characters are alphabets, numbers and #
+First character should be lower case alphabet symbol from a to k
+The second character should be numerical divisible by 3
+The length of identifier should be atleast 2
+Solution:
+s=input('Enter an identifier')
+m=re.fullmatch('[a-z][0369][a-zA-Z0-9#]*',s)
+if m!=None:
+    print('Valid')
+else:
+    print('Invalid')
+
+Q. WAP which checks for a valid indian mobile number, starting with 91
+s=input('Enter an identifier: ')
+m=re.fullmatch('^91[6-9]\d{9}',s)
+if m!=None:
+    print('Valid')
+else:
+    print('Invalid')
+
+Q. WAP to check mobile number, 
+if the number is of 10 digits than indian condition
+if number is of 11 digits then it should start with 0
+if the number is 12 digits then it should start with 91
+if the number is 13 digits then it should start with +91
+import re
+
+def printout(m):
+    if m!=None:
+        print('Valid')
+    else:
+        print('Invalid')
+        
+s=input('Enter an identifier: ')
+if len(s)==10:
+    m=re.fullmatch('[6-9]\d{9}',s)
+    printout(m)
+elif len(s)==11:
+    m=re.fullmatch('^0[6-9]\d{9}',s)
+    printout(m)
+elif len(s)==12:
+    m=re.fullmatch('^91[6-9]\d{9}',s)
+    printout(m)
+elif len(s)==13:
+    m=re.fullmatch('^\+91[6-9]\d{9}',s)
+    printout(m)
+else:
+    printout(None)
+
+Q. W.A.P to read the mobile numbers from a file.
+import re
+s=''
+with open('/Users/utsav/Technology/Languages/python/mobile', 'r') as f:
+    s=f.read()
+    
+sl=s.split()
+with open('/Users/utsav/Technology/Languages/python/mobileout', 'w') as f:
+    for i in sl:
+        m=re.fullmatch('[6-9]\d{9}', i)
+        if m!=None:
+            f.write(m.group()+'\n')
+
+OR: Clean way using findall()
+==
+import re
+
+f1=open('/Users/utsav/Technology/Languages/python/mobile', 'r')
+f2=open('/Users/utsav/Technology/Languages/python/mobileout1', 'w')
+
+for line in f1:
+    list=re.findall('[6-9]\d{9}', line)
+    for number in list:
+        f2.write(number+'\n')
+
+print('Fetched all mobile numbers')
+f1.close()
+f2.close()
+
+Q . code to scrap webpages
+import re, urllib
+import urllib.request
+import time
+
+sites=['https://www.google.com/', 'https://www.amazon.in/']
+for s in sites:
+    print('Searching...', s)
+    time.sleep(10)
+    u=urllib.request.urlopen(s)
+    text=u.read()
+    title=re.findall('<title>.*</title>', str(text), re.IGNORECASE)
+    print(title[0])
+
+Scrap website to get all emailids
+a=set()
+t=urllib.request.urlopen('https://www.idfy.com/about-us-1').read()
+numbers=re.findall('[a-z]*[@][a-z]*[.][a-z]*', str(t))
+for n in numbers:
+    a.add(n)
+
+print(a)
+
+Regex for emails: \w[a-zA-Z0-9_.]*@gmail[.]com
+import re
+
+s=input('Enter email: ')
+m=re.fullmatch('\w[a-zA-Z0-9_.]*[@]\w+[.]\w+',s)#('\w[a-zA-Z0-9_.]*[@](gmail|rediff)+[.]\w+',s)
+if m != None:
+    print(m.group())
+else:
+    print('invalid')
+
+===========================
+
+
+14 datatypes are divided into 3 categories:
+Fundamental: int, float, complex, bool, str
+sequence: range, list, tuple, bytearray, bytes
+collection: set, frozenset, dictionary
+None
+
+Equality Operators:
+--------------------
+
+== operator never gives any error, it's output is either true or false.
+chaining concept is applicable for equality operators.
+
+10==20==30 # False
+10==5+5==2*5 #True
+'a' == 97 # False because python compares the string and number but not unicode and number.
+(10+2j)==(10+2j)#True
+'durga'==(10+2j)#False
+
+Logical Operators:
+------------------
+for boolean data
+and : if both are True then true
+or : if anyone argument is True then True
+not : opposite
+
+for non-boolean
+
+0 means False, non-zero means true
+'' means False
+
+for x and y 
+-----------
+IF x is 0 or '' THEN x ELSE y (if x evalues to false then result is x else y)
+Eg: 0 and 20
+Out[8]: 0
+
+10 and 20
+Out[9]: 20
+
+'' and 10
+Out[10]: ''
+
+
+X or Y
+------
+If x is not 0 or '' then x else Y
+Eg: 0 or 20
+Out[11]: 20
+
+'utsav' or 0
+Out[12]: 'utsav'
+
+'utsav' or 'ramesh'
+Out[13]: 'utsav'
+
+not X : if 0 or '' is equivalent to False
+------
+not 0
+Out[14]: True
+
+not ''
+Out[15]: True
+
+not 10
+Out[16]: False
+
+Tricky example: 
+10 or 10/0
+Out[17]: 10
+out is 10 because in case of x or y if x is non-zero then x is printed and y is not even looken upon.
+
+
+Bitwise operators: applicable on int and boolean type.
+------------------
+& | ^ ~ << >>
+
+&: if both bits are one then 1 else  0
+|: if anyone bit is one then 1 else 0
+^: xor - if both bits are different then 1 else 0
+~: bitwise complement: 1==>0 and 0==>1
+<<: bitwise leftshift operator
+>> bitwise rightshift operator
+
+Eg: 4 & 5 --> 100 & 101 == 100 hence o/p: 4
+4|5 --> 5
+4^5 --> 1
+~4 --> complement bits needs to be applied for all # -5, negation means 2's complement
+~True
+Out[27]: -2
+
+shift operators
+---------------
+<< - Left shift operator - print(10<<2) #40
+>> - Right shift operator -- print(10 >> 2) #2
+
+
+Assignment Operators: =
+----------------------
+Compund assignment operators: += -= *= /= %= //= **= &= |= ^= >>= <<=
+++ -- operators are not available in python 
+
+Ternary operator: different from other languges ?:
+------------------
+x=10 if 10>20 else 20
+x
+Out[32]: 20
+
+input(): input() is used to read the data from keyboard.
+input considers the value in str format hence typecast it to int if your want.
+
+Eg: 
+a=int(input('1st Number: '))
+b=int(input('2st Number: '))
+min=a if a<b else b # ternary operator
+print ('Min number is', min)
+
+Eg: x=10 if a>b else 20 if b>c else 30
+print(x)
+
+Special Operators: 2
+------------------
+
+Identity Operators:
+-------------------
+Address comparision: is, is not
+a,b=10,20
+print(a is b) # False
+print(a is not b) # True
+
+list is mutable hence every time new object is created.
+
+Membership Operators:
+---------------------
+Two operators: in, not in
+
+list1=[10,20,30]
+10 in list1 #True
+
+s='Python is very easy language'
+print('Ramesh' not in s) #True
+
+Operator precedence:
+--------------------
+()
+**
+~ --> unary operator
+* / % //
++ -
+<< >>
+& ^ |
+> < >= <= == !=
+= += -= /= *=
+is is not
+in not in
+not
+and or
+ 
+
+module: A group of files, functions is called module. Similar to collections api etc in Java.
+Eg. math module
+usage: import math
+print(math.sqrt(4)) #2.0
+or: from math import pi,sqrt
+print(sqrt(4)) #2.0
+print(pi)#3.14159
+
+aliasing: renaming
+eg: import math as m
+print(m.pi) #3.14159
+#after creating alias we cannot use original name of module
+print(math.pi) #Nameerror: math is not defined
+
+few of the functions/constants in math module:
+sqrt(), ceil(), floor(), pow(), factorial(), gcd(), sin(), cos()
+pi, nan(Not a Number), e, infinity
+
+Input and Output statements:
+----------------------------
+Read dynamic data from keyboard: 2 functions
+Python2:
+raw_input() --  takes value from keyboard in string form then we need to typecast it.
+input() -- takes value from keyboard in the provided data type.
+Python 3: Consists of only one function
+input() -- it behaves similar to raw_input function in P2.
+takes the input as str type.
+Eg:
+print(type(input('Read Number: '))) #str
+
+How to read multiple values from the keyboard in a single line?
+Steps 1: input('Enter two numbers')
+2. input('Enter two numbers').split() # split function to split the values
+3. for x in input('Enter two numbers').split() # assign the values to x one by one
+4. int (x) for x in input('Enter two numbers').split() # typecast x to int
+5. [int (x) for x in input('Enter two numbers').split()] # convert it into list since it needs to be assigned to a variable
+6. a,b = [int (x) for x in input('Enter two numbers').split()] # assign values to a variable
+7. print(a 'and' b) # Congrats you did it.
+
+a,b,c,d,e = [int(x) for x in input('Enter five numbers').split(',')]
+print(a, 'and', b, 'and', c, 'and', d, 'and', e) # 10 and 2 and 3 and 4 and 5
+
+split(): split function is used to split the string (default delimiter is space)
+eval(): eval() function takes string as input and evaluates the values
+Eg: print(eval("10+20.2+30")) #60.2
+It is very useful when we want to take any expression and evaluate it.
+Eg: print(eval(input("Enter an exp:"))) # Enter an exp:10*2+30/4//2**2 o/p: 21.0
+
+eval() also helps in keeping the datatype of the input value, if we input int it takes it as int, if list then list.
+Eg: print(type(eval(input("Enter Data:"))))
+Enter Data:10
+<class 'int'>
+Enter Data:10.5
+<class 'float'>
+Enter Data:[10,20]
+<class 'list'>
+Enter Data:{1:'utsav', 2:'ramesh'}
+<class 'dict'>
+
+Eg: 
+a,b,c = [eval(i) for i in input('Enter three values').split(',')]
+print('Sum: ', a+b+c)
+O/p: Enter three values10, 10.5, True
+Sum:  21.5
+
+Command Line Arguments:
+-----------------------
+argv(list type)(present in sys module): this variable stores all command line values
+
+Eg: 
+#!/anaconda3/bin/python
+from sys import argv
+print(argv) # prints name of file as well
+print(argv[1:]) # To print only args
+Utsavs-MacBook-Air:python_test utsav$ python test.py 1 2 3
+['test.py', '1', '2', '3']
+['1', '2', '3']
+
+len(): len() is used to provide length of provided argument.
+len([1,2,3,4])
+Out[62]: 4
+
+len('string')
+Out[63]: 6
+
+len((1,2,3,4))
+Out[64]: 4
+
+len({1:'abc', 2:'def'})
+Out[65]: 2
+
+By default, space is the delimiter between args but if we have a command line argument which contains space then we can pass the arg as string within quotes.
+Eg: python test.py 'Ramesh Wadhwa' or
+python test.py Ramesh\ Wadhwa
+python test.py "Ramesh Wadhwa"
+python test.py '''Ramesh Wadhwa'''
+
+Every command line argument is by default considered as string type.
+
+If we try to get an arg number which is not present like
+print(arg[100]) # IndexError: list index out of range
+For same case if we use slice then we won't get any error
+print(argv[10:100]) #Output: []
+
+Output Statements:
+===================
+TO print output to the console we should go for print().
+
+Form-1: print() without any arguments, an empty line will be inserted.
+
+Form-2: print('string') with one argument#print('Hello\nDurga ') #print("Utsav+Parashar")
+Eg:
+print('Utsav' + 'Parashar') # for + operator both args should be string
+UtsavParashar
+print('Utsav', 'Parashar')
+Utsav Parashar
+print('Utsav' * 2) # for * operator one arg should be int with another string
+UtsavUtsav
+
+Form-3: More than one args print(a,b,c)
+a,b,c=10,20,30
+print(a,b,c)
+10 20 30 
+
+sep attribute - if we want any other delimiter other than space, we can use sep option in print
+-------------
+print(a,b,c, sep=',')
+10,20,30
+
+end attribute - if we don't want newline for each print statement then we can use end attribute
+--------------
+print('Hello', end=',:')
+print('How are you doing?')
+O/p: Hello,:How are you doing?
+
+Use of sep and end attribute together
+print(10,20,30,40, sep=':', end='...')
+print(50,60,70,80, sep='-')
+O/p: 10:20:30:40...50-60-70-80
+
+Print can take any type(list, str, tuple) of arg as input
+print([1,2,3], end='::')
+print((1,2,3), end='--')
+print({1,2,3}, end='..')
+Op: [1, 2, 3]::(1, 2, 3)--{1, 2, 3}..
+
+Print with formatted string: %i%f%s
+-----------------------------
+%i --> integer
+%d --> integer
+%f --> float
+%s --> str, list
+Eg:
+a,b,c=10,10.5,'ramesh'
+print('Value of a is %i, b is %f, c is %s' %(a,b,c))
+Value of a is 10, b is 10.500000, c is ramesh
+
+Print statement with replacement {} : use it with format()
+---------------------------------------------
+We can replace the tuple numerics with strings
+Eg: 
+name,salary,gf='utsav',100000000,'Anjali'
+print('Hello {0}, your salary {1} is too high. Is that for {2}'.format(name,salary,gf))
+#Output: Hello utsav, your salary 100000000 is too high. Is that for Anjali
+
+Without specifying index also it will work
+print('Hello {}, your salary {} is too high. Is that for {}'.format(name,salary,gf))
+Hello utsav, your salary 100000000 is too high. Is that for Anjali
+
+We can use variables inside replacement operator and assign them value in format.
+print('Hello {x}, your salary {y} is too high. Is that for {z}'.format(z=gf, x=name, y=salary))
+Hello utsav, your salary 100000000 is too high. Is that for Anjali
+
+
+==============
+FLOW CONTROL:
+==============
+At runtime in which order the statements needs to be executed is called flowcontrol.
+3 types of flow controls:
+
+1. Conditional/Selection statements:
+------------------------------------
+if
+if .. else
+if .. elif 
+if .. elif .. elif .. else
+
+colon and indentation is mandatory in python 
+
+2. Iterative Statements:
+------------------------
+for loop:
+for each element in sequence(list, tuple, dict, range):
+   do some action
+
+Go for 'for' loop if we know number of iterations in advance else go for while loop.
+
+while loop:
+num=1
+while num<=10:
+    print (num)
+    num +=1
+
+Infinite loops:
+---------------
+
+chr(): chr is used to convert from ascii code to character.
+chr(97) == a
+ord(): ord() is used to convert character to ascii code.
+ord('a') == 97
+Above two functions can be used to increment characters in python.
+ch='A'
+for i in range(1, 4):
+   ch=chr(ord(ch)+1) 
+   print(ch)
+
+Print a pyramid:
+for i in range(1, n+1):
+    print(' '*(n-i),'*'*(2*i-1))
+
+Reverse Pyramid:
+for i in range(n+1,0,-1):
+    print(' '*(n-i), '*'*(2*i-1))
+
+
+
+3. Transfer statements(3): 
+--------------------------
+break, continue and pass :
+break: We can use break if we want to break loop execution based on some condition.
+continue: if we wanna skip an iteration based on condition then we can use continue.
+
+In python, else not only works with if but also
+for-else
+while-else
+try-except-else-finally
+
+else(loop without break)- if break is not executed then go for else.
+else is valid only with break but not with continue.
+if a loop does not contain break but contains else, then else will always be executed.
+
+pass: if an empty block is required then we can go for pass keyword.
+---- IT is more useful in OOPS.
+1. It is an empty statement.
+2. It is a null statement.
+3. It does not do anything.
+
+pass can be analogous to abstract in Java.
+Eg:
+class Vehicle{
+	public abstract int getNoOfWheels();
+}
+class Bus extends Vehicle{
+	public int getNoOfWheels(){
+		return 7;
+	}
+}
+class Car extends Vehicle{
+	public int getNoOfWheels(){
+		return 5;
+	}
+}
+Same thing in python:
+class Vehicle:
+	def getNoOfVehicles: pass # if we don't define pass then code won't compile
+class Bus(Vehicle):
+	def getNoOfVehicles:
+		return 7
+class Car(Veicle):
+	def getNoOfVehicles:
+		return 5
+ 
+if True:
+    pass
+else
+	print('vague use of pass')
+
+del statement:
+==============
+It is always good to delete a variable after it is used. So that the variable is eligible for GC. del is used for this purpose.
+
+x=10
+print(x)
+del x
+print(x)
+NameError: name 'x' is not defined
+Eg: del x,y
+
+Diffrence between del and None:
+-------------------------------
+If we don't want to object and the reference pointing to it then we can use del the object and reference.
+If we want to delete the object but want to keep the identifier for future use then we can assign None to that identifier.
+s="abc"
+s1="def"
+del s # both object and reference are deleted.
+s1 = None # object containing def is deleted but identifier now points to None
+if two reference are pointing to same object and one reference is deleted then only the reference will be deleted. Other refrence will still point to same object.
+
+String DataType:
+================
+Any sequence of characters within single double or triple(multiline) quotes is called String.
+
+slice operator:
+--------------
+s[begin:end:step]
+slicing is done from begin to end-1.
+step value can be positive or negative.
+1. if step value is positive then slicing is done from left to right.
+2. if step value is negative then slicing is done from right to left.
+
+Imp:
+s[begin:end:step]
+step: +ve forward direction from begin to end-1
+	  -ve backward direction from begin to end+1
+In forward direction:
+1. default value begin from 0
+2. default value end: length of string
+3. default value of step: 1
+
+In backward direction:
+1. default value to begin: -1
+2. default value end: -(length of String + 1) 
+3. default value step: -1
+
+slicing never gives error even with wrong expression
+print('Ramesh'[2:6:-1]) #'' output is empty because step does not match with index
+
+How to use slice operator to reverse a string:
+s[::-1] # if steps is negative then slice return values from right to left.
+Eg: print('Ramesh'[::-1]) # hsemaR
+Eg: '0123456789'[-1:-6:-1]
+Out[55]: '
+Eg:'0123456789'[2:-6:1]
+Out[57]: '23''
+Eg: '0123456789'[-1:6:-2]
+Out[59]: '97'
+'0123456789'[0:-5]
+Out[60]: '01234'
+'0123456789'[:0:-1]
+Out[61]: '987654321'
+
+Mathematical Operators on String: +, *
+---------------------------------
++: both arguments should be string
+*: one argument should be string and other one should be int 
+
+strip(): remove space from beginning and end,(similar to trim() in java)
+lstrip(): remove space from left of String
+rstrip(): remove space from end of the String
+
+find() in string: find(subString, [start], [end]) 
+-----------------
+find() is used to find the lowest index of substring in the string if the substring is present.
+If the substring is not present then it returns -1.
+start, end is useful to find substring in provided string like s[start:end], then the interpreter will search sustring within provided range using slice.
+
+rfind(): exactly similar to find but it returns the highest index which is useful if the substring is present more than once.
+
+index(): index(subString, [startingIndex], [endIndex]) 
+---------
+index() is used to provide lowest index of the substring in the string. If the index is not found then it raises ValueError exception.
+
+rindex(): exactly similar to find but it returns the highest index which is useful if the substring is present more than once.
+
+Difference between find() and index():
+---------------------------------------
+The only difference is that find() method returns -1 if the substring is not found, whereas index() throws an exception.
+
+Eg: s='Durga software classes'
+print(s.find('software'))
+print(s.index('software'))
+print(s.find('software',2,16))
+print(s.index('software',4,18))
+print(s.find('ramesh'))
+print(s.index('ramesh'))
+
+Eg: with rfind() and rindex()
+print(s.find('let'))
+print(s.rfind('let'))
+print(s.index('let'))
+print(s.rindex('let'))
+print(s.find('it',4,16))
+print(s.index('it',2,18))
+
+methods() is string:
+--------------------
+index() rindex(), find(), rfind(), 
+enumerate(): enumerate() is used to provide counter to an string. If we want to add a counter to iterating string we can do it through enumerate(). It is very widely used method.
+enumerate object needs to be converted to list or tuple which return list of tuple or tuple of tuple respectively.
+Eg:
+s='utsav'
+print(enumerate(s)) #<enumerate object at 0x11e2a8f78>
+print(list(enumerate(s)))#[(0, 'u'), (1, 't'), (2, 's'), (3, 'a'), (4, 'v')]
+print(list(enumerate(s,10)))#[(10, 'u'), (11, 't'), (12, 's'), (13, 'a'), (14, 'v')]
+for tag,value in list(enumerate(s)):
+    print (tag, value)
+
+format():
+
+count(substring): count is used to count the occurence of substring in the string.
+count(subString, start, end): count substring occurrence between start and end item index
+s[start:end]
+
+replace(): replace is used to replace substring from another string. New object is being created internally for it.
+
+
+split()
+rspilit()
+splitlines()
+join()
+
+upper()
+lower()
+swapcase(): swapcase is used to swap the case between lower and uppercase. Eg. s.swapcase()
+title(): The title() method returns a string with first letter of each word capitalized; a title cased string. Eg: s.title()
+capitalize(): capitalize function is used to convert first character of first word to uppercase rest all are lowercase. Eg: s.capitalize()
+
+isalnum()
+isalpha()
+isdigit()
+isdecimal()
+isidentifier()
+islower()
+isnumeric()
+isprintable()
+isspace()
+istitle()
+isupper()
+
+center()
+casefold()
+startswith()
+endswith(): 
+expandtabs()
+encode()
+
+ljust()
+rjust()
+
+lstrip()
+rstrip()
+strip()
+
+partition()
+rpartition()
+maketrans()
+translate()
+
+zfill()
+format_map()
+
+any()
+all()
+ascii()
+
+bool()
+bytearray()
+bytes()
+float()
+int()
+
+compile()
+complex()
+filter()
+input()
+iter()
+
+len()
+max()
+min()
+map()
+
+ord()
+chr()
+
+reversed()
+slice()
+sorted()
+sum()
+zip()
+
+
+Regex:
+------
+Raw String - r expression is used to create a raw string. Python raw string treats backslash as a literal character.
+path="C:\Desktop\Nathan"
+print(path) # results in error
+path=r"C:\Desktop\Nathan"
+print(path)
+Hence it is always good to treat a string as raw string.
+
+Some of the commonly used method for re module are listed below:
+re.match()
+re.search()
+re.findall()
+
+re.match() is used to match a string at the start of the string sentence, returns a match object on success and none on failure.
+print(re.match('this', r'this i am a this person')) / <re.Match object; span=(0, 4), match='this'>
+print(re.match('this', r'i am a this person')) / None
+Since output of the match function in match object hence we use group() to get the value.
+print(re.match('this', r'this i am a this person').group())
+
+re.search() --> matches the single occurence of the pattern in complete string.
+print(re.search('this', r'i am a this person').group())
+
+re.findall() --> It will return all the occurence of the pattern in the string. I will recommend you to always use re.findall() as it can work like both re.search() and re.match().
+print(re.findall('this', r'this i am a this person'))
+
+Special sequences in regex
+\b - return a match where the specified pattern is at the end of the string.
+print(re.findall(r'son\b', r'i am a person'))
+
+\d - returns a match where the string contains a digit.
+print(re.findall(r'\d', r'i am a person number 1 and 2'))
+
+\D - returns a match where the string does not contain a digit.
+print(re.findall(r'\D+', r'i am a person number 1 and 2'))
+
+\w - helps in extraction of alphanumeric characters only (characters from 1-z, 0-9, and _)
+print(re.findall(r'\w+', r'i am a person number 1 and 2 and *'))
+
+\w - helps in extraction of non alphanumeric characters.
+print(re.findall(r'\W+', r'i am a person number 1 and 2 and *'))
+
+Meta characters in regex:
+these are the characters with special meatings.
+
+. -> matches any character except newline character.
+s="rohan and rohit published a paper"
+x=re.findall("ro.", s)
+y=re.findall("ro...", s)
+print(x)
+print(y)
+
+^ -> start with a given pattern
+if(re.findall("^rohan", s)):
+    print('yes')
+
+| -> either or --> string contains any of the two patterns
+re.findall("rohan|rohita", s)
+
+Sets - []
+Select the range within these sets
+s="rohan and rohit published a paper 123"
+re.findall("[1-9]\d+", s)
+
+[^abc] -- characters other than abc in teh string
+
+

@@ -1,0 +1,685 @@
+OOPS:
+=====
+class: A class is a blueprint/template or a plan based on which objects need to be created.
+For a building/apartment once a plan is designed, then we can created any number of apartments(objects) based on that plan.
+
+object: Physical existance of a plan is know as object.
+
+Reference: Remote is an reference pointing to TV object.
+
+class to object -- one to one/ one to many relationship
+object to reference -- one to one/ one to many relationship
+Eg: 
+class Student():
+    '''This is a class, created by Utsav'''#DocString
+    def __init__(self, name, rollno):
+        self.name=name
+        self.rollno = rollno
+        
+    def talk(self):
+        ''' This method should be used wisely'''
+        print('Hi, My Name is: {} and roll no is {}'.format(self.name, self.rollno))
+
+s1=Student('Ramesh', 101)
+s2=Student('Suresh', 102)
+print(s1.name, s2.rollno)
+s1.talk()
+s2.talk()
+#Print doc string
+print(Student.__doc__)
+help(Student)
+print(Student.talk.__doc__)
+
+Eg:
+class Student():
+    '''This is a class, created by Utsav'''#DocString
+    def __init__(self, name, rollno):
+        self.name=name
+        self.rollno = rollno
+        
+    def talk(self):
+        ''' This method should be used wisely'''
+        print('Hi, My Name is: {} and roll no is {}'.format(self.name, self.rollno))
+
+s1=Student(rollno=101, name='Ramesh')
+s2=Student('Suresh', 102)
+print(s1.name, s2.rollno)
+s1.talk()
+s2.talk()
+
+self: holds the current object
+-----
+self is an implicit variable.
+self is a reference variable which is pointing to current object.
+For constructor and instance method, first argument should be self.
+We do not need to provide values for self arguments but Python Virtual Machine does it.
+By using self, we can declare and access instance variables.
+self is used to differentiate between local variable and instance variable in a method.
+In python, the variables declared under constructor are called instance variable.
+Whatever, first argument we are passing is considered as self. But it recommended to used 'self'
+
+class Student():
+    '''This is a class, created by Utsav'''#DocString
+    def __init__(self):
+        print('*'*10)
+        print(id(self))
+        print('*'*10)
+        
+s1=Student()
+print('S1', id(s1))
+
+s2=Student()
+print('S2', id(s2))
+
+Constructor:
+-------------
+The name should always be __init__(self)
+Whenever we create an object the constructor of the called automatically.
+THe main objective of constructor is to initialize and declare instance variable.
+For every object constructor will be executed only once.
+Constructor should have atleast one argument.
+if we do not write a constructor then python will provide default constructor.
+In python, constructor overloading, method overloading is not applicable. Even if we declare many constructors but the python will consider only last constructor.
+
+Difference between method and constructor
+Method: name - any
+constructor: name - __init__
+Constructor will be executed automatically whenever the object is created, Method weill be executed when it is called.
+Constructor can be executed only once per object, method can be executed any number of times.
+Constructor is useful for instantiate variable initialization but method is used for business logic.
+
+Types of variables: 3
+----------------------
+Instance variables/ Object level variables: If the value of variable varies from object to -------------------------------------------object then they are known as instance variables. A separate copy will be created object to object.
+Instance variables are defined by self(or any other name).
+
+Where can instance variables be declared?
+1. Inside Constructor using self
+2. Inside instance method using self
+3. Using reference variable for the object.(Outside of the class)
+
+How to access instance variables?
+Within class using self
+Outside class using object reference
+
+How to delete instance variables?
+Within class: del self.variableName
+Outside class: del objectReference.variableName
+
+All the instance variables can be printed using print(s.__dict__)
+Eg: 
+class Student():
+    '''This is a class, created by Utsav'''#DocString
+    
+    college_name='St. Joseph\'s'
+    
+    def __init__(self, name, rollno):
+        self.name=name
+        self.rollno = rollno
+        
+    def info(self):
+        self.marks=90
+        
+s1=Student('Ramesh', 101)
+print(s1.__dict__)
+s1.info()
+print(s1.__dict__)
+s1.age=24
+print(s1.__dict__)
+
+Static variables/Class variables: variable remains common for all the objects are known as class level variables. No modifier is required. The variable which is declared inside class but outside constructor or method then it is called static variables.
+
+local variables: The variables which are declared inside constructor or methods without self keyword are called local variables.
+
+Type of methods:
+1. Instance/Object methods: The method in which first argument is self and in which instance variables are used is called instance methods.
+
+2. Class methods: For all class level variables and methods a class level object is created. If we want to use class related variables from a class method then the first argument of the method is cls(class)/any name can be used. Also, class level method variable name should be @classname
+
+3. Static methods: Method which does not used class level or object level data. These methods are utility methods. Annotation/Decorator used for them is @staticmethod
+Eg:
+class Student():
+    '''This is a class, created by Utsav'''#DocString
+    
+    college_name='St. Joseph\'s' / Class level variable
+    
+    def __init__(self, name, rollno):  # constructor
+        self.name=name # instance method
+        self.rollno = rollno
+        
+    def talk(self): 
+        ''' This method should be used wisely'''
+        x=10000 # local variable
+        print('Hi, My Name is: {} and roll no is {}'.format(self.name, self.rollno))
+        print('x', x)
+    
+    @classmethod   
+    def getCollegeName(cls):
+        print(cls.college_name)
+        
+    @staticmethod
+    def getAverage():
+        return 10/20
+
+s1=Student(rollno=101, name='Ramesh')
+s2=Student('Suresh', 102)
+print(s1.name, s2.rollno)
+s1.talk()
+s2.talk()
+
+Student.getCollegeName()
+print(Student.getAverage())
+
+Nested Methods within a class: 2019.01.15
+-----------------------------------------
+class Body:
+    def __init__(self):
+        print('Body')
+    
+    def m1(self):
+        def sumpro(a,b):
+            print('sum:', a+b)
+            print('prod:', a*b)
+        sumpro(10,20)
+        sumpro(100,200)
+        
+Body().m1()
+
+Garbage Collection: import gc
+-------------------
+
+Constructor __init__(self): Used to initialize an object
+Destructor __del__(self): Used for clean up activities before destroying object.
+
+creation --> constructor --> use object --> destructor --> destroy object.
+
+Objects which does not have any reference all garbage collected by gc.
+GC has three main methods
+
+gc.isEnabled()
+gc.disable()
+gc.enable()
+
+import gc
+
+print(gc.isenabled()) 
+print(gc.disable())     
+print(gc.isenabled())
+print(gc.enable())
+print(gc.isenabled())
+
+Destructors: __del__(self)
+------------
+Like we have __init__(self) to instantiate the object similarly we have a destructor which is called by gc before destroying the object.
+__del__(self) is used to cleanup activities before destroying the object.
+It is similar to finalize() is java.
+
+Eg:
+import time
+class GCDemo:
+    def __init__(self):
+        print('Object is being created')
+    
+    def __del__(self):
+        print('Cleanup activities before destroying the object')
+        
+a=GCDemo()
+print('Currently there is a reference')
+a=None
+time.sleep(2)
+print('This brings us to the end of application')
+a=GCDemo()
+print('Again we have a reference')
+del(a)
+time.sleep(2)
+print('Finally we have reached end of program')
+
+Even if we do not de-reference the object then also just before the completion of the program gc destroys all objects of the applcation
+
+class GCDemo:
+    def __init__(self):
+        print('Object is being created')
+    
+    def __del__(self):
+        print('Cleanup activities before destroying the object')
+        
+a=GCDemo()
+print('Currently there is a reference')
+Output:
+Object is being created
+Cleanup activities before destroying the object
+Currently there is a reference
+
+Example: In list all objects are created and before application terminates gc destroys all objects by itself.
+class GCDemo:
+    def __init__(self):
+        print('Object is being created')
+    
+    def __del__(self):
+        print('Cleanup activities before destroying the object')
+
+l=[GCDemo(), GCDemo(), GCDemo()]
+print('After 3 objects creation and deletion,application is closed.')
+
+Object is being created
+Object is being created
+Object is being created
+Cleanup activities before destroying the object
+Cleanup activities before destroying the object
+Cleanup activities before destroying the object
+After 3 objects creation and deletion,application is closed.
+
+How can we get the number of reference of the objects?
+sys.getrefcount(objectReference) # No of references + 1 (self)
+
+import sys
+class GCDemo:
+    def __init__(self):
+        print('Object is being created')
+    
+    def __del__(self):
+        print('Cleanup activities before destroying the object')
+        
+a=GCDemo()
+b=a
+c=a
+d=b
+print(sys.getrefcount(a))
+
+=============
+Polymorphism:
+=============
+Poly - means
+morps - forms
+i.e one name but multiple forms
+
+Overloading:
+------------
+Same name various purpose.
+Operator overloading: +, *
+10+20=30
+a+b=ab
+10*3=30
+a*3=aaa
+deposit(cash)
+deposit(cheque)
+deposit(dd)
+
+Operator Overloading:
+---------------------
+In java we don't have operator overloading but we have in python.
+Eg: +, *
+
+operator overloading is internally implemented using MAGIC METHODS:
++ --> __add__()
+
+Eg:
+class Book:
+    def __init__(self, pages):
+        self.pages=pages
+    
+    def __add__(self, other):
+        return self.pages+other.pages
+    
+    def __sub__(self, other):
+        return self.pages-other.pages
+    
+    def __mul__(self, other):
+        return self.pages*other.pages
+
+b1=Book(100)
+b2=Book(200)
+print(b1+b2)
+print(b1-b2)
+print(b1*b2)
+
+Magic Methods:
++:__add__
+-:__sub__
+*:__mul__
+/:__div__
+%:__mod__
+//:__floordiv__
+**:__pow__
+
++= : __iadd__
+-=, *=, /=. %=, //=, **= 
+
+>= --> ge
+<= --> le
+<  --> lt
+>  --> gt
+== --> eq
+!= --> ne
+
+__str__(): COPY FROM OFFICE NOTES
+
+
+Aggregation and Compositions: has a relationship
+-----------------------------
+Strong relationship(association) between two objects is called Composition like University and Department.
+Department is of no use without University.
+
+Weak relationship(association) between two objects is called Aggregation like Professor and University.
+Professor does not live and die with University.
+
+Like Student and Name, i.e without Student there is no Name hence composition.
+Student and College Name i.e without Student there can be college Name
+
+Hence, Student has a name(Composition), Student has a college name(Aggregation)
+
+The relation between object and instance variable is composition and the relation between object and static variable is aggregation.
+
+class Student:
+    collegeName = 'PCE'
+    
+    def __init__(self, name):
+        self.name = name
+    
+print(Student.collegeName)
+print(Student('Ramesh').name)
+
+------------
+Inheritance:
+------------
+Type of Inheritance:
+Single Inheritance
+Multilevel Inheritance
+Hierarical Inheritance
+Multiple Inheritance
+Hybrid Inheritance
+Cyclic Inheritance - Not supported by Python and Java
+
+Single Inheritance:
+--------------------
+The process of inheriting properties from one parent to one child is called Single Inheritance.
+
+Eg:
+class P:
+    def m1(self):
+        print('Parent')
+
+class C(P):
+    def m2(self):
+        print('Child')
+        
+c=C()
+c.m1()
+c.m2()
+
+Multilevel Inheritance:
+-----------------------
+A is parent of B which is parent of C
+class P:
+    def m1(self):
+        print('Parent')
+
+class C(P):
+    def m2(self):
+        print('Child')
+        
+class GC(C):
+    def m3(self):
+        print('Grand Child')
+        
+gc=GC()
+gc.m1()
+gc.m2()
+gc.m3()
+
+Hierarical Inheritance:
+-----------------------
+Single parent and multiple child
+Eg:
+class P:
+    def m1(self):
+        print('Parent')
+
+class C1(P):
+    def m2(self):
+        print('Child 1')
+        
+class C2(P):
+    def m2(self):
+        print('Child 2')
+        
+c1=C1()
+c1.m1()
+c1.m2()
+
+c2=C2()
+c2.m1()
+c2.m2()
+
+Multiple Inheritance:
+----------------------
+Multiple parents and Single child
+
+How ambiguity or Diamond access problem is solved in Multiple Inheritance in Python?
+Order - first contact first person.
+class P1:
+    def m1(self):
+        print('Parent 1')
+
+class P2:
+    def m1(self):
+        print('Parent 2')
+        
+class C(P1,P2):
+    pass
+
+c=C()
+c.m1()
+
+
+Hybrid Inheritance: Single + Multilevel + Hierarical + Multiple
+--------------------
+Combination of Two or More Inheritance is called Hybrid Inheritance.
+
+Method Resolution in Hybrid Inheritance: (MRO -- Method Resolution Order) - Depth First Left to Right ALgo is used
+-------------------------------------------------------------------------
+class GP:
+    def m1(self):
+        print('GP')
+        
+class P(GP):
+    def m1(self):
+        print('Parent')
+        
+class C(P):
+    def m1(self):
+        print('Child')
+        
+class Chacha(GP):
+    def m1(self):
+        print('Chacha')
+        
+print(C.mro())
+Output: [<class '__main__.C'>, <class '__main__.P'>, <class '__main__.GP'>, <class 'object'>]
+
+class A:pass
+class B(A):pass
+class C(A):pass
+class D(B,C):pass
+        
+print(D.mro())
+[<class '__main__.D'>, <class '__main__.B'>, <class '__main__.C'>, <class '__main__.A'>, <class 'object'>]
+
+Eg: C3 Algorithm:
+
+
+class A:pass
+class B:pass
+class C:pass
+class X(A,B):pass
+class Y(B,C):pass
+class P(X,Y,C):pass
+        
+print(P.mro())
+[<class '__main__.P'>, <class '__main__.X'>, <class '__main__.A'>, <class '__main__.Y'>, <class '__main__.B'>, <class '__main__.C'>, <class 'object'>]
+
+class D:pass
+class E:pass
+class F:pass
+class B(E,D):pass
+class C(D,F):pass
+class A(B,C):pass
+
+print(A.mro())
+ 
+#A,B,E,C,D,F --> A -- B -- E -- C(since D is common parent of B and C) -- D --F
+
+
+Ducktyping philosophy of python:
+
+Overloading
+	Operator overloading
+	Method overloading
+	Constructor overloading
+Overriding
+	Method Overriding
+	constructor overriding 
+
+---------------
+MultiThreading:
+---------------
+Multitasking:
+---------------
+Process based Multitasking: OS level
+Thread based Multitasking:
+---------------------------
+One Process, multiple threads.
+Each task is independent part of same program.
+Thread:
+An independent part of a program is called a thread.
+A flow of execution is called Thread.
+It is a python object.
+
+When should we go for multithreading?
+Whenever there are indiviual events needs to be performed then we can go  for multithreading.
+
+Python provides inbuilt support for multithreding via threading module.
+
+Main Thread name is MainThread.
+print('Current Thread', threading.current_thread().getName())
+
+How many ways can we create Thread in Python? Three Ways
+1. Creating a Thread without using any class
+2. Creating a Thread by extending Thread class
+3. Creating a Thread by without extending Thread class
+
+join(): If a thread wants to wait for other threads completion then it call join().
+-------Say main thread wants to wait for child thread t1 to complete then main thread calls 
+t1.join()
+
+Setting and getting name of a thread:
+-------------------------------------
+t.getName() or current_thread().name
+t.setName() or current_thread().name='New Name'
+
+1. Creating a Thread without using any class
+---------------------------------------------
+import threading
+
+def display():
+    for i in range(10):
+        print('Child Thread')
+        
+t=threading.Thread(target=display) #Creation of Thread and calling dispaly method
+t.start()
+
+for i in range(10):
+    print('MainThread')
+
+
+2. Creating a Thread by extending Thread class
+----------------------------------------------
+import threading
+
+class MyThread(threading.Thread):
+    def run(self):
+        for i in range(10):
+            print('Child Thread', threading.current_thread().getName())
+
+t=MyThread()
+t.start()
+
+for i in range(10):
+            print('Parent Thread', threading.current_thread().getName()) 
+
+3. Creating a Thread by without extending Thread class
+-------------------------------------------------------
+from threading import *
+
+class Test:
+    def m1(self):
+        for i in range(10):
+            print('Child Thread')
+
+t=Thread(target=Test().m1)
+t.start()
+
+for i in range(10):
+    print('Parent Thread')  
+
+Eg: 
+import threading
+import time
+
+def doubles(numbers):
+    for i in numbers:
+        time.sleep(1)
+        print('Doubles', 2*i)
+        
+def squares(numbers):
+    for i in numbers:
+        time.sleep(1)
+        print('Squares', i*i)
+
+numbers=[1,2,3,4,5,6]
+begintime=time.time()
+t1=threading.Thread(target=doubles, args=(numbers,))
+t2=threading.Thread(target=squares, args=(numbers,))
+
+t1.start()
+t2.start()
+
+t1.join() #Main Thread waiting for T1 to complete
+t2.join() #Main Thread waiting for T2 to complete
+
+endtime=time.time()
+print('Time Taken', endtime-begintime)
+
+join()
+
+isAlive()
+
+ident
+
+getName() or name
+
+setName() or name
+
+enumerate()
+
+Daemon Threads:
+---------------
+Background executing threads are called Daemon Thread.
+Their purpose is to support for non-deamon threads.
+Eg. Garbage collector
+
+check if a thread is daemon or not? using isDaemon() or daemon variable
+print(threading.current_thread().isDaemon())
+print(threading.current_thread().daemon)
+
+is it possible to change Daemon nature of a  thread? setDaemon(True/False)
+Restriction to use this method: Before starting thread only we can change its daemon nature, once thread is started then we cannot change its daemon nature.
+Otherwise: RuntimeError: cannot set daemon status of active thread
+
+Daemon Thread is killed as soon as the last non-deamon thread terminates.
+
+Default Nature of Thread:
+-------------------------
+Only Main thread is non-daemon.
+All remaining threads daemon nature will be inherited from parent.
+    
