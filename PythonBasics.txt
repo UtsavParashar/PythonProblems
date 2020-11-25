@@ -208,8 +208,13 @@ a,b,c,d,e = [int(x) for x in input('Enter five numbers').split(',')]
 print(a, 'and', b, 'and', c, 'and', d, 'and', e) # 10 and 2 and 3 and 4 and 5
 
 split(): split function is used to split the string (default delimiter is space)
+Eg: 'This is a string'.split()
+kdb: " " vs "This is a string"
+
 eval(): eval() function takes string as input and evaluates the values
 Eg: print(eval("10+20.2+30")) #60.2
+>>> eval("10+20*30")
+kdb: value "10+20*30
 It is very useful when we want to take any expression and evaluate it.
 Eg: print(eval(input("Enter an exp:"))) # Enter an exp:10*2+30/4//2**2 o/p: 21.0
 
