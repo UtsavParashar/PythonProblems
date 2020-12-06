@@ -291,13 +291,12 @@ UtsavUtsav
 
 Form-3: More than one args print(a,b,c)
 a,b,c=10,20,30
-print(a,b,c)
-10 20 30 
+print(a,b,c) ## 10 20 30 
+print(a+b+c) ## 60
 
 sep attribute - if we want any other delimiter other than space, we can use sep option in print
 -------------
-print(a,b,c, sep=',')
-10,20,30
+print(a,b,c, sep='|') ## 10|20|30
 
 end attribute - if we don't want newline for each print statement then we can use end attribute
 --------------
