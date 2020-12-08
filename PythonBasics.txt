@@ -578,7 +578,7 @@ print(list(enumerate(s,10)))  ## [(10, 'u'), (11, 't'), (12, 's'), (13, 'a'), (1
 for tag,value in list(enumerate(s)):
     print (tag, value)
 enumerate function in kdb
-q)enumerate:{enlist (til count x),'x}
+q)enumerate:{enlist (y+til count x),'x}
 q)enumerate "string"
 0 "s" 1 "t" 2 "r" 3 "i" 4 "n" 5 "g"
 
