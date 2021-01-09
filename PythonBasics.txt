@@ -393,7 +393,7 @@ Reverse Pyramid:
 for i in range(n+1,0,-1):
     print(' '*(n-i), '*'*(2*i-1))
 
-3. Transfer statements(3): 
+3. Transfer statements(3): break, continue and pass 
 --------------------------
 break, continue and pass :
 break: We can use break if we want to break loop execution based on some condition.
@@ -407,6 +407,13 @@ try-except-else-finally
 else(loop without break)- if break is not executed then go for else.
 else is valid only with break but not with continue.
 if a loop does not contain break but contains else, then else will always be executed.
+
+for i in range(10):
+    if i == 5:
+        break
+    print(i)
+else:
+    print(15)
 
 pass: if an empty block is required then we can go for pass keyword.
 ---- IT is more useful in OOPS.
@@ -500,7 +507,7 @@ Eg: print('Ramesh'[::-1]) # hsemaR
 Eg: '0123456789'[-1:-6:-1]
 Out[55]: '
 Eg:'0123456789'[2:-6:1]
-Out[57]: '23''
+Out[57]: '23'
 Eg: '0123456789'[-1:6:-2]
 Out[59]: '97'
 '0123456789'[0:-5]
