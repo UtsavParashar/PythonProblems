@@ -779,7 +779,8 @@ if we provide an index which is out of range then the element will be added to t
 l.insert(1999,'a')#'a' will be added to the end of the list.
 l.insert(-100,'b')#'b' will be added to 0th posision of the list.
 
-pop(index) is used to remove the element at the provided index. If the index in not provided ----------the the pop() removes element at -1 th index i.e last element of the list.
+pop(index) is used to remove the element at the provided index. 
+If the index is not provided then the pop() removes element at -1 th index i.e last element of the list.
 If the index provided to the pop() is not present in the list then IndexError exception is thrown.
 Eg: val=my_list.pop()
 print(val, my_list)
@@ -789,6 +790,9 @@ remove(element): remove() is used to remove provided FIRST element from the list
 my_list.remove(11)
 print(my_list)
 remove() just removes the provided element, it does not return any value hence returns 'None'.
+l=[1,2,3,2,4,5]
+print(l.remove(2))
+print(l)
 
 index(element): index() is used to return FIRST index of the provided element. If element is not present in the list then ValueError exception is thrown.
 l=[(1,2),[4,5],6,7]
@@ -797,10 +801,12 @@ print(l.index((1,2)))#0
 count(element): count() returns how many times an element occurred in the list and returns it.
 -------------- It returns 0 if the element is not present in the list.
 
-reverse(): reverse() is used to reverse the elements of the existing list. reverse() does not ---------- return any value. l.reverse()
+reverse(): reverse() is used to reverse the elements of the existing list. 
+reverse() does not return any value. 
+l.reverse()
 elements of the list can also be reversed using slice operator l[::-1]
 
-reversed(): if we want to access individual elements of the list in reverse order then we can ----------- go for reversed()
+reversed(): if we want to access individual elements of the list in reverse order then we can go for reversed()
 for i in reversed(l):
     print(i,end='')
 
