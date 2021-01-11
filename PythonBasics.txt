@@ -812,24 +812,18 @@ for i in reversed(l):
 
 sort([key, reverse,]) and sorted(list, [key, reverse]): sort method is used to sort elements in ------------------------------------------------------- either ascending or descending order in existing list.
 Simple difference between sort and sorted is sort does not return any value but sorted returns an iteratable list.
-For sort method list must contain only homogeneous elements otherwise we'll get pipe error.
+For sort method or sort function list must contain only homogeneous elements otherwise we'll get Type error.
 Parameters:
-sort()/sorted() by default it does not require any parameter but if we want to reverse the elements then we can use reverse='True'#get output in descending order.
+sort()/sorted() by default does not require any parameter but if we want to reverse the elements then we can use reverse='True'#get output in descending order.
 if we want any other order other then ascending or descending then we can provide a function which provides customized sorting order.
 l.sort(reverse=True)
 l.sort(key=myfunction, reverse=True)
 Eg: 
-def takeSecond(elem):
-    return elem[1]
-# random list
 random = [(2, 2), (3, 4), (4, 1), (1, 3)]
-# sort list with key
-random.sort(key=takeSecond)
-# print list
-print('Sorted list:', random)
+random.sort(key=lambda e:e[1], reverse=True)
+random # First element of each sublist is sorted in descending order [(3, 4), (1, 3), (2, 2), (4, 1)]
 
-
-copy(): we can use copy() for shallow copy means a new object is created containg the same -------- elements as existing list or we can for deep copy using = operator.
+copy(): we can use copy() for shallow copy means a new object is created containg the same elements as existing list or we can for deep copy using = operator.
 While doing a deep copy if we change the elements of one list then other list is also updated.
 copy() return a new list which is present in different object.
 Shallow copy can also be done through slicing
@@ -840,12 +834,13 @@ print('l', id(l))
 print('l1', id(l1))
 l2=l.copy()#Shallow Copy using copy()
 print('l2', id(l2))
-l3=l2[:]#Shallow COpy using slice operator
+l3=l2[:]#Shallow Copy using slice operator
 print(id(l3))
 print('l2', id(l2))
 
 clear(): clear() is used to clear all elements of the list.
---------list.clear()
+--------
+list.clear()
 The clear() does not take any parameter.
 clear() clears the list and does not return any value.
 del keyword can be used to delete the list
@@ -877,6 +872,25 @@ print([i for i in range(10) if i%2==1])#[1, 3, 5, 7, 9]
 in operator can be used to test if an element exists in list or not
 -----------
 print(8 in pow)#True
+in opertor is python is used to check atom in vector or vector in vector unlike kdb which can check atom in atom, atom in vector, vector in vector, list in vector
+print("x" in "a") ## atom in atom -- False
+print("x" in "acdexyz") ## atom in vector -- True
+print("wx" in "acdexyz") ## vector in vector -- False
+print(["abc",["def","ghi"],"jkl"]in "bed" ) ## list in vector - TypeError: 'in <string>' requires string as left operand, not list
+print("wx" in ["acdexyz","abcd","wx"]) ## - True - vector in list
+print(["ab","cd"] in [["ab","cd"],0,1,2]) ## True - List in List
+
+'in' in kdb - 
+q)"x" in "a" // 0b
+q)"x" in "acdexyz" // 1b
+q)"wx" in "acdexyz" // 01b
+q)("abc";("def";"ghi");"jkl")in "bed"
+010b
+(110b;000b)
+000b
+q)"wx" in ("acdexyz";"abcd";"wx") // 1b
+q)("ab";"cd") in (("ab";"cd");0 1 2) // 1b
+
 
 x=[1,2,3]
 y=[1,2,3]
@@ -907,13 +921,11 @@ Output:
 40 50 60 
 70 80 90
 
-
-
 ======
 Tuple:()
 ======
-Tuple is similar to that of list with the difference that list is mutable and tuple is immutable. i.e we can change the elements of the list but we cannot change the elements of a list.
-there are certain advantages of implementing a tuple over a list. Below listed are some of the main advantages:
+Tuple is similar to that of list with the difference that list is mutable and tuple is immutable. i.e we can change the elements of the list but we cannot change the elements of a tuple.
+There are certain advantages of implementing a tuple over a list. Below listed are some of the main advantages:
 * We generally use tuple for heterogeneous (different) datatypes and list for homogeneous (similar) datatypes.
 * Since tuple are immutable, iterating through tuple is faster than with list. So there is a slight performance boost.
 * Tuples that contain immutable elements can be used as key for a dictionary. With list, this is not possible.
@@ -930,7 +942,7 @@ print(type(t))#<class 'tuple'>
 
 Accessing Elements in a tuple: Various ways
 -------------------------------------------
-1. Indexing: my_tuple(2) # providing index out of range with raise IndexError Exception.
+1. Indexing: my_tuple[2] # providing index out of range with raise IndexError Exception.
 ------------ The index must be integer otherwise it will result in TypeError Exception.
 fetch value from nested tuple.
 t=(1,[1,2,3],'anc', (11,22,33))
@@ -981,7 +993,7 @@ all(iterable): all return false if any one element in the iterable(tuple,list, s
 For an empty iterable all returns True.
 all nonZero values are considered true in python.
 For strings all always returns true even '0' as string in True.
-In dictionary, all check keys and not values. if all keys are true then all returns True.
+In dictionary, all checks keys and not values. if all keys are true then all returns True.
 print(all((1,2,0,4)))#False
 print(all('adfjkl0'))#True
 
