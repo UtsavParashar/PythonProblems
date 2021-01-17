@@ -1038,7 +1038,7 @@ Duplicates are not allowed
 Insertion order is not preserved
 Heterogeneous elements are allowed
 Does not support indexing s[0] and slicing s[1:3]
-set() can be used to create a set and also to type cast to set.
+set() function can be used to create a set and also to type cast to set.
 Empty set cannot be used using {} rather by using set(), {} will result in empty dict.
 
 
@@ -1050,17 +1050,17 @@ s.add(10)
 s.update([10,20,40])
 s.update([10,20],(30,40),{10,20})
 
-Not that you cannot add an element(atom) using update method, you will have to use add method for that with update method it will result in type error
+Note that you cannot add an element(atom) using update method, you will have to use add method for that with update method it will result in type error
 s.update(24,[10,20],(30,40),{10,20})
 s={1,2,3}
 s.update([10,20],(30,40),{10,20})
 s.update('py')
 s # {1, 10, 2, 20, 3, 30, 40, 'p', 'y'}
 
-3. None discard(element): discard() is used to remove an element from the set if the element is present, if the element is not present then it does not give any error unlike remove method.
-
-4. None remove(element): remove() searches for an element and removes it. If the element is not present in set then it throws KeyError Exception.
+3. None remove(element): remove() searches for an element and removes it. If the element is not present in set then it throws KeyError Exception.
 s.remove(10)#KeyError: 10
+
+4. None discard(element): discard() is used to remove an element from the set if the element is present, if the element is not present then it does not give any error unlike remove method.
 
 5. element pop():pop method returns and removes arbitary element from set. We don't know which element will be removed because set is unordered.
 If we try to call pop method on empty set then TypeError exception is raised.
@@ -1224,7 +1224,7 @@ The items() method returns a view object that displays a list of dictionary's (k
 dictionary.items() 
 print(d.items())
 for k,v in d.items():
-    print(k,v, sep=' '
+    print(k,v, sep=' ')
 
 clear() - clear method can be used to delete all key-values from a dict.
 
@@ -1245,13 +1245,28 @@ update() - another dict can be appended to existing dict.
 Functions:
 =============
 
-
 Kind of Parameters of functions:
-positional: based on position
-keyword: assigning same name to args and parameter
-default: assigning default values to args 
-var-args: variable arguments, *n, results in a tuple of arguments.
-keyword var-args: variable arguments in terms of dictionaries
+def calc(a,b):
+        return a+b
+
+1. positional: based on position
+    cal(100,50)
+
+2. keyword: assigning same name to args and parameter
+    cal(b=50, a=100)
+
+3. default: assigning default values to args 
+    if we don't pass any value then default value is considered
+    def wish(msg, name='Guest'): # default arg should be placed after positional arg
+
+4. var-args: variable arguments, *n, results in a tuple of arguments.
+    def sums(*n): # var-args
+        print(sum(n)) # Here n is a tuple 
+
+    sums(10,20)
+    sums(10,20,30,40)
+
+5. keyword var-args: variable arguments in terms of dictionaries
 
 Rules:
 Positional Arguments should be followed by keyword arguments should be followed by default arguments.
@@ -1314,7 +1329,7 @@ BuiltIn/UserDefined/Library Functions:
 --------------------------------------
 Functions that we define ourselves to do certain specific task are referred as user-defined functions.
 Functions that readily come with Python are called built-in functions. If we use functions written by others in the form of library, it can be termed as library functions.
-All the other functions that we write on our own fall under user-defined functions. So, our user-defined function could be a library function to someone else.
+All the other functions that we write on our own fall under user-defined functions. So, our user-defined function could be a library function or someone else.
 
 Python Function Arguments:
 --------------------------
@@ -1394,6 +1409,9 @@ print(list(filter(lambda x:x%2!=0, l)))
 if no function is passed to filter() i.e if None is passed as function to filter method then filter function behaves as identity function and allows all True value from iterable.
 Eg: l=['a','z','u','b','i','m',0]
 print(list(filter(None,l))) #['a', 'z', 'u', 'b', 'i', 'm'] - 0 is not printed since 0==False.
+
+In filter the input is filtered to provide the output so the number of items in output is less compared to input but when in mapping the count of the input sequence should be same as that of the output.
+Filter is like apply some condition to return True or False but in map we are asking to map input to output like provide square for each input, increase sal by 20% for each input
 
 Map map(function, sequence1, sequencen): Map input to output based on some condition. Eg: Map $1000 bonus to each employees salary
 ----------------------------
@@ -1546,9 +1564,11 @@ Bride===BeautyParlor==>Heroine
 BeautyParlor(Bride):
 	return Heroine
 
+Input Function == Decorator Function == Output function with extended functionality
+
 Hence function Decorators take input as Input function and returns an output function with added features.
 
-The purpose of decorator function is to increase the functionality of existing function without changing existing function.
+The purpose of decorator function is to increase the functionality of existing function without changing/modifying   existing function.
 
 Decorators helps out code to be short and more pythonic.
 
