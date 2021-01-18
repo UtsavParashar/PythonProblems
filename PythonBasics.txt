@@ -1795,6 +1795,8 @@ Eg. We have a module(file) module.py
     Another module test.py
         import module
         In test.py if can place a condition if __name__ == __main__ that mean the code is run directly in test.py
+Because a module can be run directly like py module.py and also from other module like test.py.
+Hence module functionality can be run directly or indirectly hence using this variable __name__ we can understand that the code is run directly and not indirectly using import.
 
 =============
 Python Files:
