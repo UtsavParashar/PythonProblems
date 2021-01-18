@@ -1788,6 +1788,14 @@ Eg:
 >>> dir(example)
 ['__builtins__', '__cached__', '__doc__', '__file__', '__loader__', '__name__', '__package__', '__spec__', 'add']
 
+The special name __name__ -
+    If __name__ is equal to __main__ then the code is run directly from this program else this code is run from someother module.
+Eg. We have a module(file) module.py
+        print("This is a module)
+    Another module test.py
+        import module
+        In test.py if can place a condition if __name__ == __main__ that mean the code is run directly in test.py
+
 =============
 Python Files:
 =============
