@@ -1798,6 +1798,34 @@ Eg. We have a module(file) module.py
 Because a module can be run directly like py module.py and also from other module like test.py.
 Hence module functionality can be run directly or indirectly hence using this variable __name__ we can understand that the code is run directly and not indirectly using import.
 
+
+Working with random module:
+---------------------------
+To generate random number.
+
+1. random() - Generate float numbers between 0 and 1 where 0 and 1 are excluded.
+from random import *
+for i in range(10):
+    print (random())
+
+2. randint(startValue, endValue) - generate random integer number between two numbers
+randint(1,100) - here 1 and 100 are inclusive
+from random import *
+print(randint(1,10))
+
+3. uniform(startValue, endValue) - random float value between two numbers
+uniform(1,10) - exclusive 1 and 10
+print(uniform(1,10))
+
+4. randrange([start], stop, [step]) - start <= x < stop 
+start default value is 0
+step defalt value is 1
+generates a random number for provided range. 
+
+5. choice() - It won't provide random number but select a random object from a collection
+choice(['a','b','v','d'])
+
+
 =============
 Python Files:
 =============
@@ -1822,7 +1850,7 @@ Read and write from a file:
 with open('/Users/utsav/Technology/Languages/python/abc.txt', 'w') as f:
     print(f.write('This is a sentence which I want to write \n'))
     f.write('This is an apple sentence\n')
-    f.write('M very sad because of Jeff and McKenzies divorse\n')
+    f.write('M very sad because of Jeff and McKenzie's divorse\n')
     
 
 with open('/Users/utsav/Technology/Languages/python/abc.txt', 'r') as f:
@@ -1973,8 +2001,17 @@ for entry in randomList:
         print()
     else:
         print('Program is running well')
-print("The reciprocal of",entry,"is",r)
+        print("The reciprocal of",entry,"is",r)
 
+try:
+    risky code
+except:
+    handling code i.e if exception raised 
+else:
+    if except code is not run i.e if exception is not raised
+finally:
+    it will run everytime
+    
 Raise Exception:
 ---------------
 We can raise an exception using raise keyword.
