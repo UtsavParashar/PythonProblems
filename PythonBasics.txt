@@ -2046,6 +2046,33 @@ When we are developing a large Python program, it is a good practice to place al
 
 User-defined exception class can implement everything a normal class can do, but we generally make them simple and concise. Most implementations declare a custom base class and derive others exception classes from this base class.
 
+Logging:
+Logging levels - numbers can be used instead of logging levels
+CRITICAL - 50
+ERROR - 40
+WARN - 30
+INFO - 20
+DEBUG - 10
+NOTSET - 0
+
+import Logging
+logging.basicConfig(file='logfile.txt', level=logging.INFO) # This is the file in which logs will be added, default level is logging.WARNING which can be changes
+Eg.
+import logging
+logging.basicConfig(filename='/Users/utsav/log.txt', level=logging.INFO)
+logging.info('New Request Came')
+try:
+    x=int(input('Enter First Number'))
+    y=int(input('Enter Second Number'))
+    print(x/y)
+except ZeroDivisionError as msg:
+    print('cannot divide by zero')
+    logging.exception(msg)
+except ValueError as msg:
+    print('Enter only int values')
+    logging.exception(msg)
+logging.info('Request Completed')
+
 
 ===================
 Regular Expression:
