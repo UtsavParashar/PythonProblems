@@ -2073,6 +2073,35 @@ except ValueError as msg:
     logging.exception(msg)
 logging.info('Request Completed')
 
+Pickling and unpickling:
+==========================
+The process of write state of an object to a file is called picking and the process of reading an object from a file is called unpickeling.
+methods for pickling and unpickling
+pickling - pickel.dump(obj, file)
+unpickling - pickel.load(obj)
+
+Eg:
+import pickle
+class Emp:
+    def __init__(self,name,empNo):
+        self.name = name
+        self.empNo = empNo
+    def display(self):
+        print(self.name,"\t", self.empNo)
+
+with open('file.dat','wb') as f:
+    e = Emp('Utsav',101)
+    print("Started pickling")
+    pickle.dump(e, f)
+
+print("Pickling completed")
+with open('file.dat', 'rb') as f:
+    obj = pickle.load(f)
+    print("object after unpickling")
+    obj.display()
+
+
+
 
 ===================
 Regular Expression:
