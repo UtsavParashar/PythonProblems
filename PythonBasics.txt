@@ -2118,7 +2118,12 @@ Eg: import re
 
 pattern=re.compile('ab')
 count=0
-matcher=pattern.finditer('This is an ab example of abes')
+matcher1=pattern.finditer('This is an ab example of abes')
+for m in matcher1:
+    count += 1
+    print('start:{}, end:{}, group:{}'.format(m.start(), m.end(), m.group()))
+print('Count', count)    
+count = 0
 matcher=re.finditer('ab', 'ababbacalkjfacalfkhaab')
 for match in matcher:
     count += 1
