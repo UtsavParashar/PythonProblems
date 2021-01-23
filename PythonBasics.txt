@@ -2235,6 +2235,10 @@ import re
 a=re.split('-', '10-20-30')
 print(a)
 
+import re
+a=re.split('\.','utsav.et@gmai;.com') # . is to be assigned with \ or [.] otherwise it is considered as regex all character
+print(a)
+
 Q. Write a program which takes below parameters as input.
 The allowed characters are alphabets, numbers and #
 First character should be lower case alphabet symbol from a to k
