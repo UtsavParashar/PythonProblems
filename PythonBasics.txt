@@ -2231,6 +2231,9 @@ print(match)
 
 list split('dilimiter', 'string'): splits the string based on a dilimiter.
 ----------------------------------
+import re
+a=re.split('-', '10-20-30')
+print(a)
 
 Q. Write a program which takes below parameters as input.
 The allowed characters are alphabets, numbers and #
