@@ -2239,6 +2239,32 @@ import re
 a=re.split('\.','utsav.et@gmai;.com') # . is to be assigned with \ or [.] otherwise it is considered as regex all character
 print(a)
 
+^ and $ - check start and end of a string.
+# Check if the line starts with string Learn
+import re
+m=re.search('^Learn','Learning Python')
+if m != None:
+    print('Matches')
+else:
+    print("Doesn't match")
+
+This can also be done using match function
+import re
+m=re.match('Learn','Learning Python')
+if m != None:
+    print('Matches')
+else:
+    print("Doesn't match")
+
+## Eg check if a string ends with python
+import re
+m=re.search('python$','Learning Python',re.IGNORECASE) # Case Insensitive
+if m != None:
+    print('Matches')
+else:
+    print("Doesn't match")
+
+
 Q. Write a program which takes below parameters as input.
 The allowed characters are alphabets, numbers and #
 First character should be lower case alphabet symbol from a to k
