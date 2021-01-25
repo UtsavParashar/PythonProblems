@@ -2377,7 +2377,112 @@ if m != None:
 else:
     print('invalid')
 
+Multithreading:
+---------------
+Executing several tasks similtaneously where each task is a separate independent part of same program and each independent part is called a thread.
+threading module is used for multi threading
+current_thread().getName() is used to get the current excuting thread.
+Every python program has just one default thread i.e MainThread
+import threading
+print('Current Thread -', threading.current_thread().getName()) # Current Thread - MainThread
+
+The ways of creating thread in Python: 3 ways
+1. Creating a thread without using any class.
+2. Creating a thread by extending Thread class.
+3. Creating a thread without extending Thread class.
+
+Example of creating a thread without using any class:
+
+from threading import *
+import time
+
+def display():
+    time.sleep(0.5)
+    print('Current Thread - ', current_thread().getName())
+    
+t = Thread(target=display) # MainThread creates child thread object
+t.start() # main thread starts chile thread
+print('Current Thread2 - ', current_thread().getName()) # MainThread continues execution
+------------
+from threading import *
+def display():
+    for i in range(10):
+        print('Child')
+    
+t=Thread(target=display)
+t.start()
+for i in range(10):
+    print('Main')
+
+---------------
+Creating a thread by extending thread class.
+
+class MyThread(Thread):
+    def run(self):
+        for i in range(10):
+            print('Child Thread')
+
+t=MyThread()
+t.start()
+for i in range(10):
+    print('Parent Thread')
+--------------------
+
+Creating a thread without extending Thread class
+from threading import *
+import time
+class MyThread:
+    def display(self):
+        for i in range(10):
+            print('Child Thread')
+            
+t=Thread(target=MyThread().display)
+t.start()
+for i in range(10):
+    print('Parent Thread')
+
+How to get and set name of a thread?
+t.getName() or t.name
+t.setName()
+
+Thread with functions having multiple args
+from threading import *
+def doubles(numbers):
+    for n in numbers:
+        print('Doubles ', n*2)
+def squares(numbers):
+    for n in numbers:
+        print('Squares ', n*n)
+
+numbers=[1,2,3,4,5]
+t1=Thread(target=doubles, args=(numbers,)) # arguments to method is sent as tuple
+t2=Thread(target=squares, args=(numbers,)) # since squares has only one arg hence , in tuple creation
+t1.start()
+t2.start()
+t1.join() # main thread waiting for t1 thread to complete
+t2.join() # main thread waiting for t2 thread to complete
+print('This is main Thread - ', current_thread().getName())
+
+
+
+
+
+
+
+
+
+
+
 ===========================
+
+
+
+
+
+
+
+
+
 
 
 14 datatypes are divided into 3 categories:
