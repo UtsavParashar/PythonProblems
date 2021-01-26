@@ -2464,6 +2464,63 @@ t2.join() # main thread waiting for t2 thread to complete
 print('This is main Thread - ', current_thread().getName())
 
 
+Shallow copy - copy() - new reference pointing to new object with same content 
+Shallow copy becomes tricky for mutable nested objects.
+In this case the new object is created but for nested object it will not create a new object hence any change in nested object will reflect in both objects i.e the newly created object and the old object.
+import copy
+copy.copy() can also be used for shallow copy
+l1.copy() is same as copy.copy()
+
+Eg:
+l1=[10,20,[30,40],50]
+l2=l1.copy() ## Shallow copy
+print('l1', l1)
+print('l2', l2)
+l1[2][0]=888
+print('l1', l1)
+print('l2', l2)
+
+l1 [10, 20, [30, 40], 50]
+l2 [10, 20, [30, 40], 50]
+l1 [10, 20, [888, 40], 50]
+l2 [10, 20, [888, 40], 50]
+-----------------
+
+import copy
+l1=[10,20,[30,40],50]
+l2=copy.copy(l1) ## Shallow copy
+print('l1', l1)
+print('l2', l2)
+l1[2][0]=888
+print('l1', l1)
+print('l2', l2)
+
+l1 [10, 20, [30, 40], 50]
+l2 [10, 20, [30, 40], 50]
+l1 [10, 20, [888, 40], 50]
+l2 [10, 20, [888, 40], 50]
+---------------------
+
+Deep copy  - new reference pointing to new object even the nested objects.
+copy.deepcopy() is used for deep copy 
+Deep copy is expensive operation.
+
+Eg:
+import copy
+l1=[10,20,[30,40],50]
+l2=copy.deepcopy(l1) ## Deep copy
+print('l1', l1)
+print('l2', l2)
+l1[2][0]=888
+print('l1', l1)
+print('l2', l2)
+
+l1 [10, 20, [30, 40], 50]
+l2 [10, 20, [30, 40], 50]
+l1 [10, 20, [888, 40], 50]
+l2 [10, 20, [30, 40], 50]
+-------------------------------------
+
 
 
 
