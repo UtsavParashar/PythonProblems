@@ -2521,6 +2521,42 @@ l1 [10, 20, [888, 40], 50]
 l2 [10, 20, [30, 40], 50]
 -------------------------------------
 
+Python Database Programming:
+---------------------------
+Standard steps to communicate with Database:
+1. import the database specific module
+    import cx_Oracle # To connect to oracle database
+    import pymysql # To connect to mysql
+    import pymssql # To connect to microsoft sql
+
+2. Establish connection between python program and db
+    con=cx_Oracle.connect(database information)
+    eg: con=cx_Oracle.connect('scott/tiger@localhost')
+
+3. Create cursor object to send the query to database and store the result
+    cursor = con.cursor()
+
+4. execute our sql query
+    cursor.execute(sqlQuery) # to execute a single sql query
+    cursor.executescript(sqlQueries) # to execute a string of sql queries separated by comma
+    cursor.executemany() # to execute a parameterized query
+
+5. fetch the result
+    cursor.fetchone() # To fetch only one row
+    cursor.fetchall() # To fetch all rows
+    cursor.fetchmany(n) # To fetch n rows
+
+6. Auto commit/rollback is not present in python hence we need to commit changes after insert update
+    commit()
+    rollback()
+
+7. cursor.close()
+   con.close()
+   
+
+
+
+     
 
 
 

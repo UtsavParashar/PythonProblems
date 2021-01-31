@@ -33,6 +33,7 @@ print(Student.talk.__doc__)
 
 self: holds the current object
 -----
+Inside the class a variable is required pointing to the object i.e reference variable is self.
 self is an implicit variable.
 self is a reference variable which is pointing to current object.
 For constructor and instance method, first argument should be self.
