@@ -60,7 +60,7 @@ Constructor:
 -------------
 The name should always be __init__(self)
 Whenever we create an object the constructor of the class is called automatically.
-Th  e main objective of constructor is to initialize and declare instance variable.
+The main objective of constructor is to initialize and declare instance variable.
 For every object constructor will be executed only once.
 Constructor should have atleast one argument.
 if we do not write a constructor then python will provide default constructor.
@@ -69,12 +69,16 @@ In python, constructor overloading, method overloading is not applicable. Even i
 Difference between method and constructor
 Method: name - any
 constructor: name - __init__
-Constructor will be executed automatically whenever the object is created, Method weill be executed when it is called.
+Constructor will be executed automatically whenever the object is created, Method will be executed when it is called.
 Constructor can be executed only once per object, method can be executed any number of times.
-Constructor is useful for instantiate variable initialization but method is used for business logic.
+Constructor is useful for instance variable initialization but method is used for business logic.
 
 Types of variables: 3
 ----------------------
+Instance variable/Object level variable
+Static variable/ Class level variable
+Local variable/ Method variable
+
 Instance variables/ Object level variables: If the value of variable varies from object to -------------------------------------------object then they are known as instance variables. A separate copy will be created object to object.
 Instance variables are defined by self(or any other name).
 
@@ -113,17 +117,72 @@ s1.age=24
 print(s1.__dict__)
 
 Static variables/Class variables: variable remains common for all the objects are known as class level variables. No modifier is required. The variable which is declared inside class but outside constructor or method then it is called static variables.
-Static variable can be decalared at 3 places:
+Static variable can be decalared at below places:
 1. Outside constructor and method
 2. Inside constructor and method using className i.e className.variableName
 3. Outside class using class name
 4. In a class method using cls variable or class Name
 5. Inside static methods using class name
 
+Static variables can be accessed using below means:
+Inside the class:
+    using self - constructor and instance method
+    using cls - class method
+    using classname - any method within the class
+Outside the class:
+    using classname
+    using object reference
+
+Static variables can be modified/deleted as:
+Inside the class:
+    Using cls variable or className
+Outside the class:
+    Only using className
+
+Example
+class Test:
+    a=10
+    
+    def __init__(self):
+        print('inside constructor using className', Test.a)
+        print('inside constructor using self', self.a)
+        
+    def m1(self):
+        print('*'*20)
+        print('inside instance method using className', Test.a)
+        print('inside instance using self', self.a)
+    
+    @staticmethod
+    def m2():
+        print('*'*20)
+        print('inside static method using className', Test.a)
+    
+    @classmethod
+    def m3(cls):
+        print('*'*20)
+        print('inside class method using className', Test.a)
+        print('inside class using cls', cls.a)
+    
+t = Test()
+t.m1()
+Test.m2()
+Test.m3()
+print('*'*20)
+print('Outside class using className', Test.a)
+print('Outside class using object reference', t.a)
+
 
 local variables: The variables which are declared inside constructor or methods without self keyword are called local variables.
 
+global variable: global variable is the concept of functional programming, we can define global variable inside a class instance method using global keyword.
+Global variables can be accessed directly within an instance method of a class.
+
 Type of methods:
+Instance/Object Methods
+Class Method
+Static Method
+
+
 1. Instance/Object methods: The method in which first argument is self and in which instance variables are used is called instance methods.
 
 2. Class methods: For all class level variables and methods a class level object is created. If we want to use class related variables from a class method then the first argument of the method is cls(class)/any name can be used. Also, class level method variable name should be @classname
@@ -161,6 +220,11 @@ s2.talk()
 
 Student.getCollegeName()
 print(Student.getAverage())
+
+When to use static/instance/class mathod:
+1. if we are using atleast one instace variable then go for instance method.
+2. if we are using only static/class level variable and not instance variables then we should go for class method.
+3. if we are not using any static or instance variables then we can go for static methods, static methods are general purpose utility methods. 
 
 Nested Methods within a class: 2019.01.15
 -----------------------------------------
