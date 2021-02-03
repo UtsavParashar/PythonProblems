@@ -288,6 +288,31 @@ class Person:
 
 Person().display()
 
+
+class Human:
+    def __init__(self):
+        self.name = 'Suresh'
+        self.head = self.Head()
+        
+    def display(self):
+        print('Name ', self.name)
+        print('Head Method ', self.head.talk())
+        print('Brain Method ', self.head.brain.think())
+        
+    class Head:
+        def __init__(self):
+            self.brain = self.Brain()
+        
+        def talk(self):
+            print('Talking')
+            return "Return Talking"
+            
+        class Brain:
+            def think(self):
+                print('Thinking')
+                return "Return Thinking"
+Human().display()
+
 Nested Methods within a class: 2019.01.15
 -----------------------------------------
 class Body:
@@ -305,18 +330,19 @@ Body().m1()
 
 Garbage Collection: import gc
 -------------------
-
 Constructor __init__(self): Used to initialize an object
 Destructor __del__(self): Used for clean up activities before destroying object.
 
+Based on our requirements we can enable and disable garbage collector like during trading hours if we don't need garbage collection then we can disable garbage collector during that period and then enable in post trading hours.
+
 creation --> constructor --> use object --> destructor --> destroy object.
 
-Objects which does not have any reference all garbage collected by gc.
+Objects which does not have any reference are garbage collected by gc.
 GC has three main methods
 
-gc.isEnabled()
-gc.disable()
-gc.enable()
+gc.isEnabled() --> check if the garbage collector is enabled or not.
+gc.disable() --> disable the garbage collector.
+gc.enable() --> enable garbage collector.
 
 import gc
 
@@ -331,6 +357,8 @@ Destructors: __del__(self)
 Like we have __init__(self) to instantiate the object similarly we have a destructor which is called by gc before destroying the object.
 __del__(self) is used to cleanup activities before destroying the object.
 It is similar to finalize() is java.
+Just before destroying an object, GC always calls destructor to perform cleanup activities.
+PVM calls GC  and GC calls destructor.
 
 Eg:
 import time
@@ -386,6 +414,19 @@ Cleanup activities before destroying the object
 Cleanup activities before destroying the object
 Cleanup activities before destroying the object
 After 3 objects creation and deletion,application is closed.
+
+import time
+import gc
+class Test:
+    def __init__(self):
+        print('Inside constructor')
+    def __del__(self):
+        print('Before destruction')
+
+t1=Test()
+t1=None
+time.sleep(3)
+print('Program Ends')
 
 How can we get the number of reference of the objects?
 sys.getrefcount(objectReference) # No of references + 1 (self)
@@ -451,6 +492,7 @@ print(b1+b2)
 print(b1-b2)
 print(b1*b2)
 
+
 Magic Methods:
 +:__add__
 -:__sub__
@@ -463,14 +505,86 @@ Magic Methods:
 += : __iadd__
 -=, *=, /=. %=, //=, **= 
 
->= --> ge
-<= --> le
-<  --> lt
->  --> gt
-== --> eq
-!= --> ne
+>= --> __ge__
+<= --> __le__
+<  --> __lt__
+>  --> __gt__
+== --> __eq__
+!= --> __ne__
 
-__str__(): COPY FROM OFFICE NOTES
+__str__(): similar to toString() method of java.
+Whenever we are trying to print an object reference internally __str__ method is called in python.
+b1=Book()
+print(b1) # internally __str__ method will be called
+Eg: class Book:
+    def __init__(self, pages):
+        self.pages = pages
+        
+    def __str__(self):
+        return 'Number of pages in book are '+ str(self.pages)
+b=Book(100) 
+print(b)
+
+Can we have __add__ method which takes more than two args?
+No, add method is desiged in such a way in python that it takes two args at a time and the result is then added to the third arg.
+
+There is a hack for this is which __str__ and __add__ method can be used.
+Hack is return book object from __add__ method and then it can be printed as string in __str__ method.
+class Book:
+    def __init__(self, pages):
+        self.pages = pages
+        
+    def __add__(self, other):
+        print('add called')
+        return Book(self.pages + other.pages)
+    
+    def __mul__(self, other):
+        print('mul called')
+        return Book(self.pages * other.pages)
+        
+    def __str__(self):
+        return 'Number of pages in book are '+ str(self.pages)
+    
+b1 = Book(1)
+b2 = Book(2)
+b3 = Book(5)
+b4 = Book(10)
+print(b1+b2*b3+b4)
+
+SO, whenever we are calling + operator then __add__() method will be called.
+whenever we are printing book object reference then __str__() method will be called.
+
+Eg:
+class Student:
+    def __init__(self, name, marks):
+        self.name = name
+        self.marks = marks
+    
+    def __lt__(self, other):
+        return self.marks < other.marks
+    
+s1 = Student('Ramesh',100)
+s2 = Student('Suresh', 200)
+print(s1<s2)
+print(s1>s2)
+
+Eg with multiple classes:
+class Employee:
+    def __init__(self, name, salaryPerHour):
+        self.name = name
+        self.salaryPerHour = salaryPerHour
+        
+    def __mul__(self, other):
+        return self.salaryPerHour * other.noOfDays
+    
+class TimeSheet:
+    def __init__(self, name, noOfDays):
+        self.name = name
+        self.noOfDays = noOfDays
+e = Employee('Ramesh', 100)
+t = TimeSheet('Ramesh', 25)
+print('Salary of this month', e*t)
+
 
 
 Aggregation and Compositions: has a relationship
