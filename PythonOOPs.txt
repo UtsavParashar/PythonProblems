@@ -585,7 +585,38 @@ e = Employee('Ramesh', 100)
 t = TimeSheet('Ramesh', 25)
 print('Salary of this month', e*t)
 
+Why python does not support method or constructor overloading?
+While defining overloading we are always going to talk about arguments type but in case of python there isn't type then there is no option to differentiate the methods with same and different argument type.
+Here we can pass any type of data to the method like a method which takes one arg and you want to pass string and int to it for that we would require two methods in languages like java where method overloading is allowed but in case of python single method can do that job.
 
+public void m1(int a){}
+public void m1(String a){}
+
+In python single method can take args of two different type.
+def m1(self, a): 
+    print(a)
+m1(10)
+m1('abc')
+
+Eg: def m1(a,b):
+    print(a+b)
+m1('a','b')
+m1(10, 20)
+
+Next thing is number of arguments for overloading - this can be solved using var args *args
+def m1(*args):
+    total = 0
+    for i in args:
+        total += i
+    print(total)
+m1(10,20)
+m1(10)
+m1(10,20,30)
+m1(10,20,30,40)
+m1()
+m1(100,200)
+
+If a class consists of more than one methods/constructor with same name then only last method will be considered.
 
 Aggregation and Compositions: has a relationship
 -----------------------------
@@ -614,13 +645,32 @@ print(Student('Ramesh').name)
 ------------
 Inheritance:
 ------------
+Advantage:
+    Code reusability
+    Extend Functionality
+
+Example:
+class P:
+    def property(self):
+        print('cash+land+shares+power')
+    def marriage(self):
+        print('Katrina')
+class C(P):
+    def marriage(self):
+        super().marriage()
+        print('Deepika')
+        
+c = C()
+c.property()
+c.marriage()
+
 Type of Inheritance:
 Single Inheritance
 Multilevel Inheritance
 Hierarical Inheritance
 Multiple Inheritance
 Hybrid Inheritance
-Cyclic Inheritance - Not supported by Python and Java
+Cyclic Inheritance - Not supported by Python and Java - Eg: A(A)# A extends A or A(B) and B(A)#A extends B and B extends A
 
 Single Inheritance:
 --------------------
@@ -760,6 +810,68 @@ class A(B,C):pass
 print(A.mro())
  
 #A,B,E,C,D,F --> A -- B -- E -- C(since D is common parent of B and C) -- D --F
+
+super():
+useful in inheritance.
+to call parent class members from child class we can use super().
+It provides the advantage of code reusability.
+
+Eg:
+class Person:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    def display(self):
+        print('Name ', self.name)
+        print('Age ', self.age)
+        
+class Student(Person):
+    def __init__(self,name,age,rollno,marks):
+        super().__init__(name, age)
+        self.rollno = rollno
+        self.marks = marks
+    def display(self):
+        super().display()
+        print('RollNo ', self.rollno)
+        print('Marks ', self.marks)
+        
+class Teacher(Person):
+    def __init__(self,name,age,salary,subject):
+        super().__init__(name, age)
+        self.salary = salary
+        self.subject = subject
+    def display(self):
+        super().display()
+        print('Salary ', self.salary)
+        print('Subject ', self.subject)
+        
+s = Student('Ramesh',10,101,90)
+t = Teacher('Chandu',31,10000,'Python')
+s.display()
+print('*'*15)
+t.display()
+
+Eg:
+Natural order is calling super class of immideate parent but if we want to call method from a specific grandparent then we can follow super(childOFThatParent,self).m1()
+class A:
+    def m1(self):
+        print('A')
+class B(A):
+    def m1(self):
+        print('B')
+class C(B):
+    def m1(self):
+        print('C')
+class D(C):
+    def m1(self):
+        super(C,self).m1() # Calling m1() of B class
+
+D().m1()
+
+Super cannot be used to call parent class instance variables. We should use self only. But we can use super to call static variables from parent class.
+
+
+
 
 
 Ducktyping philosophy of python:
