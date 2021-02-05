@@ -870,10 +870,91 @@ D().m1()
 
 Super cannot be used to call parent class instance variables. We should use self only. But we can use super to call static variables from parent class.
 
+---------------------
+File Handling:
+
+Two types of files:
+1. Text files - text data like name of students, marks of students etc
+2. Binary files - images, video files, audio files etc
+
+Steps to work with files: In order read/write to a file 
+first we need to open the file:
+open('complete file name with path', 'mode like read/write/append')
+f = open('abc.txt','w')
+    Different modes of file in python for text files - 7 modes
+    Default mode is r i.e read
+        w - write
+            open a file for write operation. If the specified file is not present then create it.
+            If file already exists then it will apply override operation i.e existing data will be gone.
+
+        r - read
+            open a file for read operation. File pointer is at the beginning of the file.
+            If the specified file is not present then we will get FileNotFoundError.
+
+        a - append
+            same as w except the old data won't be gone. 
+
+        r+ - read and then write
+                the file pointer will be at the beginning.
+
+        w+ - write and then read
+                overwrite existing data
+        a+ - append and then read
+
+        x - exclusive
+                similar to write but it will work only if file is not already present, if the file is 
+                already present then it won't overrwite the data rather it will raise FileExists error.
+
+        Binary files also have same modes but with a difference as below.
+        rb, wb, ab, rb+, wb+, ab+, xb+
+
+Various properties on file object:
+f = open('abc.txt','r')
+then below properties can be applied
+variables:
+f.name
+f.mode
+f.closed
+method:
+f.readable()
+f.writable()
+
+Eg:
+f=open('abc.txt','a')
+print('File Name', f.name)
+print('File Name', f.mode)
+print('File Name', f.readable())
+print('File Name', f.writable())
+print('File Name', f.closed)
+f.close()
+print('File Name', f.closed)
+
+Writing data to the file:
+f.write(str) - to write a single string
+f.writelines(list of lines) - to write a list of lines
+
+Eg: with open('abc.txt','w') as f:
+    f.write('Utsav is a hero who is \n')
+    f.write('is\n')
+    f.write('Awesome\n')
+
+Eg:
+with open('abc.txt','w') as f:
+    f.writelines(['sunny\n','bunny\n','chinny\n','vinny\n'])
+
+Reading character data from text file:
+f.read() - to read total data from the file
+f.read(n) - to read n characters from the file
+f.readline() - to read only one line
+f.readlines() - to read all lines into a list
+
+Eg: 
+with open('abc.txt') as f:
+    print(f.read())
 
 
 
-
+---------------
 Ducktyping philosophy of python:
 
 Overloading
