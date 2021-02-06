@@ -952,6 +952,63 @@ Eg:
 with open('abc.txt') as f:
     print(f.read())
 
+Thread:
+Various ways to create thread.
+1. when using run method of Thread class
+t = Thread()
+t.start()
+
+2. when using user defined method
+t = Thread(target = display())
+t.start() 
+
+3. same as 2nd option but with method being instance method of a class
+t = Thread(target = MyThread().display())
+t.start()
+
+If the main thread has to wait for completion of child thread (t1) then use join()
+t1.join([seconds for waiting]) # Main thread will wait for the completion of t1 thread.
+
+ident:
+Each thread has an identification number associated with it which can be seen using t.ident variable.
+
+get and set thread name:
+current_thread.getName()
+current_thread.setName('TestThread')
+current_thread.name = 'TestThread'
+
+active_count() - get number of active threads in the program.
+enumerate() - provides a list with details of all active threads like threadname, identification number etc.
+isAlive() - check if a thread is alive, returns boolean.
+
+from threading import *
+import time
+def display():
+    print('current thread started ', current_thread().getName())
+    time.sleep(3)
+    print('current thread started ', current_thread().getName())
+print('Active count ', active_count())    
+t1 = Thread(target=display)
+t2 = Thread(target=display)
+t3 = Thread(target=display)
+t1.start()
+time.sleep(0.5)
+t2.start()
+time.sleep(0.2)
+t3.start()
+print('Active count ', active_count())
+time.sleep(6)
+l = enumerate()
+for t in l:
+    print('Thread name ', t.name)
+    print('Thread ident ', t.ident)
+
+
+Deamon Thread - The threads running in the background are deamon threads.
+The main purpose of the main thread is to provides support to the main threads.
+Eg:
+Movie - Deamon Thread - Producer, director, cameraman
+Main Thread - hero heroine
 
 
 ---------------
@@ -1075,25 +1132,13 @@ t2.join() #Main Thread waiting for T2 to complete
 endtime=time.time()
 print('Time Taken', endtime-begintime)
 
-join()
-
-isAlive()
-
-ident
-
-getName() or name
-
-setName() or name
-
-enumerate()
-
 Daemon Threads:
 ---------------
 Background executing threads are called Daemon Thread.
 Their purpose is to support for non-deamon threads.
 Eg. Garbage collector
 
-check if a thread is daemon or not? using isDaemon() or daemon variable
+check if a thread is daemon or not? using isDaemon() or daemon variable - both return boolean value
 print(threading.current_thread().isDaemon())
 print(threading.current_thread().daemon)
 
@@ -1107,4 +1152,8 @@ Default Nature of Thread:
 -------------------------
 Only Main thread is non-daemon.
 All remaining threads daemon nature will be inherited from parent.
+
+What is the main advatage of having non daemon thread?
+In video game once last car reached destination then roads bridges are not required.
+Therefore there isn't any need to kill daemon threads since after completion of last non-daemon thread, all the daemon thread will be killed my themselves.
     
