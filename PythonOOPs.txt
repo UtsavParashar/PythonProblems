@@ -1157,3 +1157,48 @@ What is the main advatage of having non daemon thread?
 In video game once last car reached destination then roads bridges are not required.
 Therefore there isn't any need to kill daemon threads since after completion of last non-daemon thread, all the daemon thread will be killed my themselves.
     
+Generators:
+===========
+Generator function won't take any input, it is responsible to generate a sequence of values.
+yield keyword - it is used to generate sequence using yield.
+Biggest advantage of generator is the values won't be created and stored rather at the time of necessary they will be generated and provided.
+Example:
+def fib():
+    a,b=0,1
+    while True:
+        yield a
+        a,b=b,a+b
+for n in fib():
+    if n>100:
+        break
+    print(n)
+
+Hence generators provides great memory advantage over range, list etc.
+It is most widely used in web scraping where we have to read large files.
+It also provides performance benifits:
+Eg: For generators it takes less time compared to creating same about of object in list.
+import random
+import time
+
+names = ['Ramesh','Suresh', 'Chandu', 'Maghu']
+lang = ['Python', 'java', 'kdb']
+
+def people_list(num):
+    result = list()
+    for i in range(num):
+        d = {'id':i, 'name':random.choice(names), 'lang':random.choice(lang)}
+    result.append(d)
+    return result
+
+def people_gen(num):
+    for i in range(num):
+        d = {'id':i, 'name':random.choice(names), 'lang':random.choice(lang)}
+    yield d
+    
+t1=time.process_time()
+p=people_list(1000000)
+print('List time', time.process_time() - t1)
+
+t1=time.process_time()
+p=people_gen(1000000)
+print('Gen time', time.process_time() - t1)
