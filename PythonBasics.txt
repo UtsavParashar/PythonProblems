@@ -2073,6 +2073,16 @@ except ValueError as msg:
     logging.exception(msg)
 logging.info('Request Completed')
 
+Default format of logging messages is
+WARNING:root:This is Warning message
+LogType:User:message
+This format can be changed using below keywords in basicConfig method with format 
+logging.basicConfig(format='%(asctime)s%(levelname)s:%(message)s', datefnmt='%d/%m/%Y %H:%M:%S')
+asctime for date and time
+
+In order to print logging message on console, does not pass any argument to the basicConfig method
+logging.basicCongfig()
+
 Pickling and unpickling:
 ==========================
 The process of write state of an object to a file is called picking and the process of reading an object from a file is called unpickeling.

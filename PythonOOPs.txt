@@ -1202,3 +1202,35 @@ print('List time', time.process_time() - t1)
 t1=time.process_time()
 p=people_gen(1000000)
 print('Gen time', time.process_time() - t1)
+
+
+Assertions:
+-----------
+Assetion is used for debugging purpose.
+The process of identifying and fixing the bug is called debugging.
+assertion is applicable only in dev and test env.
+
+Types of asserts statments - two
+Simple
+    assert(conditional statement) - Condition is true means everything is good till here.
+    if false then AssertionError is raised
+    Eg:
+        def m():
+            x=10
+            x+=1
+            assert(x==10) # Assertion Error
+            print(x)
+        m()
+
+Augmented: Other then just Assertion Error if we want to display some other msg then we can go for augmented version of assert.
+Eg:
+def m():
+    x=10
+    x+=1
+    assert x==10, 'Here x should be greater than 10' # Assertion Error
+    print(x)
+    
+m()
+Augmented version is always recommended because it gives extra information.
+
+py -o test.py is used in order to ignore assert statements.
