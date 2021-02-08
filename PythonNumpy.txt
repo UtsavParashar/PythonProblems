@@ -1,0 +1,41 @@
+Numpy stands for Numerical Python
+NumPy is a numerical library for python that allows for exteremely fast data generation and handling.
+It utilizes arrays which can efficiently store data(much better than a built in normal python list)
+Understanding numpy is crucial to truly mastering pandas.
+
+Numpy has:
+Numpy arrays
+Numpy indexing and selection
+Numpy operations
+
+Numpy arrays basically comes under two flavors:
+1. Vectors - One dimentional arrays
+2. matrix - 2 dimention i.e it has one row and one col in numpy. It's a list of list.
+
+Performace wise numpy arrays are far better than list
+import numpy as np
+#Creating numpy array
+l=[1,2,3]
+type(np.array(l)) # convert list to a vector
+
+Comparision Example:
+
+import time
+l=list(range(50000000))
+st = time.time()
+for i in l:
+    i*2
+print(time.time() - st)
+n=np.array(l)
+st = time.time()
+n*2
+print(time.time() - st)
+
+Output:
+7.179000616073608
+0.5665650367736816
+
+np.array(list([[1,2,3],[4,5,6],[7,8,9]]))
+
+Similar to  range in python, numpy has arange which is used to generate a sequence of numbers.
+np.arange(1,10,2)
