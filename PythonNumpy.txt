@@ -39,3 +39,17 @@ np.array(list([[1,2,3],[4,5,6],[7,8,9]]))
 
 Similar to  range in python, numpy has arange which is used to generate a sequence of numbers.
 np.arange(1,10,2)
+
+we can get an array of zeros using
+np.zeros(3) # List of zeros
+np.zeros((2,3)) # Multi dimentional list of zeros with 2 rows and 3 columns
+
+similar to zeros we haves ones function as well
+np.ones(4)
+np.ones((2,4))
+
+np.linspace() is a useful function which provides specified linearly spaced numbers between two numbers.
+Is is different from arange like if we want to 3 linealy spaced numbers between 0 and 10 we can use linspace. (Still in doubt, look at the example)
+np.linspace(0,10,3) # array([ 0.,  5., 10.])
+
+Identity Matrix: np.eye(4)
