@@ -53,3 +53,43 @@ Is is different from arange like if we want to 3 linealy spaced numbers between 
 np.linspace(0,10,3) # array([ 0.,  5., 10.])
 
 Identity Matrix: np.eye(4)
+
+Random Numbers:
+There are lots of ways to generate random numbers.
+import numpy as np
+np.random.rand(5) # Generate 5 random numbers between 0.0 and 1.0 [0.,1)
+np.random.rand(2,3)
+
+np.random.randn(5) # Standard Normal Distribution
+
+np.random.randint(1,100,10) - give me 10 random integers between 1 and 100
+
+reshape() - To reshape an existing array we can use reshape method.
+arr = np.arange(25)
+ranarr = np.random.randint(1,100,10)
+print(arr)
+print(ranarr)
+## To reshape arr to a 2d 5,5 array
+arr.reshape(5,5)
+ranarr.reshape(2,5)
+
+shape - we can get the shape field of an array using shape(), it tells if the array is 1D, 2D etc
+arr.reshape(5,5).shape # (5, 5)
+
+dtype - we can use dtype to get the type of the values in an array
+np.array([1,2.0,3,'a']).dtype # dtype('<U32')
+
+max(), min() - to get max, min values of an array
+Statistical Functions in Numpy - https://numpy.org/doc/stable/reference/routines.statistics.html
+argmax() - to get the index of the max value in the array
+
+Numpy Operations:
+arr = np.arange(10)
+print(arr + arr)
+
+Dividing by Zero - in Numpy does not raise an error but shows warning.
+
+np.sqrt(arr)
+np.max(arr)
+np.exp(arr)
+
