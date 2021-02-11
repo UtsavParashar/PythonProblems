@@ -1,0 +1,45 @@
+Python Tricks:
+
+Assertions:
+The proper use of assertions is to tell the programmer of the unreoverable errors.
+Assertions are not intended to signal expected error conditions, where the user can take corrective actions or can just try again.
+Assertions are meant to be internal self checks for your program. They work by declaring some condition as impossible in your code.
+If one of these condition doesn't hold that means there is a bug in the program.
+
+Like in below example other than using if statement and raising an exception we can go with assertion.
+def apply_discount(product, discount):
+    price = int((product['price']) * (1.0 - discount))
+    assert 0 <= price <= product['price']
+    return price
+
+shoes = {'name':'Fancy Shoes', 'price':14900}
++ive case:
+    (apply_discount(shoes, .2) / 100)
+-ive case:
+    (apply_discount(shoes, 2.0) / 100)
+
+Caveat #1 - Don't use asserts for Data Validation
+The biggest caveat with asserts in python is tht assertions can be globally disabled using -O or -OO.
+This turns any asserts statement into a null operation which simply gets compiled away and won't be executed.
+
+Caveat #2 - Assert that never fails
+Non-Empty tuple is always True in Python.
+>>> assert (1==2, 'This should fail')
+<stdin>:1: SyntaxWarning: assertion is always true, perhaps remove parentheses?
+It will give a warning but never fail.
+
+Key Takeaways:
+Python's assert statement is a debugging aid that tests a condition as an internal self check in your program.
+Asserts should only be used to help developers identify bugs. They are not a mechanism for handling runtime errors.
+Asserts can be globally disabled with an interpreter setting.
+
+Commas are very important in python:
+Its always a good practice to keep list, set, dict and tuple multiline.
+In case you forgot to add a comma between two items of a list, python will merge it.
+>>> ['ab','ms','ch' 'ra'] ## ['ab', 'ms', 'chra']
+This 'string literal concatenation' is an intentional and documented behaviour.
+
+Solution: It's all about the habits
+    Always place items of list multiline.
+    place a comma after each item, even the last item.
+    
