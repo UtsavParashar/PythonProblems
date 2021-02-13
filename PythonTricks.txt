@@ -117,3 +117,40 @@ The class based implementation and the generator based implementation are essent
 A downside of the @contextmanager based implementation might be that it requires some understanding of advanced python concepts like decorator and generator.
 
 Writing pretty APIs with Context Managers:
+Create a timer class with context manager using time().
+import time
+class MeasureTime: 
+        
+    def __enter__(self):
+        self.start = time.time()
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end = time.time()
+        print(self.end - self.start)
+
+with MeasureTime():
+    for i in range(10000000):
+        pass
+
+Same example using contextlib2 and contextmanager decorator
+from contextlib2 import contextmanager
+
+@contextmanager
+def time_taken():
+    try:
+        st = time.time()
+        yield st
+    finally:
+        print(time.time()  - st)
+
+with time_taken():
+    for i in range(100000000):
+        pass
+
+Takeaways:
+The with statement simplifies exception handling by encapsulating standard use of try/finally statements in a so called context managers.
+Most commonly it is used to manage the safe acquisition and release of system resources. Resources are acquired by the with statement and released automatically when execution leaves the with context.
+Using with effectively can help you avoid resource leaks and make your code easier to read.
+
+Underscores, Dunders and More.
+-----------------------------
