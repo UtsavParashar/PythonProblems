@@ -153,4 +153,13 @@ Most commonly it is used to manage the safe acquisition and release of system re
 Using with effectively can help you avoid resource leaks and make your code easier to read.
 
 Underscores, Dunders and More.
------------------------------
+------------------------------
+Single and Double underscores have a meaning in python variables and method. Some of that meaning is merely by convention and intended as a hint to the programmer and some of it is enforced by python interpreter.
+There could be 5 types of variables or methods with underscores:
+1. Single leading underscore - _var
+2. Single trailing underscore - var_
+3. Double leading underscores - __var
+4. Double leading and trailing underscores - __var__
+5. Single underscore - _
+
+1. Single leading underscore - It has a meaning by convention, it is a hint to the programmer that the variable in private i.e it is used for internal purpose only.
