@@ -162,4 +162,9 @@ There could be 5 types of variables or methods with underscores:
 4. Double leading and trailing underscores - __var__
 5. Single underscore - _
 
-1. Single leading underscore - It has a meaning by convention, it is a hint to the programmer that the variable in private i.e it is used for internal purpose only.
+1. Single leading underscore - It has a meaning by convention, it is a hint to the programmer that the variable is private i.e it is used for internal purpose only.
+The underscore prefix is meant as a hint to tell other programmers that a variable or method starting with a single underscore is intended for internal use. This convetion is defined in pep8 - https://pep8.org/
+This convention is not enforced by python interpreter. Python does not have strong distinctions between private and public variables like Java does.
+class Test:
+    def __init__( )
+
