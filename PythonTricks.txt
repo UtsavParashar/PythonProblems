@@ -166,5 +166,78 @@ There could be 5 types of variables or methods with underscores:
 The underscore prefix is meant as a hint to tell other programmers that a variable or method starting with a single underscore is intended for internal use. This convetion is defined in pep8 - https://pep8.org/
 This convention is not enforced by python interpreter. Python does not have strong distinctions between private and public variables like Java does.
 class Test:
-    def __init__( )
+    def __init__(self)
+        self.foo = 11
+        self._bar = 23
+
+What's going to happen if you instantiate this class and try to access foo and _bar attributes defined in the constructor.
+t = Test()
+t.foo # 11
+t._bar # 23
+There was no difference.
+
+But if you have a function named _func in a module and you imported that module as from module import * in that case _func will throw error.
+“def external_func():
+    return 23
+
+“Now, if you use a wildcard import to import all the names from the module, Python will not import names with a leading underscore (unless the module defines an __all__ list that overrides this behavior):”
+
+def _internal_func():
+    return 42”
+“>>> _internal_func()
+NameError: "name '_internal_func' is not defined”
+
+But importing the module as import module with not throw any error.
+“>>> import my_module
+>>> my_module.external_func()
+23
+>>> my_module._internal_func()
+42”
+
+Single Trailing Underscore:
+---------------------------
+Sometimes the most fitting name is already taken by the python keyword, in order to use same variable name as class_.
+
+Double Leading Underscore:
+--------------------------
+“A double underscore prefix causes the Python interpreter to rewrite the attribute name in order to avoid naming conflicts in subclasses.”
+“This is also called name mangling—the interpreter changes the name of the variable in a way that makes it harder to create collisions when the class is extended later.”
+class Test:
+    def __init__(self):
+        self.foo = 11
+        self._bar = 12
+        self.__baz = 13
+        
+t = Test()
+dir(t)
+['_Test__baz','_bar', 'foo']
+self.__baz is converted to _Test__baz
+
+NameMangling
+“If you look closely, you’ll see there’s an attribute called _Test__baz on this object. This is the name mangling that the Python interpreter applies. It does this to protect the variable from getting overridden in subclasses”
+
+Now let's extend the Test class
+    def __init__(self):
+        super().__init__()
+        self.foo = 'overriden'
+        self._bar = 'overriden'
+        self.__baz = 'overriden'
+t2 = ETest()
+print (t.foo, t2.foo) # 11 overriden
+print (t._bar, t2._bar) # 11 overriden
+print (t.__baz, t2.__baz) # AttributeError: 'Test' object has no attribute '__baz'
+
+“As you can see, __baz got turned into _ExtendedTest__baz to prevent accidental modification. But the original _Test__baz is also still around:”
+print (t._Test__baz, t2._ETest__baz) # 13 overriden
+
+We can always use getter method to get the dunders(variables/methods) with double __
+class ManglingTest:
+    def __init__(self):
+        self.__mangled = 'hello'
+    def get_mangled(self):
+        return self.__mangled
+ManglingTest().get_mangled()
+
+
+“Does name mangling also apply to method names? It sure does! Name mangling affects all names that start with two underscore characters (“dunders”) in a class context:”
 
