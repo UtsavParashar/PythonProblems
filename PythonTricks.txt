@@ -240,4 +240,56 @@ ManglingTest().get_mangled()
 
 
 “Does name mangling also apply to method names? It sure does! Name mangling affects all names that start with two underscore characters (“dunders”) in a class context:”
+“For example, you’d pronounce __baz as “dunder baz.” Likewise, __init__ would be pronounced as “dunder init,” even though one might think it should be “dunder init dunder.”
+
+Double Leading and Trailing Underscores:
+----------------------------------------
+“Perhaps surprisingly, name mangling is not applied if a name starts and ends with double underscores. Variables surrounded by a double underscore prefix and postfix are left unscathed by the Python interpreter:”
+“However, names that have both leading and trailing double underscores are reserved for special use in the language. This rule covers things like __init__ for object constructors, or __call__ to make objects callable.
+
+These dunder methods are often referred to as magic methods—but many people in the Python community, including myself, don’t like that word. It implies that the use of dunder methods is discouraged, which is entirely not the case. They’re a core feature in Python and should be used as needed. There’s nothing “magical” or arcane about them.
+
+However, as far as naming conventions go, it’s best to stay away from using names that start and end with double underscores in your own programs to avoid collisions with future changes to the Python language.”
+
+Single Underscore:
+------------------
+“Per convention, a single stand-alone underscore is sometimes used as a name to indicate that a variable is temporary or ”
+“For example, in the following loop we don’t need access to the running index and we can use “_” to indicate that it is just a temporary value:”
+for _ in range(10):
+    print('variable')
+
+“You can also use single underscores in unpacking expressions as a “don’t care” variable to ignore particular values. Again, this meaning is per convention only and it doesn’t trigger any special behaviors in the Python parser. The single underscore is simply a valid variable name that’s sometimes used for this purpose.”
+
+car = ('red','benz',12,'4 wheel')
+color,_,milage,_ = car # If interested only in color and milage
+print(color, milage) # red, milage
+print(_) # '4 wheel'
+
+“Besides its use as a temporary variable, “_” is a special variable in most Python REPLs that represents the result of the last expression evaluated by the interpreter.
+
+This is handy if you’re working in an interpreter session and you’d like to access the result of a previous calculation:”
+>>> 20+3
+23
+>>> _
+23
+>>> print(_)
+23
+
+“It’s also handy if you’re constructing objects on the fly and want to interact with them without assigning them a name first:”
+“>>> list()
+[]
+>>> _.append(1)
+>>> _.append(2)
+>>> _.append(3)
+>>> _
+[1, 2, 3]”
+
+Strings in pythons:
+format method used while printing is old, f string is the new norm.
+
+f' strings :
+PEP 498 introduced a new string formatting mechanism known as Literal String Interpolation or more commonly as F-strings (because of the leading f character preceding the string literal). The idea behind f-strings is to make string interpolation simpler. 
+To create an f-string, prefix the string with the letter “ f ”. The string itself can be formatted in much the same way that you would with str.format(). F-strings provide a concise and convenient way to embed python expressions inside string literals for formatting. 
+  
+
 
