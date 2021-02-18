@@ -1,3 +1,42 @@
+Pandas: Panel Data
+-------
+
+Series: Series are similar to Numpy arrays, except that we can give them a named or datetime index, instead of just a numerical index.
+Series can hold heterogeneous data.
+
+Series had two main object - data and index.
+We can create series with either list, numpy array or a dict.
+Eg: 
+import numpy as np
+import pandas as pd
+
+labels = ['a','b','c']
+l = list([10, 200, 30])
+npa = np.arange(10,31,10)
+d = {'a':10, 'b':20, 'c':300}
+print(pd.Series(data = l, index = labels))
+print('*'*20)
+print(pd.Series(npa,labels))
+print('*'*20)
+print(pd.Series(d))
+
+DataFrame - It can be considered as a combination of series as we have table as the combination of column in kdb and each column is a dict of key(columnName) and value(columnValues)
+DataFrame has 3 important objects - data, index and columnsNames
+
+I consider pandas similar to columnar database table.
+
+import numpy as np
+import pandas as pd
+pd.DataFrame(np.arange(1,17).reshape(4,4), ['a','b','c','d'], ['c1','c2','c3','c4'])
+
+How can you tell that DataFrame is a combination of series?
+type(df['c1']) # pandas.core.series.Series
+
+
+
+
+
+
 Pandas
 ## Merging Joining & Concatenation
 # Concatination is similar to uj
