@@ -93,3 +93,38 @@ np.sqrt(arr)
 np.max(arr)
 np.exp(arr)
 
+Broadcasting:
+Broadcasting can be done in numpy array but not in list.
+Before that what is broadcasting, look at the example below and you will understand.
+a = np.arange(10)
+a[:5] = 100
+a # array([100, 100, 100, 100, 100,   5,   6,   7,   8,   9])
+
+First 5 elements are assigned value 100, this is broadcasting assigning more than one elements with a value in one go.
+This could not be done with list.
+l = list(range(10))
+l[:5] = 100 ## TypeError: can only assign an iterable
+
+In numpy array also if you want to do a shallow copy, you will have to use copy method otherwise '=' operator will repoint the new reference to same object.
+
+you can get the values from the matrix or 2D array using a[row,col]. This is also helpful if we want to get a matrix output a[1:,:1]
+a= np.arange(20).reshape(4,5)
+a[1:,:2]
+Out:
+array([[ 5,  6],
+       [10, 11],
+       [15, 16]])
+
+## Conditional Selection
+If we want to get value of an array based on conditional statement then we can go for conditional selection.
+## Conditional Selection
+a = np.arange(1,11)
+boolean_array = a > 4
+a[boolean_array] ## array([ 5,  6,  7,  8,  9, 10])
+
+Practically used conditional selection:
+a = np.arange(1,11)
+a[a>4] ## array([ 5,  6,  7,  8,  9, 10])
+
+
+
