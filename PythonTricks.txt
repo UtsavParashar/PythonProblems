@@ -290,6 +290,56 @@ format method used while printing is old, f string is the new norm.
 f' strings :
 PEP 498 introduced a new string formatting mechanism known as Literal String Interpolation or more commonly as F-strings (because of the leading f character preceding the string literal). The idea behind f-strings is to make string interpolation simpler. 
 To create an f-string, prefix the string with the letter “ f ”. The string itself can be formatted in much the same way that you would with str.format(). F-strings provide a concise and convenient way to embed python expressions inside string literals for formatting. 
+
+It is better, more convinient and faster then format.
+Eg: name = 'Utsav'
+age = 31
+print('My name is {}, and my age is {}'.format(name, age))
+print(f'My name is {name}, and my age is {age}')
+
+Expressions can be used directly with f string
+import datetime
+today = datetime.datetime.today()
+print(f"{today: %B %d, %Y}")
+
+Backslash cannot be used directly in a format string
+print(f'newline {"\n"}') # SyntaxError: f-string expression part cannot include a backslash
+solution:
+newl = '\n'
+print(f'newline, {newl}and we have a new line')
+
+Inline arithmatic can be done with formatted String Literal.
+a = 10
+b = 15
+print(f'Ten plus five is {a+b} and not {2*(a+b)}')
+
+Template String - String with less capabilities but more SECURE.
+It can be used in case when you have a user supplied string.
+Eg:
+from string import Template
+n = 'Utsav'
+t = Template('Hey, $name')
+t.substitute(name = n)
+
+Eg. When a malacious user can get your secret key is you are using formatted string
+SECRET = 'this_is_a_secret_key'
+class Error:
+    def __init__(self):
+        pass
+err = Error()
+user_input = '{anyErrorObjRef.__init__.__globals__[SECRET]}'
+
+# Now any user can use your formatted string user_input and get your secret from it
+print(user_input.format(anyErrorObjRef=err))
+
+# Same example with Template String
+user_input = '$anyErrorObjRef.__init__.__globals__[SECRET]'
+Template(user_input).substitute(anyErrorObjRef = err)
+
+Hence user cannot get your secret string using Template string.
+
+Which String Formatting should you use?
+Template String for user input string else always Formated String literal(3.6+) else format string. 
   
 
 
