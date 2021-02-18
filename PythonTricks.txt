@@ -341,5 +341,40 @@ Hence user cannot get your secret string using Template string.
 Which String Formatting should you use?
 Template String for user input string else always Formated String literal(3.6+) else format string. 
   
+Functions:
+==========
+First class object in python.
 
+They can be returned from another function:
+def f():
+    return 100
+def nf():
+    return f
+nf()()
 
+They can be passed as arguments to other functions
+def f():
+    print(100)
+def nf(g):
+    g()
+nf(f)
+
+They can be stored in a data structure.
+def f(a,b):
+    print(a+b)
+def g(a,b):
+    print(a*b)
+
+l = [f,g]
+print(l[0](10,20))
+print(l[1](10,20))
+
+They can be assigned to a variable
+def f(a,b):
+    print(a+b)
+def g(a,b):
+    print(a*b)
+add = f
+prd = g
+print(add(10,20))
+print(prd(10,20))
