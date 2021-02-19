@@ -37,6 +37,7 @@ type(df['c1']) # pandas.core.series.Series
 
 
 
+
 Pandas
 ## Merging Joining & Concatenation
 # Concatination is similar to uj

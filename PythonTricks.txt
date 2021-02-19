@@ -378,3 +378,117 @@ add = f
 prd = g
 print(add(10,20))
 print(prd(10,20))
+
+Python attaches a string identifier to every function at creation time for debugging purposes. You can access this internal identifier with the __name__ attribute.
+Functions are object which are pointed by a reference which is the name of the function.
+You can also assign another reference variable to same function object.
+bark = yell
+print(id(yell), id(bark))
+print(yell.__name__, bark.__name__)
+del yell
+print(id(bark), bark.__name__)
+
+Functions can be passed as arguments to other functions. Functions that can accept other functions as arguments are also called higher-order functions. They are a necessity for the functional programming style.
+list(map(bark, ['hey','hello','hi']))
+
+Inner functions which has access to the variables of outer function are called lexical scoping and when the outer function returns the inner function which can be assigned to a reference variable outside outer function this is called lexical closure.
+(Lexical scoping is not supported by q but lexical closure is supported)
+Eg:
+def outer(text):
+    def inner():
+        return text.upper() ## Lexical Scoping i.e outer function variable can be used inside inner function
+    return inner # Lexical Closure i.e inner function is returned from outer funtion
+oi = outer('hello') 
+oi()
+In KDB : Lexical Closure is supported by lexical scoping is not supported.
+q)o:{[t] i:{[t] :upper t}; :i}
+
+While all functions are objects in Python, the reverse isn’t true. Objects aren’t functions. But they can be made callable, which allows you to treat them like functions in many cases.
+
+If an object is callable it means you can use the round parentheses function call syntax on it and even pass in function call arguments. This is all powered by the __call__ dunder method. Here’s an example of class defining a callable object:
+
+class Adder:
+    def __init__(self, n):
+         self.n = n
+
+    def __call__(self, x):
+        return self.n + x
+
+>>> plus_3 = Adder(3)
+>>> plus_3(4)
+7
+
+callable(object):
+------------------
+A callable is something that can be called like function, method etc.
+The built in callable function returns True if the object passed appears to be callable otherwise false.
+def geek():
+    return 5
+num = 5*5
+callable(geek) # True
+callable(num) # False
+
+The built in callable() method checks if the argument is either of the two:
+An instance of a class with __call__ method.
+An instance has a method which is callable.
+
+class Geek:
+    def __call__(self):
+        print('Hello')
+        
+callable(Geek) #True
+geekObject = Geek()
+callable(geekObject) # True
+geekObject() # Hello
+
+class Geek:
+    def testCallable(self):
+        print('Callable')
+callable(Geek) # True
+geekObject = Geek()
+callable(geekObject) # False, because it does not have __call__ method
+
+In fact, any object which implements the special method __call__() is termed callable. So, in the most basic sense, a decorator is a callable that returns a callable.
+Basically, a decorator takes in a function, adds some functionality and returns it. 
+
+Behind the scenes, “calling” an object instance as a function attempts to execute the object’s __call__ method.
+
+Of course, not all objects will be callable. That’s why there’s a built-in callable function to check whether an object appears to be callable or not:
+
+>>> callable(plus_3)
+True
+>>> callable(yell)
+True
+>>> callable('hello')
+False
+
+“Objects can be made callable. In many cases this allows you to treat them like functions.”
+
+Lambda:
+-------
+Lambda are anonymous functions which are shorform of writing small anonymous functions.
+normal function is defined using def keyword, lambda are defined using lambda keyword.
+They are very handy when we have to use function objects.
+
+(lambda x,y:print(x+y))(10,20)
+
+Eg: To sort a list of tuples based on the second values in the tuples
+loft = [(3,'b'),(2,'d'),(1,'e'),(4,'a')]
+sorted(loft, key=lambda x:x[1]) # [(4, 'a'), (3, 'b'), (2, 'd'), (1, 'e')]
+
+loft = [(3,'b',30),(2,'d',20),(1,'e',10),(4,'c',40)]
+## To get sorted output based on first item 
+print(sorted(loft, key=lambda x:x[1]))
+## To get reverse of sorted output based on first item
+for r in reversed(sorted(loft, key=lambda x:x[1])):
+    print(r)
+
+sort the numbers based on their squares:
+sorted(range(-5,6), key= lambda x:x*x) # [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5]
+
+Before writing a lambda - “Always ask yourself: Would using a regular (named) function or a list comprehension offer more clarity?”
+
+
+
+
+

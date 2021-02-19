@@ -1441,9 +1441,10 @@ print(list(map(lambda x:2*x if x<=1500 else 3*x, l)))
 
 Map with more than one sequence: map(lambda,list1, list2)
 --------------------------------
-Eg: l1=[1,2,3,4]
+Eg: 
+l1=[1,2,3,4]
 l2=[10,20,30,40]
-print(list(map(lambda x,y:x+y, l1,l2)))
+print(list(map(lambda x,y:x+y, l1,l2))) # [11, 22, 33, 44]
 
 reduce(function, iterable): 
 ---------------------------
