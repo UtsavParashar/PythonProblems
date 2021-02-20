@@ -1310,6 +1310,20 @@ Although optional, documentation is a good programming practice. Unless you can 
 In the above example, we have a docstring immediately below the function header. We generally use triple quotes so that docstring can extend up to multiple lines. This string is available to us as __doc__ attribute of the function.
 Eg: print(function_name.__doc__)
 
+``` - Fenced Code blocks - It is used commonly in google code and other places
+-------------------------
+Inside the doc string we can use it to enclose the code snippet.
+
+def fn():
+    """
+    ```cmd
+        with getData(uat) as gd:
+            df = gd()
+    ```
+    """
+    print(100)
+
+
 The return statement:
 --------------------
 The return statement is used to exit a function and go back to the place from where it was called.

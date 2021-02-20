@@ -486,9 +486,298 @@ for r in reversed(sorted(loft, key=lambda x:x[1])):
 sort the numbers based on their squares:
 sorted(range(-5,6), key= lambda x:x*x) # [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5]
 
+get the name of the person from a dict with max age
+d = {'Ramesh': 35, 'Suresh':25, 'Chandu':31}
+max(d, key=lambda x:d[x])
+
 Before writing a lambda - “Always ask yourself: Would using a regular (named) function or a list comprehension offer more clarity?”
 
+Decorators:
+If we want to provide an additional feature to an already existing function[s] then you can opt for decorators.
+decorators are higher order funcs which takes another function as input and return that function with additional ability.
+Input and output for decorator are callable.
+
+Real world example - If your manager comes on Monday and asks you to modify all the 30 functions of a report with additional logging facility then you can write a decorator and annotate all those 30 funtions with the decorator name and you are done. Other wise you will have to modify all 30 functions separately.
+
+If you annotate the function with decorator then the functions loses its initial capability, in that case you will have to find hacks.
+Other option to use a decorator is to call the decorator with existing function and assign it to another function.
+g = func_decor(greet)
+In this case you have new function g with the added feature and existing function greet is intact.
+
+Applying Decorator to multiple functions:
+-----------------------------------------
+Eg: Write a decorator which coverts the output to uppercase for 2 input functions.
+def decor_upper(func):
+    def wrapper():
+        orig_func = func()
+        modified_ver = func().upper() ## Original function is called here
+        return modified_ver
+    return wrapper
+
+@decor_upper
+def greet():
+    return 'hello'
+@decor_upper
+def abuse():
+    return 'bastard'
+
+print(greet())
+print(abuse())
+
+Applying Multiple Decorators to a function:
+--------------------------------------------
+We can apply multiple decorators to a function in that case it will follow bottor up approach i.e the decorator placed at the bottom will be applied first and the decorator placed the top will be applied last.
+
+Eg: Apply strong and emphasis tags of html on the existing function value.
+def strong(func):
+    def wrapper():
+        return '<strong>' + func() + '</strong>'
+    return wrapper
+def emphasis(func):
+    def wrapper():
+        return '<em>' + func() + '</em>'
+    return wrapper
+
+@strong
+@emphasis
+def greet():
+    return 'hello'
+
+greet()
+
+It is equivalent to 
+decorated_greet = strong(emphasis(greet))
+
+“This also means that deep levels of decorator stacking will eventually have an effect on performance because they keep adding nested function calls. In practice, this usually won’t be a problem, but it’s something to keep in mind if you’re working on performance-intensive code that frequently uses decoration.”
 
 
+Decorator function that accepts arguments:
+------------------------------------------
+Decorators make extensive use of closures.
+Closure is when the inner function is returned from a function and the inner function is assigned to a variables.
+So that by executing the variable we can get the output of inner function even after execution of functions is called closure.
+
+def trace(func):
+    def wrapper(*args, **kwargs):
+        print(f'TRACE: calling {func.__name__}() '
+              f'with {args}, {kwargs}')
+        original_result = func(*args, **kwargs)
+        print(f'TRACE: {func.__name__}() '
+              f'returned {original_result!r}')
+        return original_result
+    return wrapper
+
+@trace
+def say(name, line):
+    return f'{name}: {line}'
+
+say('Ramesh', 'Hello Duniya')
+
+How to write debuggable Decorators:
+-----------------------------------
+Whenever we write a decorater for a function then the identity and attributes of the original function are lost. Hence it becomes very difficult to debug the code.
+
+def uppercase(func):
+    def wrapper():
+        return func().upper()
+    return wrapper
+
+@uppercase
+def greet():
+    """This is an awesome greet function"""
+    return 'hello duniya'
+
+print(greet.__name__) ## wrapper
+print(greet.__doc__) ## This is a wrapper
+
+We can maintain the name and attributes of original function here using @functool.wraps.
+This helps a lot during debugging and is very common in google code.
+
+import functools
+def uppercase(func):
+    """This is upperclass decorator"""
+    @functools.wraps(func)
+    def wrapper():
+        """This is a wrapper"""
+        return func().upper()
+    return wrapper
+
+@uppercase
+def greet():
+    """This is an awesome greet function"""
+    return 'hello duniya'
+
+print(greet.__name__) # greet
+print(greet.__doc__) # This is an awesome greet function
+
+Key Takeaways of Decorator
+==========================
+* Decorators define reusable building blocks you can apply to a callable to modify its behavior without permanently modifying the callable itself.
+* The @ syntax is just a shorthand for calling the decorator on an input function. Multiple decorators on a single function are applied bottom to top (decorator stacking).
+* As a debugging best practice, use the functools.wraps helper in your own decorators to carry over metadata from the undecorated callable to the decorated one.
+* Just like any other tool in the software development toolbox, decorators are not a cure-all and they should not be overused. It’s important to balance the need to “get stuff done” with the goal of “not getting tangled up in a horrible, unmaintainable mess of a code base.
+
+*args and **kwargs:
+===================
+What are *args and **kwargs parameters used for? They allow a function to accept optional arguments, so you can create flexible APIs in your modules and classes.
+def foo(required,*args,**kwargs):
+    print(required)
+    if args:
+        print(args)
+    if kwargs:
+        print(kwargs)
+
+foo('hello')
+foo ('hello',1,2,3,4,key1='Val1', key2='val2')
+
+The above function requires at least one argument called “required,” but it can accept extra positional and keyword arguments as well.
+If we call the function with additional arguments, args will collect extra positional arguments as a tuple because the parameter name has a * prefix.
+Likewise, kwargs will collect extra keyword arguments as a dictionary because the parameter name has a ** prefix.
+
+Forwarding Optional or keyword arguments:
+-----------------------------------------
+It's possible to pass optinal and keyword parameters i.e * and ** from one function to another.
+This also gives you an opportunity to modify the arguments before you pass them along.
+
+def bar(required, *args, **kwargs):
+    print(required)
+    if args:
+        print(args)
+    if kwargs:
+        print(kwargs)
+
+def foo(required, *args, **kwargs):
+    kwargs['name'] = 'Alice'
+    new_args = args + ('ramesh',)
+    bar(required, *new_args, **kwargs)
+    
+foo('Required','suresh','chandu',age='23', job='engg')
+
+This technique can be useful for subclassing and writing wrapper functions. For example, you can use it to extend the behavior of a parent class without having to replicate the full signature of its constructor in the child class.
+This can be quite convenient if you’re working with an API that might change outside of your control:
+
+class Car:
+    def __init__(self, color, milage):
+        self.color = color
+        self.milage = milage
+class AlwaysWhiteCar:
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.color = 'White'
+        
+AlwaysWhiteCar('Green', 12).color  
+
+The AlwaysBlueCar constructor simply passes on all arguments to its parent class and then overrides an internal attribute. This means if the parent class constructor changes, there’s a good chance that AlwaysBlueCar would still function as intended.
+
+The downside here is that the AlwaysBlueCar constructor now has a rather unhelpful signature—we don’t know what arguments it expects without looking up the parent class.
+
+Typically you wouldn’t use this technique with your own class hierarchies. The more likely scenario would be that you’ll want to modify or override behavior in some external class which you don’t control.
+
+One more scenario where this technique is potentially helpful is writing wrapper functions such as decorators. There you typically also want to accept arbitrary arguments to be passed through to the wrapped function.
+
+And, if we can do it without having to copy and paste the original function’s signature, that might be more maintainable:
+import functools
+def trace(f):
+    functools.wraps(f)
+    def decorated_function(*args, **kwargs):
+        print(f, args, kwargs)
+        result = f(*args, **kwargs)
+        print('result -', result)
+        return result
+    return decorated_function
+
+@trace
+def greet(greeting, name):
+    return f'Hello {name}, {greeting}'
+
+greet('How are you?', 'Ramesh')
+
+Output -
+<function greet at 0x112c0fd90> ('How are you?', 'Ramesh') {}
+result - Hello Ramesh, How are you?
+'Hello Ramesh, How are you?'
+
+You can find same pattern in google finance api - https://github.com/google/tf-quant-finance/blob/13336f99bd1cab56f783f38d320dddf3da00e7cc/tf_quant_finance/datetime/holiday_calendar_test.py
+def test_both_impls(test_fn):
+  # Decorator to run the test with both BoundedHolidayCalendar and
+  # UnboundedHolidayCalendar.
+  # Create the calendar as `self.impl(args)`.
+  def create_unbounded_calendar(**kwargs):
+    kwargs.pop("start_year", None)
+    kwargs.pop("end_year", None)
+    return unbounded_holiday_calendar.UnboundedHolidayCalendar(**kwargs)
+
+  @functools.wraps(test_fn)
+  def wrapped(*args, **kwargs):
+    self = args[0]
+    with self.subTest("Bounded"):
+      self.impl = bounded_holiday_calendar.BoundedHolidayCalendar
+      test_fn(*args, **kwargs)
+    with self.subTest("Unbounded"):
+      self.impl = create_unbounded_calendar
+      test_fn(*args, **kwargs)
+  return wrapped
 
 
+With techniques like this one, it’s sometimes difficult to balance the idea of making your code explicit enough and yet adhere to the Don’t Repeat Yourself (DRY) principle. This will always be a tough choice to make. If you can get a second opinion from a colleague, I’d encourage you to ask for one.
+
+Key Takeaways from *args and **kwargs
+======================================
+*args and **kwargs let you write functions with a variable number of arguments in Python.
+*args collects extra positional arguments as a tuple. **kwargs collects the extra keyword arguments as a dictionary.
+The actual syntax is * and **. Calling them args and kwargs is just a convention (and one you should stick to).
+
+``` - Fenced Code blocks
+Inside the doc string we can use it to enclose the code snippet.
+
+def fn():
+    """
+    ```cmd
+        with getData(uat) as gd:
+            df = gd()
+    ```
+    """
+    print(100)
+
+Function Argument Unpacking:
+----------------------------
+Sometimes you function takes more than one argument and you need to pass a sequence be it list, tuple, generator or a dict with those many items as args of function to the function.
+In that case function argument unpacking comes in handy
+Eg:
+def unpack(a,b,c):
+    print(f'<{a},{b},{c}>')
+unpack(1,0,1)
+
+What if we need to pass a tuple(1,0,1) or a list [1,0,1] or a generator of three elements to the function.
+In that case function argument unpack variable * comes in handy, it will unpack the sequence to seperate elements and pass them to the function.
+It is similar to the unlist operation in kdb which can be performed using raze in kdb.
+
+Eg: print((1,2,3)) ## (1, 2, 3)
+print(*(1,2,3)) ## 1 2 3
+
+coming back to upack function where we need to pass a list [1,0,1]
+def unpack(a,b,c):
+    print(f'<{a},{b},{c}>')
+unpack(*[1,0,1])
+
+passing generator:
+unpack(*(x*x for x in range(3))) # <0,1,4>
+
+What if we have a dict {'x':1, 'y':0, 'z':1}? Nw, we go with ** 
+def unpack(a,b,c):
+    print(f'<{a},{b},{c}>')
+unpack(**{'a':1, 'b':0, 'c':1}) # <1,0,1>
+Here, keys of dict are matching with args of function hence values are passed. If keys of dict would not match with func args then it would result in TypeError: unpack() got an unexpected keyword argument 'x'.
+
+If we pass dict with *, then keys are passed as args of the function:
+unpack(*{'x':1, 'y':0, 'z':1}) # <x,y,z>
+
+Key Takeaways from function unpacking
+=====================================
+1. The * and ** operators can be used to “unpack” function arguments from sequences and dictionaries.
+2. Using argument unpacking effectively can help you write more flexible interfaces for your modules and functions.
+
+Return None statements from function:
+======================================
+If a function doesn’t specify a return value, it returns None. Whether to explicitly return None is a stylistic decision.
+This is a core Python feature but your code might communicate its intent more clearly with an explicit return None statement.
