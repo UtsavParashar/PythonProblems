@@ -23,7 +23,9 @@ print(pd.Series(d))
 DataFrame - It can be considered as a combination of series as we have table as the combination of column in kdb and each column is a dict of key(columnName) and value(columnValues)
 DataFrame has 3 important objects - data, index and columnsNames
 
-I consider pandas similar to columnar database table.
+I consider pandas similar to columnar database table like kdb.
+Here each dataframe is a collection of series similar to table being collection of columns in kdb+.
+
 
 import numpy as np
 import pandas as pd
@@ -31,6 +33,69 @@ pd.DataFrame(np.arange(1,17).reshape(4,4), ['a','b','c','d'], ['c1','c2','c3','c
 
 How can you tell that DataFrame is a combination of series?
 type(df['c1']) # pandas.core.series.Series
+
+you can fetch a column from a dataframe using 
+import numpy as np
+import pandas as pd
+
+df = pd.DataFrame(np.arange(1,17).reshape(4,4),('A','B','C','D'),('W','X','Y','Z'))
+df['W']
+
+Other way to fetch a column from a series is
+df.W # This is not recommended because in the say way we call the methods over dataframe
+
+To fetch more than one column we need to pass a list of columns
+df[['W','Y']] 
+Confirmation of it being a list - df[list(('W','Y'))]
+
+To add a new column to a dataframe
+df['New'] = df['W'] + df['X']
+
+NOTE - axis = 0 is for row and axis = 1 is for column because we use df(row,column) hence row is at index 0 and column is at index 1.
+Do df.shape and you will find row at index 0 and column at index 1 Eg - df.shape # (3, 4), 3 rows and 4 cols
+
+To drop a column from dataframe we can use drop method but we need to take care of two things:
+1. we need to provide axis = 1 as 0 is for row and 1 is for column.
+2. we need to provide inplace = True to drop the column permanently as we have `table in kdb.
+df.drop('New', axis=1, inplace=True)
+
+To drop a row
+df.drop('D', inplace=True)
+
+We can fetch the rows from a df in two ways.
+1. Using loc by providing the index name
+    df.loc['B']
+2. Using iloc by providing the index number
+    df.iloc[1]
+Again rows are a collection of series.
+Hence both rows and columns are collection of series in dataframe.
+
+To get a particular a particular value from a row and column
+df.loc['A','X'] # 2
+
+We can also fetch the list of rows and columns
+df.loc[['A','C'],['W','Y']]
+
+For a dataframe if we want to get the dataframe output based on any condition like get only the values in the dataframe where value is greater than 5
+df[df > 5] ## False returns NaN
+In practise  we run boolean filter over a column and the output does not consists of the rows where the value is False hence we do not get NaN in that case.
+df[df['W']>6]
+and in the output if we want only two columns say W and X col
+df[df['W']>6][['W','X']]
+
+Get the result based on multiple conditions
+df[(df['W']>3) & (df['Y']<15)]
+
+Why are we using & and not 'and' operator in the above code?
+Because 'and' works on singular values like 'True' and 'False' but not on series of values.
+
+reset_index() - If you want to convert the index to a column and replace it with numerical index then we can go with reset_index().
+In does not occur in place, to get it done place inplace = True
+df.reset_index()
+
+In order to set some other column to index, set_index() can be used.
+df['States'] = 'CA NY WD TX'.split()
+df.set_index('States') # inplace is required to make it permanent
 
 
 

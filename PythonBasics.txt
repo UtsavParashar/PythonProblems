@@ -733,6 +733,11 @@ List stores heterogeneous objects but it is best suited for homogeneous objects(
 List is mutable.
 my_list=[1,2, 3.0, 'hello',('a','b'), [1,2,3]]
 
+In kdb we can create a list like `a`b`c without place ; in between
+Is there a similar way to create a string list?
+'a b c d e'.split()
+'CA NY WD TX'.split() 
+
 Ways to create list:
 --------------------
 l=[]
