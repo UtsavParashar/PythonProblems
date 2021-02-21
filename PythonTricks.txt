@@ -781,3 +781,147 @@ Return None statements from function:
 ======================================
 If a function doesn’t specify a return value, it returns None. Whether to explicitly return None is a stylistic decision.
 This is a core Python feature but your code might communicate its intent more clearly with an explicit return None statement.
+
+Difference in being identical and equal:
+=========================================
+1 is True ## False - reference comparision - kdb equivalent 1 ~ 1.0 / 0b
+1 == True ## True  - Content comparision - kdb equivalent 1 = 1.0 / 1b
+
+a = [1,2,3]
+b = a
+c = list(a)
+print(id(b), id(a), id(c))
+a is b is c # False
+a == b == c # True
+
+repr() or __repr__:
+repr() is similar to str() with a difference that str() is used for creating output for end user whereas repr() is mainly used for debugging purpose.
+Eg: 
+import datetime
+
+print(str(datetime.datetime.now())) # 2021-02-21 10:01:57.157195
+print(repr(datetime.datetime.now())) # datetime.datetime(2021, 2, 21, 10, 1, 57, 157463)
+
+difference can be seen in the output of str() and repr()
+repr() is a representation which has all the information about the object.
+
+Internally for a class __repr__ method can be overriden to get the desired representation of the class object.
+
+Every class needs a __repr__:
+-----------------------------
+Whenever we print a class object the interpreter shows the name of the class and id of it.
+But there can be more to it.
+class Car:
+    def __init__(self, color, milage):
+        self.color = color
+        self.milage = milage
+print(Car('Green',21)) ### <__main__.Car at 0x108dd9f28>
+
+We can use __str__ dunder to provide some meaningful output when we print an object.
+class Car:
+    def __init__(self, color, milage):
+        self.color = color
+        self.milage = milage
+    
+    def __str__(self):
+        return f'A {self.color} car'
+
+print(Car('Green',21)) ## A Green car
+Car('Green',21) ## <__main__.Car at 0x108dc64a8>
+
+By overridind the __str__() we get the desired output when we use print statement to print the object.
+Without print statement it still provides the same output.
+
+Now the question is why we are again getting same Car class and id when we are not using print.
+The answer is __repr__, so in python3 there are 2 dunders which maintains toString feature of the class and the two dunders are __str__ and __repr__ and their corresponding methods are str() and repr() respectively.
+
+class Car:
+    def __init__(self, color, milage):
+        self.color = color
+        self.milage = milage
+    
+    def __str__(self):
+        return f'A {self.color} car'
+    
+    def __repr__(self):
+        return f'A shiny {self.color} car with milage of {self.milage}'
+        
+my_car = Car('Blue',21)
+print('pr ', my_car) ### pr  A Blue car
+print('str ', my_car) ### str  A Blue car
+print('repr ', repr(my_car)) ### repr  A shiny Blue car with milage of 21
+my_car ### A shiny Blue car with milage of 21
+
+Now, even in case of printing the object without print statement we are getting the output of __repr__.
+
+Interestingly, containers like lists and dicts always use the result of __repr__ to represent the objects they contain. Even if you call str on the container itself
+
+print(str([my_car])) # [A shiny Blue car with milage of 21]
+print(str(tuple([my_car]))) # (A shiny Blue car with milage of 21,)
+
+But still it isn't very clear when we should go for __str__ and __repr__?
+The result of the date object’s __str__ function should primarily be readable.
+With __repr__, the idea is that its result should be, above all, unambiguous. The resulting string is intended more as a debugging aid for developers.
+Eg: Let's check python's core lib datetime class
+
+import datetime
+today = datetime.date.today()
+str(today) # '2021-02-21' - More readable clear concise output
+repr(today) # 'datetime.date(2021, 2, 21)' 
+
+We could copy and paste the string returned by __repr__ and execute it as valid Python to recreate the original date object. This is a neat approach and a good goal to keep in mind while writing your own reprs.
+
+On the other hand, I find that it is quite difficult to put into practice. Usually it won’t be worth the trouble and it’ll just create extra work for you. My rule of thumb is to make my __repr__ strings unambiguous and helpful for developers, but I don’t expect them to be able to restore an object’s complete state.
+
+Why every class needs a __repr__ 
+----------------------------------
+If you don’t add a __str__ method, Python falls back on the result of __repr__ when looking for __str__. Therefore, I recommend that you always add at least a __repr__ method to your classes. This will guarantee a useful string conversion result in almost all cases, with a minimum of implementation work.
+
+If we define the __repr__ dunder in a class then in inner __str__ dunder also calls it to display the output. Hence it is always a good practise to add a __repr__ dunder with a class name and basic information in the class.
+
+class Car:
+    def __init__(self, color, milage):
+        self.color = color
+        self.milage = milage
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.color!r},{self.milage})'
+
+my_car = Car('Blue', 21)
+print(str(my_car))
+print(repr(my_car))
+print(my_car)
+
+Note 4 things:
+1. Please note that I’m using the !r conversion flag to make sure the output string uses repr(self.color) and repr(self.mileage) instead of str(self.color) and str(self.mileage).
+2. str() also calls __repr__ because default __str__ drill down to __repr__
+3. We have used __class__.__name__ dunder so that in future if the class name changes we do not have to modify __repr__ dunder. This supports our Don't Repeat Yourself (DRY) principle.
+4. We can always have an optional __str__ dunder in the class
+
+
+class Car:
+    def __init__(self, color, milage):
+        self.color = color
+        self.milage = milage
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.color!r},{self.milage})'
+
+    def __str__(self):
+        return f'A shiny {self.color} car'
+
+Google quants finance code also uses it extensively
+  def __repr__(self):
+    output = "PeriodTensor: shape={}".format(self.shape)
+    if tf.executing_eagerly():
+      return output + ", quantities={}".format(repr(self._quantity.numpy()))
+    return output
+
+Key Takeaways of repr()
+========================
+1. You can control to-string conversion in your own classes using the __str__ and __repr__ “dunder” methods.
+2. The result of __str__ should be readable. The result of __repr__ should be unambiguous.
+3. Always add a __repr__ to your classes. The default implementation for __str__ just calls __repr__.
+
+Defining your own Exception classes:
+====================================
