@@ -925,3 +925,196 @@ Key Takeaways of repr()
 
 Defining your own Exception classes:
 ====================================
+* It is always good to create your custom exception classes and raise it otherwise raising exceptions like ValueError can be vague and your colleague and future you might not able to understand the issue in one go.
+* Whenever you’re publicly releasing a Python package, or even if you’re creating a reusable module for your company, it’s good practice to create a custom exception base class for the module and then derive all of your other exceptions from it.
+
+Here’s how to create a custom exception hierarchy for all exceptions in a module or package. The first step is to declare a base class that all of our concrete errors will inherit from:
+
+class BaseValidationError(ValueError):
+    pass
+class NameTooShortError(BaseValidationError):
+    pass
+class NameTooLongError(BaseValidationError):
+    pass
+class NameTooCuteError(BaseValidationError):
+    pass
+
+For example, this allows users of your package to write try…except statements that can handle all of the errors from this package without having to catch them manually:
+def validate(name):
+    if len(name) < 8:
+        raise NameTooShortError
+    
+try:
+    validate('joe')
+except BaseValidationError as err:
+    print('Error - ', err)
+    
+In conclusion, defining custom exception classes makes it easier for your users to adopt an it’s easier to ask for forgiveness than permission (EAFP) coding style that’s considered more Pythonic.
+
+Key Takeaways
+
+1. Defining your own exception types will state your code’s intent more clearly and make it easier to debug.
+2. Derive your custom exceptions from Python’s built-in Exception class or from more specific exception classes like ValueError or KeyError.
+3. You can use inheritance to define logically grouped exception hierarchies.
+
+Cloning objects for Fun and Profit:
+===================================
+“Python’s built-in mutable collections like lists, dicts, and sets can be copied by calling their factory functions on an existing collection:
+
+new_list = list(original_list)
+new_dict = dict(original_dict)
+new_set = set(original_set)
+
+“However, this method won’t work for custom objects and, on top of that, it only creates shallow copies. For compound objects like lists, dicts, and sets, there’s an important difference between shallow and deep copying:
+
+“A shallow copy means constructing a new collection object and then populating it with references to the child objects found in the original. In essence, a shallow copy is only one level deep. The copying process does not recurse and therefore won’t create copies of the child objects themselves.
+The children are not copied in shallow copy they are merely referenced again in the copied object.
+
+Eg:
+l1=[10,20,[30,40],50]
+l2=l1.copy() ## Shallow copy
+print('l1', l1)
+print('l2', l2)
+l1[2][0]=888
+print('l1', l1)
+print('l2', l2)
+print(id(l1[2])) # 4451347400
+print(id(l2[2])) # 4451347400
+
+l1 [10, 20, [30, 40], 50]
+l2 [10, 20, [30, 40], 50]
+l1 [10, 20, [888, 40], 50]
+l2 [10, 20, [888, 40], 50]
+4451347400
+4451347400
+
+A deep copy makes the copying process recursive. It means first constructing a new collection object and then recursively populating it with copies of the child objects found in the original. Copying an object this way walks the whole object tree to create a fully independent clone of the original object and all of its children.
+
+Eg:
+import copy
+l1=[10,20,[30,40],50]
+l2=copy.deepcopy(l1) ## Deep copy
+print('l1', l1)
+print('l2', l2)
+l1[2][0]=888
+print('l1', l1)
+print('l2', l2)
+
+l1 [10, 20, [30, 40], 50]
+l2 [10, 20, [30, 40], 50]
+l1 [10, 20, [888, 40], 50]
+l2 [10, 20, [30, 40], 50]
+-------------------------------------
+
+“This is useful if you need to clearly communicate that you’re creating a shallow copy somewhere in your code. Using copy.copy() lets you indicate this fact. However, for built-in collections it’s considered more Pythonic to simply use the list, “dict, and set factory functions to create shallow copies.
+
+Let's follow a example of copy methods on a custom class
+import copy
+class point:
+    def __init__(self,p1,p2):
+        self.p1 = p1
+        self.p2 = p2
+    def __repr__(self):
+        return (f'{self.__class__.__name__} ({self.p1!r}, {self.p2!r})')
+    
+class rectangle:
+    def __init__(self, topright, bottomleft):
+        self.topright = topright
+        self.bottomleft = bottomleft
+    def __repr__(self):
+        return (f'{self.__class__.__name__} ({self.topright!r}, {self.bottomleft!r})')
+
+rect = rectangle(point(1,2), point(3,4))
+srect = copy.copy(rect)
+drect = copy.deepcopy(rect)
+print('rect - ', rect)
+print('srect - ', srect)
+print('drect - ', drect)
+rect.topright.p1 = 11
+print('rect - ', rect)
+print('srect - ', srect)
+print('drect - ', drect)
+
+rect -  rectangle (point (1, 2), point (3, 4))
+srect -  rectangle (point (1, 2), point (3, 4))
+drect -  rectangle (point (1, 2), point (3, 4))
+rect -  rectangle (point (11, 2), point (3, 4))
+srect -  rectangle (point (11, 2), point (3, 4))
+drect -  rectangle (point (1, 2), point (3, 4))
+
+-----------------------------------------------------
+
+Key Takeaways from Shallow and Deep Copy
+=========================================
+1. Making a shallow copy of an object won’t clone child objects. Therefore, the copy is not fully independent of the original.
+2. A deep copy of an object will recursively clone child objects. The clone is fully independent of the original, but creating a deep copy is slower.
+3. You can copy arbitrary objects (including custom classes) with the copy module.
+
+Abstract Base Classes (abc module) Keep inheritance in check
+-------------------------------------------------------------
+While writing code which can be maintainable in future, the designer/developer has to think of many things.
+Like:
+1. Have a base class which cannot be instantiated for abstraction purpose
+2. All the child classes of the base class should implement all the methods of base class.
+
+abc module is the most widely used module to cater to this problem, it can be seen in any google python code.
+
+In order to make the base class as non instantiable we can use either of the two options
+from abc import ABC, ABCMeta
+class BaseClass(ABC) ## Widely used
+class BaseClass(metaclass = ABCMeta)
+
+To make the method as abstract method in base class so that if the method is not overridden in child class then even the child class cannot be instantiated.
+
+Eg: Case 1 -
+Base class cannot be instantiated 
+
+Eg: 
+from abc import ABC, abstractmethod
+class Shape(ABC):
+    @abstractmethod
+    def area(self):
+        pass    
+Shape() ## TypeError: Can't instantiate abstract class Shape with abstract methods area
+
+Case 2 - 
+Child class cannot be instantiated without overriding each method of parent class
+Eg: 
+from abc import ABC, abstractmethod
+
+class Shape(ABC):
+    @abstractmethod
+    def area(self):
+        pass
+
+class Rectangle(Shape):
+    def __init__(self, len, bre):
+        self.len = len
+        self.bre = bre
+    
+Rectangle(10,20) # TypeError: Can't instantiate abstract class Rectangle with abstract methods area
+
+Case 3 - when everything is defined properly
+from abc import ABC, abstractmethod, ABCMeta
+
+class Shape(metaclass = ABCMeta):
+    def __init__(self, le, bre):
+        pass
+    @abstractmethod
+    def area(self):
+        pass
+
+class Rectangle(Shape):
+    def __init__(self, le, bre):
+        self.le = le
+        self.bre = bre
+    def area(self):
+        return self.le * self.bre
+    
+print(Rectangle(10,20).area()) ## 200
+
+Key Takeaways of Abstract base class
+===========================
+Abstract Base Classes (ABCs) ensure that derived classes implement particular methods from the base class at instantiation time.
+Using ABCs can help avoid bugs and make class hierarchies easier to maintain.
+

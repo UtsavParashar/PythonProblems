@@ -2500,6 +2500,7 @@ In this case the new object is created but for nested object it will not create 
 import copy
 copy.copy() can also be used for shallow copy
 l1.copy() is same as copy.copy()
+Both old and new list object are pointing to the same nested list object.
 
 Eg:
 l1=[10,20,[30,40],50]
@@ -2509,27 +2510,16 @@ print('l2', l2)
 l1[2][0]=888
 print('l1', l1)
 print('l2', l2)
+print(id(l1[2])) # 4451347400
+print(id(l2[2])) # 4451347400
 
 l1 [10, 20, [30, 40], 50]
 l2 [10, 20, [30, 40], 50]
 l1 [10, 20, [888, 40], 50]
 l2 [10, 20, [888, 40], 50]
+4451347400
+4451347400
 -----------------
-
-import copy
-l1=[10,20,[30,40],50]
-l2=copy.copy(l1) ## Shallow copy
-print('l1', l1)
-print('l2', l2)
-l1[2][0]=888
-print('l1', l1)
-print('l2', l2)
-
-l1 [10, 20, [30, 40], 50]
-l2 [10, 20, [30, 40], 50]
-l1 [10, 20, [888, 40], 50]
-l2 [10, 20, [888, 40], 50]
----------------------
 
 Deep copy  - new reference pointing to new object even the nested objects.
 copy.deepcopy() is used for deep copy 
