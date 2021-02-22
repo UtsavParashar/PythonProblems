@@ -228,7 +228,7 @@ s2.talk()
 Student.getCollegeName()
 print(Student.getAverage())
 
-When to use static/instance/class mathod:
+When to use static/instance/class method:
 1. if we are using atleast one instace variable then go for instance method.
 2. if we are using only static/class level variable and not instance variables then we should go for class method.
 3. if we are not using any static or instance variables then we can go for static methods, static methods are general purpose utility methods. 

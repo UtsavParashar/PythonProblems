@@ -920,7 +920,7 @@ Google quants finance code also uses it extensively
 Key Takeaways of repr()
 ========================
 1. You can control to-string conversion in your own classes using the __str__ and __repr__ “dunder” methods.
-2. The result of __str__ should be readable. The result of __repr__ should be unambiguous.
+2. The result of __str__ should be readable. The result of __repr__ should be unambiguous and debuggable.
 3. Always add a __repr__ to your classes. The default implementation for __str__ just calls __repr__.
 
 Defining your own Exception classes:
@@ -1118,3 +1118,255 @@ Key Takeaways of Abstract base class
 Abstract Base Classes (ABCs) ensure that derived classes implement particular methods from the base class at instantiation time.
 Using ABCs can help avoid bugs and make class hierarchies easier to maintain.
 
+An abstract class can have both abstract and non-abstract methods. When we subclass an abstract class it is not necessary to override non-abstract methods.
+
+
+What Named Tuples are good for: Very widely used in Google code base
+-------------------------------
+Namedtuples can be a great alternative to defining a class manually.
+
+What’s a namedtuple and what makes it so special? A good way to think about namedtuples is to view them as an extension of the built-in tuple data type.
+
+Python’s tuples are a simple data structure for grouping arbitrary objects. Tuples are also immutable—they cannot be modified once they’ve been created.
+
+One downside of plain tuples is that the data you store in them can only be pulled out by accessing it through integer indexes. You can’t give names to individual properties stored in a tuple. This can impact code readability.
+
+Namedtuples aim to solve these two problems.
+
+First of all, namedtuples are immutable containers, just like regular tuples. Once you store data in top-level attribute on a namedtuple, you can’t modify it by updating the attribute. All attributes on a namedtuple object follow the “write once, read many” principle.
+
+Each object stored in them can be accessed through a unique (human-readable) identifier. This frees you from having to remember integer indexes, or resorting to workarounds like defining integer constants as mnemonics for your indexes.
+
+from collections import namedtuple
+Car = namedtuple('Car', 'color milage')
+
+In the namedtuple factory takes first argument as the name of the class and next arguments as the instance variables of the class.
+
+Why are we passing className inside the named tuple as we are already providing it outside before equals? This parameter is referred to as the “typename” in the Python docs. It’s the name of the new class that’s being created by calling the namedtuple function.
+
+Now we have a class created, named as Car and has two instance variables color and milage.
+
+The class name is used in the docstring and the __repr__ implementation that namedtuple automatically generates for us.
+
+If you assign someothr name before equals then there will be two references which will be pointing to same class object.
+from collections import namedtuple
+MatCar = namedtuple('Car', 'color milage')
+
+Now both MatCar and Car are pointing to same class object.
+Car ## __main__.Car
+MatCar ## __main__.Car
+
+We are passing the instance variable names as the shorthand to create a list, internally it is converted to a list like 
+'color milage'.split() # ['color', 'milage']
+
+We can also define the variables as a list
+Car = namedtuple('Car', ['color', 'milage'])
+
+We can now create the object of our newly created named tuple class
+mycar = Car('red', 21)
+mycar.color ## red
+
+Besides accessing the values stored in a namedtuple by their identifiers, you can still access them by their index. That way, namedtuples can be used as a drop-in replacement for regular tuples:
+mycar[0] # red
+tuple(mycar) # ('red', 21)
+
+Tuple unpacking works as expected
+print(*mycar)
+
+Object unpacking works as expected
+col, mil = mycar
+print(col, mil) # red 21
+
+You’ll even get a nice string representation for your namedtuple object for free, which saves some typing and verbosity:
+mycar # Car(color='red', milage=21)
+
+Like tuples, namedtuples are immutable. When you try to overwrite one of their fields, you’ll get an AttributeError exception:
+mycar.color = 'green' # AttributeError: can't set attribute
+
+A good way to view them is to think that namedtuples are a memory-efficient shortcut to defining an immutable class in Python manually.
+
+Subclassing Namedtuples
+========================
+We can extend named tuple class and add methods, variables to it that way.
+class MyClassWithMethods(Car):
+    def hexcolor(self):
+        if self.color == 'red':
+            return '#ff0000'
+        else:
+            return '#000000'
+
+MyClassWithMethods('red', 21).hexcolor()
+
+However, this might be a little clunky. It might be worth doing if you want a class with immutable properties, but it’s also easy to shoot yourself in the foot here.
+
+For example, adding a new immutable field is tricky because of how namedtuples are structured internally. The easiest way to create hierarchies of namedtuples is to use the base tuple’s _fields property:
+
+Car = namedtuple('Car', 'color milage')
+ElectricCar = namedtuple('ElectricCar', Car._fields + ('charge',))
+ElectricCar('red',21,45.2) # ElectricCar(color='red', milage=21, charge=45.2)
+
+Like _field property(variable), named tuple provides few more helper methods which can be useful.
+It must be noted that all the properties and methods start with _ underscore character, _ normally signals that the variable or method is private but here it is used as public interface. _ The helpers were named that way to avoid naming collisions with user-defined tuple fields.
+
+_asdict() helper method. It returns the contents of a namedtuple as a dictionary:
+mycar._asdict() # OrderedDict([('color', 'red'), ('milage', 21)]) 
+(### More about OrderedDict is described below)
+
+This is great for avoiding typos in the field names when generating JSON-output, for example:
+import json
+json.dumps(mycar._asdict()) ## '{"color": "red", "milage": 21}'
+
+Another useful helper is the _replace() function. It creates a (shallow) copy of a tuple and allows you to selectively replace some of its fields:
+mycar._replace(color = 'blue') # Car(color='blue', milage=21)
+
+Lastly, the _make() classmethod can be used to create new instances of a namedtuple from a sequence or iterable.
+Car._make(['white', 12]) # Car(color='white', milage=12)
+
+When to use Named Tuples:
+-------------------------
+Using namedtuples over unstructured tuples and dicts can also make my coworkers’ lives easier because they make the data being passed around “self-documenting” (to a degree).
+
+On the other hand, I try not to use namedtuples for their own sake if they don’t help me write “cleaner” and more maintainable code. Like many other techniques shown in this book, sometimes there can be too much of a good thing.
+
+However, if you use them with care, namedtuples can undoubtedly make your Python code better and more expressive.
+
+
+Google Quants Finance Example - https://github.com/google/tf-quant-finance/blob/13336f99bd1cab56f783f38d320dddf3da00e7cc/tf_quant_finance/experimental/instruments/rates_common.py 
+InterestRateMarket = collections.namedtuple(
+    'InterestRateMarket',
+    [
+        # Instance of class RateCurve. The curve used for computing the forward
+        # expectation of Libor rate.
+        'reference_curve',
+        # Instance of class RateCurve. The curve used for discounting cashflows.
+        'discount_curve',
+        # Scalar of real dtype containing the past fixing of libor rate
+        'libor_rate',
+        # Scalar of real dtype containing the past fixing of swap rate
+        'swap_rate',
+        # Instance of class VolatiltyCube. Market implied black volatilities.
+        'volatility_curve'
+    ])
+InterestRateMarket.__new__.__defaults__ = (None, None, None, None, None)
+
+
+### What is OrderedDict?
+The OrderedDict is a subclass of dict object in Python. The only difference between OrderedDict and dict is that, in OrderedDict, it maintains the orders of keys as inserted. In the dict, the ordering may or may not be happen. It is part of collection module.
+
+import collections
+md = {'a':10, 'b':20, 'd':40, 'c':30, 'z':21}
+od = collections.OrderedDict()
+od['a'] = 10 
+od['c'] = 20
+od['b'] = 30
+print(od) ## It is list of tuples - rderedDict([('a', 10), ('c', 20), ('b', 30)])
+md # dict - {'a': 10, 'b': 20, 'd': 40, 'c': 30, 'z': 21}
+
+import collections
+md = {'a':10, 'b':20, 'd':40, 'c':30, 'z':21}
+od = collections.OrderedDict()
+od['a'] = 10 
+od['c'] = 20
+od['b'] = 30
+print(od) ## It is list of tuples - rderedDict([('a', 10), ('c', 20), ('b', 30)])
+print(md) # dict - {'a': 10, 'b': 20, 'd': 40, 'c': 30, 'z': 21}
+
+for item in md.items():
+    print (item)
+    
+for item in od.items():
+    print (item)
+
+
+Key Takeaways from Named Tuples:
+---------------------------------
+* collection.namedtuple is a memory-efficient shortcut to manually define an immutable class in Python.
+* Namedtuples can help clean up your code by enforcing an easier-to-understand structure on your data.
+* Namedtuples provide a few useful helper methods that all start with a single underscore, but are part of the public interface. It’s okay to use them.
+
+Class vs Instance Variable Pitfalls:
+====================================
+Key Takeaways
+--------------
+Class variables are for data shared by all instances of a class. They belong to a class, not a specific instance and are shared among all instances of a class.
+Instance variables are for data that is unique to each instance. They belong to individual object instances and are not shared among the other instances of a class. Each instance variable gets a unique backing store specific to the instance.
+Because class variables can be “shadowed” by instance variables of the same name, it’s easy to (accidentally) override class variables in a way that introduces bugs and odd behavior.
+
+Eg: Increment the number when an object is created for a class
+class CountObject:
+    countO = 0
+    def __init__(self):
+        self.__class__.countO += 1
+    def __repr__(self):
+        return (f'{self.__class__.__name__}')
+print (CountObject().countO)
+print (CountObject().countO)
+print (CountObject().countO)
+print (CountObject().countO)
+print (CountObject().countO)
+
+Instance, Class and Static Methods Demystified:
+================================================
+
+class MyClass:
+    def method(self):
+        return 'instance method called', self
+    @classmethod
+    def classmethod(cls):
+        return 'class method called', cls
+    @staticmethod
+    def staticmethod():
+        return 'static method called'
+
+obj = MyClass()
+
+Instance Methods:
+-----------------
+Instance methods can also access the class itself through the self.__class__ attribute. This means instance methods can also modify class state.
+
+Calling instance method
+print(obj.method()) # ('instance method called', <__main__.MyClass object at 0x1081af7b8>)
+
+MyClass was set up in such a way that each method’s implementation returns a tuple containing information we can use to trace what’s going on and which parts of the class or object that method can access.
+This confirms that, in this case, the instance method called method has access to the object instance (printed as <MyClass instance>) via the self argument.
+When the method is called, Python replaces the self argument with the instance object, obj. We could ignore the syntactic sugar provided by the obj.method() dot-call syntax and pass the instance object manually to get the same result:
+
+print(MyClass.method(obj)) # ('instance method called', <__main__.MyClass object at 0x1080db7f0>)
+Instance methods can also access the class itself through the self.__class__ attribute. This makes instance methods powerful in terms of access restrictions—they can freely modify state on the object instance and on the class itself.
+
+
+Class Methods:
+--------------
+The class method only has access to this cls argument, it can’t modify object instance state. That would require access to self. However, class methods can still modify class state that applies across all instances of the class. 
+
+print(obj.classmethod()) # ('class method called', <class '__main__.MyClass'>)
+
+Calling classmethod() showed us that it doesn’t have access to the <MyClass instance> object, but only to the <class MyClass> object, representing the class itself (everything in Python is an object, even classes themselves).
+
+Notice how Python automatically passes the class as the first argument to the function when we call MyClass.classmethod(). Calling a method in Python through the dot syntax triggers this behavior. The self parameter on instance methods works the same way.
+
+Please note that naming these parameters self and cls is just a convention. You could just as easily name them the_object and the_class and get the same result. All that matters is that they’re positioned first in the parameter list for that particular method.
+
+
+Static Methods:
+This type of method doesn’t take a self or a cls parameter, although, of course, it can be made to accept an arbitrary number of other parameters.
+As a result, a static method cannot modify object state or class state. Static methods are restricted in what data they can access—they’re primarily a way to namespace your methods.
+
+print(obj.staticmethod()) #static method called
+
+Did you see how we called staticmethod() on the object and were able to do so successfully? Some developers are surprised when they learn that it’s possible to call a static method on an object instance.
+
+Behind the scenes, Python simply enforces the access restrictions by not passing in the self or the cls argument when a static method gets called using the dot syntax.
+
+This confirms that static methods can neither access the object instance state nor the class state. They work like regular functions but belong to the class’ (and every instance’s) namespace.
+
+Now, let’s take a look at what happens when we attempt to call these methods on the class itself, without creating an object instance beforehand:
+
+
+print(MyClass.staticmethod()) # static method called
+print(MyClass.classmethod()) # ('class method called', <class '__main__.MyClass'>)
+print(MyClass.method()) # TypeError: method() missing 1 required positional argument: 'self'
+
+We were able to call classmethod() and staticmethod() just fine, but attempting to call the instance method method() failed with a TypeError.
+
+This is to be expected. This time we didn’t create an object instance and tried calling an instance function directly on the class blueprint itself. This means there is no way for Python to populate the self argument and therefore the call fails with a TypeError exception.
