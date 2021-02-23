@@ -1148,7 +1148,7 @@ Now we have a class created, named as Car and has two instance variables color a
 
 The class name is used in the docstring and the __repr__ implementation that namedtuple automatically generates for us.
 
-If you assign someothr name before equals then there will be two references which will be pointing to same class object.
+If you assign someother name before equals then there will be two references which will be pointing to same class object.
 from collections import namedtuple
 MatCar = namedtuple('Car', 'color milage')
 
@@ -1251,7 +1251,7 @@ InterestRateMarket.__new__.__defaults__ = (None, None, None, None, None)
 
 
 ### What is OrderedDict?
-The OrderedDict is a subclass of dict object in Python. The only difference between OrderedDict and dict is that, in OrderedDict, it maintains the orders of keys as inserted. In the dict, the ordering may or may not be happen. It is part of collection module.
+The OrderedDict is a subclass of dict object in Python. The only difference between OrderedDict and dict is that, in OrderedDict, it maintains the orders of keys as inserted. In the dict, the ordering may or may not  happen. It is part of collection module.
 
 import collections
 md = {'a':10, 'b':20, 'd':40, 'c':30, 'z':21}
@@ -1268,7 +1268,7 @@ od = collections.OrderedDict()
 od['a'] = 10 
 od['c'] = 20
 od['b'] = 30
-print(od) ## It is list of tuples - rderedDict([('a', 10), ('c', 20), ('b', 30)])
+print(od) ## It is list of tuples - OrderedDict([('a', 10), ('c', 20), ('b', 30)])
 print(md) # dict - {'a': 10, 'b': 20, 'd': 40, 'c': 30, 'z': 21}
 
 for item in md.items():
@@ -1369,4 +1369,58 @@ print(MyClass.method()) # TypeError: method() missing 1 required positional argu
 
 We were able to call classmethod() and staticmethod() just fine, but attempting to call the instance method method() failed with a TypeError.
 
-This is to be expected. This time we didn’t create an object instance and tried calling an instance function directly on the class blueprint itself. This means there is no way for Python to populate the self argument and therefore the call fails with a TypeError exception.
+This is to be expected. This time we didn’t create an object instance and tried calling an instance 
+function directly on the class blueprint itself. This means there is no way for Python to populate the self argument and therefore the call fails with a TypeError exception.
+
+Class Method:
+-------------
+Below example shows how a class method can help to maintain the codebase, even if in future if the name of the class changes the internal code is not required to be changed as it is not dependent on self but cls.
+For this we write factory methods which are cls methods
+class Pizza:
+    def __init__(self, ingredients):
+        self.ingredients = ingredients
+    def __repr__(self):
+        return f'{__class__.__name__} {self.ingredients!r}'
+
+    @classmethod
+    def margherita(cls):
+        return cls(['mozzarella', 'tomatoes'])
+                    
+    @classmethod
+    def prosciutto(cls):
+        return cls(['mozzarella', 'tomatoes', 'ham'])
+    
+Pizza.margherita()
+Pizza.prosciutto()
+
+Static Method:
+It provides a way to for utils methods in class which are not part of instance or class.
+This helps linking between object oriented and procedural programming styles.
+It is easier ti test Static methods as it is not dependent on class object or instance object.
+
+import math
+class Pizza:
+    def __init__(self, ingredients, r):
+        self.ingredients = ingredients
+        self.r = r
+    def __repr__(self):
+        return f'{__class__.__name__} {self.ingredients!r} {self.r!r}'
+    
+    def area(self):
+        return self.circle_area(self.r)
+    
+    @staticmethod
+    def circle_area(r):
+        return r ** 2 * math.pi
+    
+Pizza(['panner', 'farmhouse',], 4).area()
+
+Key Takeaways from instance, class and static methods
+======================================================
+Instance methods need a class instance and can access the instance through self.
+Class methods don’t need a class instance. They can’t access the instance (self) but they have access to the class itself via cls.
+Static methods don’t have access to cls or self. They work like regular functions but belong to the class’ namespace.
+Static and class methods communicate and (to a certain degree) enforce developer intent about class design. This can have definite maintenance benefits.
+
+
+
