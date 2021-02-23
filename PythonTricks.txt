@@ -1252,6 +1252,7 @@ InterestRateMarket.__new__.__defaults__ = (None, None, None, None, None)
 
 ### What is OrderedDict?
 The OrderedDict is a subclass of dict object in Python. The only difference between OrderedDict and dict is that, in OrderedDict, it maintains the orders of keys as inserted. In the dict, the ordering may or may not  happen. It is part of collection module.
+(SINCE PYTHON 3.6 insertion order in dict are preserved)
 
 import collections
 md = {'a':10, 'b':20, 'd':40, 'c':30, 'z':21}
@@ -1397,6 +1398,7 @@ Static Method:
 It provides a way to for utils methods in class which are not part of instance or class.
 This helps linking between object oriented and procedural programming styles.
 It is easier ti test Static methods as it is not dependent on class object or instance object.
+Practical examples of static methods are when we want to parse some object like parsejson, formatdate.
 
 import math
 class Pizza:
@@ -1415,12 +1417,89 @@ class Pizza:
     
 Pizza(['panner', 'farmhouse',], 4).area()
 
+Google Quants Finance Example: https://github.com/google/tf-quant-finance/blob/742d370c4ff2d0a15eb2bdda2751711cba97262c/api_docs/tf_quant_finance/experimental/instruments/InterestRateMarket.md 
+
+InterestRateMarket(reference_curve, discount_curve, libor_rate, swap_rate, volatility_curve)
+@staticmethod
+tf_quant_finance.experimental.instruments.InterestRateMarket(
+    _cls, reference_curve=None, discount_curve=None, libor_rate=None,
+    swap_rate=None, volatility_curve=None
+)
+
+
 Key Takeaways from instance, class and static methods
 ======================================================
 Instance methods need a class instance and can access the instance through self.
 Class methods don’t need a class instance. They can’t access the instance (self) but they have access to the class itself via cls.
 Static methods don’t have access to cls or self. They work like regular functions but belong to the class’ namespace.
 Static and class methods communicate and (to a certain degree) enforce developer intent about class design. This can have definite maintenance benefits.
+
+Magic variables uses:
+Before init the if __name__ block of code runs
+class Pizza:
+    def __init__(self):
+        print(f'{__class__}')
+        print(__name__)
+      
+    if __name__ == '__main__':
+        print('Never eat pizza')
+Pizza()
+Output:
+Never eat pizza
+<class '__main__.Pizza'>
+__main__
+<__main__.Pizza at 0x10a1566d8>
+
+
+Common DataStructures in Python:
+=================================
+dict - Your Go To Dictionary
+----
+Dictionaries are also often called maps, hashmaps, lookup tables, or associative arrays. They allow for the efficient lookup, insertion, and deletion of any object associated with a given key.
+
+Dictionary can be defined in two ways:
+1. curly brances expression # d = {'a':2, 'b':4, 'c':8}
+2. dictionary comprehension # {i:i*i for i in np.arange(1,5)}
+
+PyCon 2017 - https://www.youtube.com/watch?v=npw4s1QTmPg - Raymond Hettinger Modern Python Dictionaries
+
+Even for class, behind each instance is an instance dictionary
+class UserProperty:
+    def __init__(self,p1,p2,p3):
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.p1!r},{self.p2!r},{self.p3!r})'
+
+cols = UserProperty('blue','red','green')
+langs = UserProperty('Java','python', 'kdb')
+
+for prop in [cols,langs]:
+    print(vars(prop)) ## vars() returns the __dict__ attribute of the given object.
+
+Output:
+{'p1': 'blue', 'p2': 'red', 'p3': 'green'}
+{'p1': 'Java', 'p2': 'python', 'p3': 'kdb'}
+
+Since python 3.6 dict keys are ordered i.e insertion order is preserved.
+
+What is hashtable? Something that reduces the search space by cutting into smaller buckets. This is how we search for our seat in cinema hall.
+
+identity implies equality - meaning if two references are pointing to the same object that means the object is equal to itself. It is true except for NaN
+Hence, hashtable follow below rule and does not allow NaN
+RULE - If two objects are equal then their hash values are equal as well.  Hence python follow, IF TEO OBJECTS HAVE UNEQUAL HASHES, THEN THE OBJECT MUST BE UNEQUAL AS WELL.
+Hence for matching the keys faster:
+def fastmatch(key, targetkey):
+    if key is targetkey: return True             ## Fast
+    if key.hash != targetkey.hash: return False  ## Fast
+    return key == targetkey                      ## Slow
+
+If these two if are removed then python speed will reduct to half.
+
+
+
+
 
 
 
