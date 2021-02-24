@@ -1395,9 +1395,9 @@ Pizza.margherita()
 Pizza.prosciutto()
 
 Static Method:
-It provides a way to for utils methods in class which are not part of instance or class.
+It provides a way to use utils methods in class which are not part of instance or class.
 This helps linking between object oriented and procedural programming styles.
-It is easier ti test Static methods as it is not dependent on class object or instance object.
+It is easier to test Static methods as it is not dependent on class object or instance object.
 Practical examples of static methods are when we want to parse some object like parsejson, formatdate.
 
 import math
@@ -1488,16 +1488,100 @@ What is hashtable? Something that reduces the search space by cutting into small
 
 identity implies equality - meaning if two references are pointing to the same object that means the object is equal to itself. It is true except for NaN
 Hence, hashtable follow below rule and does not allow NaN
-RULE - If two objects are equal then their hash values are equal as well.  Hence python follow, IF TEO OBJECTS HAVE UNEQUAL HASHES, THEN THE OBJECT MUST BE UNEQUAL AS WELL.
+RULE - If two objects are equal then their hash values are equal as well.  Hence python follow, IF TWO OBJECTS HAVE UNEQUAL HASHES, THEN THE OBJECT MUST BE UNEQUAL AS WELL.
 Hence for matching the keys faster:
 def fastmatch(key, targetkey):
     if key is targetkey: return True             ## Fast
     if key.hash != targetkey.hash: return False  ## Fast
     return key == targetkey                      ## Slow
 
-If these two if are removed then python speed will reduct to half.
+If these two 'if' are removed then python speed will reduce to half.
 
+Dictionaries are highly optimized and underlie many parts of the language, for example class attributes and variables in a stack frame are both stored internally in dictionaries.
 
+Python dictionaries are based on a well-tested and finely tuned hash table implementation that provides the performance characteristics you’d expect: O(1) time complexity for lookup, insert, update, and delete operations in the average case.
+
+OrderedDict:
+Insertion order of dict keys are preserved in ordered dict which is also avaiable in dict from 3.6
+It is present in collections module.
+import collections 
+d = collections.OrderedDict(one=1, two=2, three=3)
+print(d)
+print(d['two'])
+## Output
+OrderedDict([('one', 1), ('two', 2), ('three', 3)])
+2
+
+collections.defaultDict
+------------------------
+Returns default values for missing keys
+Defaultdict is a container like dictionaries present in the module collections. Defaultdict is a sub-class of the dict class that returns a dictionary-like object. The functionality of both dictionaries and defualtdict are almost same except for the fact that defualtdict never raises a KeyError. It provides a default value for the key that does not exists.
+from collections import defaultdict
+
+def def_value(): 
+    return "Not Present"
+      
+# Defining the dict 
+d = defaultdict(def_value) 
+d["a"] = 1
+d["b"] = 2
+  
+print(d["a"]) 
+print(d["b"]) 
+print(d["c"]) ## Not Present
+
+collections.ChainMap:
+---------------------
+The collections.ChainMap data structure groups multiple dictionaries into a single mapping. Lookups search the underlying mappings one by one until a key is found. Insertions, updates, and deletions only affect the first mapping added to the chain.
+
+from collections import ChainMap
+d1 = {'one':1, 'two':2}
+d2 = {'tre':3, 'for':4}
+chain = ChainMap(d1,d2)
+print(chain)
+chain['tre']
+#chain['three'] KeyError: 'three'
+chain['five'] = 5
+print(chain)
+#del chain['tre'] # KeyError: "Key not found in the first mapping: 'tre'"
+del chain['five']
+print(chain)
+Output:
+ChainMap({'one': 1, 'two': 2}, {'tre': 3, 'for': 4})
+ChainMap({'one': 1, 'two': 2, 'five': 5}, {'tre': 3, 'for': 4})
+ChainMap({'one': 1, 'two': 2}, {'tre': 3, 'for': 4})
+
+ChainMap searches each collection in the chain from left to right until it finds the key (or fails)
+
+type.MappingProxyTypes:
+-----------------------
+“types.MappingProxyType – A Wrapper for Making Read-Only Dictionaries
+
+MappingProxyType is a wrapper around a standard dictionary that provides a read-only view into the wrapped dictionary’s data.7 This class was added in Python 3.3, and it can be used to create immutable proxy versions of dictionaries.
+
+For example, this can be helpful if you’d like to return a dictionary carrying internal state from a class or module, while discouraging write access to this object. Using MappingProxyType allows you to put these restrictions in place without first having to create a full copy of the dictionary.
+
+>>> from types import MappingProxyType
+>>> writable = {'one': 1, 'two': 2}
+>>> read_only = MappingProxyType(writable)
+
+# The proxy is read-only:
+>>> read_only['one']
+1
+>>> read_only['one'] = 23
+TypeError:
+"'mappingproxy' object does not support item assignment"
+
+# Updates to the original are reflected in the proxy:
+>>> writable['one'] = 42
+>>> read_only
+mappingproxy({'one': 42, 'two': 2})
+
+Key Takeaways for dictionaries
+==============================
+Dictionaries are the central data structure in Python.
+The built-in dict type will be “good enough” most of the time.
+Specialized implementations, like read-only or ordered dicts, are available in the Python standard library.
 
 
 
