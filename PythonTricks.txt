@@ -1583,6 +1583,43 @@ Dictionaries are the central data structure in Python.
 The built-in dict type will be “good enough” most of the time.
 Specialized implementations, like read-only or ordered dicts, are available in the Python standard library.
 
+Array Data Structure:
+---------------------
+How do arrays work, and what are they used for?
+Arrays consist of fixed-size data records that allow each element to be efficiently located based on its index.
+Because arrays store information in adjoining blocks of memory, they’re considered contiguous data structures (as opposed to linked datas structure like linked lists, for example.)
+
+LIST – Mutable Dynamic Arrays
+-----------------------------
+Lists are a part of the core Python language.8 Despite their name, Python’s lists are implemented as dynamic arrays behind the scenes. This means a list allows elements to be added or removed, and the list will automatically adjust the backing store that holds these elements by allocating or releasing memory.
+Python lists can hold arbitrary elements—“everything” is an object in Python, including functions. Therefore, you can mix and match different kinds of data types and store them all in a single list.
+This can be a powerful feature, but the downside is that supporting multiple data types at the same time means that data is generally less tightly packed. And as a result, the whole structure takes up more space.
+
+np.array are similar to list which are mutable and can take heterogeneous objects as input.
+
+TUPLE – Immutable Containers
+-----------------------------
+Just like lists, tuples are also a part of the Python core language.9 Unlike lists, however, Python’s tuple objects are immutable. This means elements can’t be added or removed dynamically—all elements in a tuple must be defined at creation time.
+Just like lists, tuples can hold elements of arbitrary data types. Having this flexibility is powerful, but again, it also means that data is less tightly packed than it would be in a typed array.
+
+array.array – Basic Typed Arrays
+---------------------------------
+Python’s array module provides space-efficient storage of basic C-style data types like bytes, 32-bit integers, floating point numbers, and so on.
+
+Arrays created with the array.array class are mutable and behave similarly to lists, except for one important difference—they are “typed arrays” constrained to a single data type.10
+
+Because of this constraint, array.array objects with many elements are more space-efficient than lists and tuples. The elements stored in them are tightly packed, and this can be useful if you need to store many elements of the same type.
+
+Also, arrays support many of the same methods as regular lists, and you might be able to use them as a “drop-in replacement” without requiring other changes to your application code.
+Arrays are mutable in nature
+
+Eg:
+import array
+a = array.array('f',(1,2,3.0))
+print(a) # array('f', [1.0, 2.0, 3.0])
+print(a[2]) # 3.0
+a[1] = 200
+print(a) # array('f', [1.0, 200.0, 3.0])
 
 
 
