@@ -1621,6 +1621,197 @@ print(a[2]) # 3.0
 a[1] = 200
 print(a) # array('f', [1.0, 200.0, 3.0])
 
+str - Immutable array of Unicode characters
+--------------------------------------------
+Python 3.x uses str objects to store textual data as immutable sequences of Unicode characters.11 Practically speaking, that means a str is an immutable array of characters. Oddly enough, it’s also a recursive data structure—each character in a string is a str object of length 1 itself.
+
+String objects are space-efficient because they’re tightly packed and they specialize in a single data type. If you’re storing Unicode text, you should use them. Because strings are immutable in Python, modifying a string requires creating a modified copy. The closest equivalent to a “mutable string” is storing individual characters inside a list.
+
+>>> arr = 'abcd'
+>>> arr[1]
+'b'
+>>> arr
+'abcd'
+## Strings are immutable
+>>> arr[1] = 'e' ## TypeError: 'str' object does not support item assignment
+>>> del arr[1] ## TypeError: 'str' object doesn't support item deletion
+
+Strings can be unpacked into a list to get a mutable representation.
+ls = list('abcd')
+>>> ls
+['a', 'b', 'c', 'd']
+>>> ''.join(ls)
+'abcd'
+>>> mutable_string = ''.join(ls)
+>>> mutable_string
+'abcd'
+>>> mutable_string[1] = 'e' ## TypeError: 'str' object does not support item assignment
+
+## Strings are recursive data structure
+>>> type('abc')
+<class 'str'>
+>>> type('a')
+<class 'str'>
+>>> type('abc'[1])
+<class 'str'>
+
+bytes - Immutable array of single bytes:
+Bytes objects are immutable sequences of single bytes (integers in the range of 0 <= x <= 255).12 Conceptually, they’re  similar to str objects and we can also think of them as array of bytes.
+Like strings, bytes have their own literal syntax for creating objects and they’re space-efficient. Bytes objects are immutable, but unlike strings, there’s a dedicated “mutable byte array” data type called bytearray that they can be unpacked into. 
+
+>>> arr
+b'\x00\x01\x02'
+>>> arr = b'\x00\x01\x02'
+
+bytes are immutable
+>>> arr[1] = 23 ## TypeError: 'bytes' object does not support item assignment
+>>> del arr[1] ## TypeError: 'bytes' object doesn't support item deletion
+
+bytearray - Mutable arrays of single bytes
+-------------------------------------------
+The bytearray type is a mutable sequence of integers in the range 0 <= x <= 255.13 They’re closely related to bytes objects with the main difference being that bytearrays can be modified freely—you can overwrite elements, remove existing elements, or add new ones. The bytearray object will grow and shrink accordingly.
+
+Bytearrays can be converted back into immutable bytes objects but this involves copying the stored data in full—a slow operation taking O(n) time.
+
+>>> arr = bytearray((1,2,3,4))
+>>> arr[1] ## 2
+>>> arr ## bytearray(b'\x01\x02\x03\x04')
+
+bytearrays are mutable in nature
+>>> arr[1] = 121
+>>> arr ## bytearray(b'\x01y\x03\x04')
+>>> arr[1] ## 121
+>>> del arr[1]
+>>> arr.append(242)
+>>> arr[-1] ## 242
+
+Byte array can hold values in the range 0-255
+>>> arr[1] = 'hello' ## TypeError: an integer is required
+>>> arr[1] = 300 ## ValueError: byte must be in range(0, 256)
+
+## Byte array can be converted into bytes
+>>> arr ## bytearray(b'\x01\x03\x04\xf2')
+>>> bytes(arr) ## b'\x01\x03\x04\xf2'
+
+Key takeaways from list, tuple, array, bytes, bytearray:
+-----------------------------------------------------------
+You need to store arbitrary objects, potentially with mixed data types? Use a list or a tuple, depending on whether you want an immutable data structure or not.
+
+You have numeric (integer or floating point) data and tight packing and performance is important? Try out array.array and see if it does everything you need. Also, consider going beyond the standard library and try out packages like NumPy or Pandas.
+
+You have textual data represented as Unicode characters? Use Python’s built-in str. If you need a “mutable string,” use a list of characters.
+
+You want to store a contiguous block of bytes? Use the immutable bytes type, or bytearray if you need a mutable data structure.
+
+In most cases, I like to start out with a simple list. I’ll only specialize later on if performance or storage space becomes an issue. Most of the time, using a general-purpose array data structure like list gives you the fastest development speed and the most programming convenience.
+
+dict - Simple Data Objects:
+---------------------------
+Python dictionaries store an arbitrary number of objects, each identified by a unique key. Dictionaries are also often called maps or associative arrays and allow for the efficient lookup, insertion, and deletion of any object associated with a given key.
+Data objects created using dictionaries are mutable, and there’s little protection against misspelled field names, as fields can be added and removed freely at any time. Both of these properties can introduce surprising bugs, and there’s always a trade-off to be made between convenience and error resilience.
+
+car1 = {
+    'color': 'red',
+    'mileage': 3812.4,
+    'automatic': True,
+}
+car2 = {
+    'color': 'blue',
+    'mileage': 40231,
+    'automatic': False,
+}
+
+# Dicts have a nice repr:
+>>> car2
+{'color': 'blue', 'automatic': False, 'mileage': 40231}
+
+# Get mileage:
+>>> car2['mileage']
+40231
+
+# Dicts are mutable:
+>>> car2['mileage'] = 12
+>>> car2['windshield'] = 'broken
+
+>>> car2
+{'windshield': 'broken', 'color': 'blue',
+ 'automatic': False, 'mileage': 12}
+
+# No protection against wrong field names,
+# or missing/extra fields:
+car3 = {
+    'colr': 'green',
+    'automatic': False,
+    'windshield': 'broken',
+}
+
+tuple - Immutable group of objects
+----------------------------------
+Tuples are immutable—they cannot be modified once they’ve been created.
+Performance-wise, tuples take up slightly less memory than lists in CPython,17 and they’re also faster to construct.
+
+A potential downside of plain tuples is that the data you store in them can only be pulled out by 
+accessing it through integer indexes. You can’t give names to individual properties stored in a tuple. This can impact code readability.(You can always use named tuples)
+
+# Fields: color, mileage, automatic
+>>> car1 = ('red', 3812.4, True)
+>>> car2 = ('blue', 40231.0, False)
+
+# Tuple instances have a nice repr:
+>>> car1
+('red', 3812.4, True)
+>>> car2
+('blue', 40231.0, False)
+
+# Get mileage:
+>>> car2[1]
+40231.0
+
+# Tuples are immutable:
+>>> car2[1] = 12
+TypeError:
+"'tuple' object does not support item assignment"
+
+# No protection against missing/extra fields
+# or a wrong order:
+>>> car3 = (3431.5, 'green', True, 'silver')
+
+Writing a Custom Class, More work more control:
+-----------------------------------------------
+Classes allow you to define reusable “blueprints” for data objects to ensure each object provides the same set of fields.
+
+Using regular Python classes as record data types is feasible, but it also takes manual work to get the convenience features of other implementations. For example, adding new fields to the __init__ constructor is verbose and takes time.
+
+Also, the default string representation for objects instantiated from custom classes is not very helpful. To fix that you may have to add your own __repr__ method,18 which again is usually quite verbose and must be updated every time you add a new field.
+
+Fields stored on classes are mutable, and new fields can be added freely, which you may or may not like. It’s possible to provide more access control and to create read-only fields using the @property decorator,19 but once again, this requires writing more glue code.
+
+Writing a custom class is a great option whenever you’d like to add business logic and behavior to your record objects using methods. However, this means that these objects are technically no longer plain data objects.
+
+class Car:
+    def __init__(self, color, milage, automatic):
+        self.color = color
+        self.milage = milage
+        self.automatic = automatic
+    def __repr__(self):
+        return (f'{self.__class__.__name__} ({self.color!r} {self.milage!r} {self.automatic!r})')
+    
+car1 = Car('Red', 21, True)
+car2 = Car('Blue', 23, False)
+
+print(car2.milage) # 23
+print(car1) # Car ('Red' 21 True)
+
+## Classes are Mutable
+car1.windshield = 'broken'
+print(car1.windshield) ## broken
+
+## You need to update __repr__ for every new field
+print(car1) # Car ('Red' 21 True) 
+
+collections.namedtuple - Convenient Data Objects
+-------------------------------------------------
+
 
 
 
