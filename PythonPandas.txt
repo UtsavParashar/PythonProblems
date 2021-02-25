@@ -143,13 +143,16 @@ df[df > 4].dropna(thresh=1) # Defines the threadhold
 fillna - to fill in the missing values we can use value option.
 df.fillna(value = df.mean())
 
+GroupBy:
+--------
+Group rows based on a column and apply some aggregate function over them.
+Groupby allows you to group together rows based off of a column and perform an aggregate function on them.
+import pandas as pd
+df = pd.DataFrame({'comp':['GOOG','FB','GOOG','FB'], 'sales':[100,200,120,40]})
+df.groupby('comp').mean()
+df.groupby('comp').sum().loc['FB'] ## To get aggregated output for a paricular row(company)
+df.groupby('comp').describe().transpose()['GOOG']
 
-
-
-
-
-
-Pandas
 ## Merging Joining & Concatenation
 # Concatination is similar to uj
 # Concatination can work as horizontal join when axis=1 only if column names are different in kdb
@@ -179,6 +182,8 @@ print(df['b'].unique())# Get unique values of column 'b' in output
 print(df['b'].nunique())# Get count of unique values of column 'b' in output
 print(df['b'].value_counts()) # Get the count of occurence of each value in col 'b'
 
+difference between applying groupby and value_counts on col 'b' is that groupby returns DataFrame whereas value_counts() return Series.
+
 apply() - In order to apply custom(user defined functions) to a df col, we can use apply method.
 It is one of the most powerful function of df.
 def times2(x):
@@ -193,5 +198,6 @@ df.columns
 For index
 df.index
 
-
-
+df.sort_values('colName) - to sort dataframe based on a column 
+df.isnull() - return all null values for a dataframe
+df.pivot_table() - to generate the pivot table from the dataframe
