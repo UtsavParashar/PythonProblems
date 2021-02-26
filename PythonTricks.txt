@@ -1983,4 +1983,61 @@ g.age = 21
 g.age
 
 NOTE  - WHILE CALLING g.age YOU ARE NOT CALLING METHOD BUT VARIABLE.
-ALSO NOTE - @propery  GET METHOS USUALLY RETURNS PRIVATE VARIABLE(WHICH STARTS WITH _)
+ALSO NOTE - @property  GET METHOS USUALLY RETURNS PRIVATE VARIABLE(WHICH STARTS WITH _)
+
+Google example of property methods - https://github.com/google/tf-quant-finance/blob/master/tf_quant_finance/experimental/instruments/interest_rate_swap.py
+
+  @property
+  def term(self):
+    return tf.cast(self._start_date.days_until(self._maturity_date),
+                   dtype=self._dtype) / 365.
+
+method call - rate_term = fra_proto.floating_rate_term.term
+
+Sets and MultiSets:
+-------------------
+Set
+====
+A set is an unordered collection of objects that does not allow duplicate elements. Typically, sets are used to quickly test a value for membership in the set, to insert or delete new values from a set, and to compute the union or intersection of two sets.
+
+In a “proper” set implementation, membership tests are expected to run in fast O(1) time. Union, intersection, difference, and subset operations should take O(n) time on average. 
+
+Just like dictionaries, sets get special treatment in Python and have some syntactic sugar that makes them easy to create. For example, the curly-braces set expression syntax and set comprehensions allow you to conveniently define new set instances
+
+But be careful: To create an empty set you’ll need to call the set() constructor. Using empty curly-braces {} is ambiguous and will create an empty dictionary instead.
+
+“The set type is mutable and allows for the dynamic insertion and deletion of elements.
+
+Python’s sets are backed by the dict data type and share the same performance characteristics. Any hashable object can be stored in a set.
+
+frozenset - 
+==========
+The frozenset class implements an immutable version of set that cannot be changed after it has been constructed.28 Frozensets are static and only allow query operations on their elements (no inserts or deletions.) Because frozensets are static and hashable, they can be used as dictionary keys or as elements of another set, something that isn’t possible with regular (mutable) set objects.
+
+vowels = frozenset({'a','e','i','o','u'})
+vowels.add('p')
+
+## frozensets can be used as dict key
+d = {frozenset({1,2,3}):'hello'}
+d # {frozenset({1, 2, 3}): 'hello'}
+
+collections.Counter: - Multisets
+--------------------
+The collections.Counter class in the Python standard library implements a multiset (or bag) type that allows elements in the set to have more than one occurrence.29
+
+This is useful if you need to keep track of not only if an element is part of a set, but also how many times it is included in the set.
+from collections import Counter
+inventory = Counter()
+loot = {'sword': 1, 'bread': 3}
+print(type(loot)) # <class 'dict'>
+inventory.update(loot)
+print(inventory) # Counter({'bread': 3, 'sword': 1})
+print(type(inventory)) # <class 'collections.Counter'>
+more_loot = {'apple':1, 'sword':2}
+inventory.update(more_loot)
+print(inventory) # Counter({'sword': 3, 'bread': 3, 'apple': 1})
+
+Here’s a caveat for the Counter class: You’ll want to be careful when counting the number of elements in a Counter object. Calling len() returns the number of unique elements in the multiset, whereas the total number of elements can be retrieved using the sum function:
+
+print(len(inventory)) # 3
+print(sum(inventory.values())) # 7
