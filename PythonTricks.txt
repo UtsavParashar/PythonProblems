@@ -1934,3 +1934,53 @@ You need to add behavior (methods) to the object: You should write a custom clas
 You need to pack data tightly to serialize it to disk or to send it over the network: Time to read up on struct.Struct because this is a great use case for it.
 
 If you’re looking for a safe default choice, my general recommendation for implementing a plain record, struct, or data object in Python would be to use collections.namedtuple in Python 2.x and its younger sibling, typing.NamedTuple in Python 3.
+
+@property decorator:
+--------------------
+Whenever we write a custom class over which we want to have complete control we should use @property decorator.
+It provides the benifits of data hiding and abstraction through setters and getters.
+
+In Python, getters and setters are not the same as those in other object-oriented programming languages. Basically, the main purpose of using getters and setters in object-oriented programs is to ensure data encapsulation. Private variables in python are not actually hidden fields like in other object oriented languages. Getters and Setters in python are often used when:
+
+We use getters & setters to add validation logic around getting and setting a value.
+To avoid direct access of a class field i.e. private variables cannot be accessed directly or modified by external user.
+
+We also have property method which provides the same benifits but is not highly used.
+
+Example using property function:
+class Geek:
+    def __init__(self):
+        self._age = 0
+    
+    def get_age(self):
+        return self._age
+    
+    def set_age(self, age):
+        self._age = age
+        
+    def del_age(self):
+        del self._age
+        
+    age = property(get_age, set_age, del_age)
+    
+g = Geek()
+g.age = 21
+g.get_age()
+
+Example using property decorator
+class Geek:
+    def __init__(self):
+        self._age = 0
+    @property
+    def age(self):
+        return self._age
+    @age.setter
+    def age(self, age):
+        self._age = age
+    
+g = Geek()
+g.age = 21
+g.age
+
+NOTE  - WHILE CALLING g.age YOU ARE NOT CALLING METHOD BUT VARIABLE.
+ALSO NOTE - @propery  GET METHOS USUALLY RETURNS PRIVATE VARIABLE(WHICH STARTS WITH _)
