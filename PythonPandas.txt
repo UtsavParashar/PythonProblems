@@ -201,3 +201,5 @@ df.index
 df.sort_values('colName) - to sort dataframe based on a column 
 df.isnull() - return all null values for a dataframe
 df.pivot_table() - to generate the pivot table from the dataframe
+
+

@@ -1811,7 +1811,126 @@ print(car1) # Car ('Red' 21 True)
 
 collections.namedtuple - Convenient Data Objects
 -------------------------------------------------
+The namedtuple class available in Python 2.6+ provides an extension of the built-in tuple data type.20 Similar to defining a custom class, using namedtuple allows you to define reusable “blueprints” for your records that ensure the correct field names are used.
 
+Namedtuples are immutable, just like regular tuples. This means you cannot add new fields or modify existing fields after the namedtuple instance was created.
 
+Besides that, namedtuples are, well… named tuples. Each object stored in them can be accessed through a unique identifier. This frees you from having to remember integer indexes, or resort to workarounds like defining integer constants as mnemonics for your indexes.
 
+Namedtuple objects are implemented as regular Python classes internally. When it comes to memory usage, they are also “better” than regular classes and just as memory efficient as regular tuples:
 
+from collections import namedtuple
+from sys import getsizeof
+
+print((namedtuple('Point', 'x y z')(1,2,3))) # Point(x=1, y=2, z=3)
+print(getsizeof((namedtuple('Point', 'x y z')(1,2,3)))) # 72
+print(getsizeof((1,2,3))) # 72
+
+Namedtuples can be an easy way to clean up your code and make it more readable by enforcing a better structure for your data.
+
+I find that going from ad-hoc data types, like dictionaries with a fixed format, to namedtuples helps me express the intent of my code more clearly. Often when I apply this refactoring, I magically come up with a better solution for the problem I’m facing.
+
+Using namedtuples over regular (unstructured) tuples and dicts can also make my coworkers’ lives easier: Namedtuples make the data that’s being passed around “self-documenting”, at least to a degree.
+
+from collections import namedtuple
+Car = namedtuple('Car', 'color milage automatic')
+
+car1 = Car('Blue', 21,'False')
+
+# Instance have a nice representation
+car1 # Car(color='Blue', milage=21, automatic='False')
+
+# Accessing Fields
+car1.milage # 21
+
+# Fields are immutable
+car1.milage = 12 # AttributeError: can't set attribute
+car1.windshield = 'broken' # AttributeError: 'Car' object has no attribute 'windshield'
+
+typing.NamedTuple – Improved Namedtuples
+=========================================
+This class added in Python 3.6 is the younger sibling of the namedtuple class in the collections module.21 It is very similar to namedtuple, the main difference being an updated syntax for defining new record types and added support for type hints.
+
+Please note that type annotations are not enforced without a separate type-checking tool like mypy.22 But even without tool support, they can provide useful hints for other programmers (or be terribly confusing if the type hints become out-of-date.)
+
+from typing import NamedTuple
+
+class Car(NamedTuple):
+    color:str
+    milage:float
+    automatic:bool
+        
+car1 = Car('red', 21.1, True)
+
+## Instance have a nicer representation
+car1 # Car(color='red', milage=21.1, automatic=True)
+
+## Accessing Fields
+car1.milage # 21.1
+
+## Fields are immutable
+#car1.milage = 22.3 # AttributeError: can't set attribute
+#car1.windshield = 'broken' # AttributeError: 'Car' object has no attribute 'windshield'
+
+## Type annotations are not enforced without
+## a separate type checking tool like mypy
+Car('Green', 'NOT_A_FLOAT', False) ## Car(color='Green', milage='NOT_A_FLOAT', automatic=False)
+
+struct.Struct – Serialized C Structs
+=====================================
+The struct.Struct class23 converts between Python values and C structs serialized into Python bytes objects. For example, it can be used to handle binary data stored in files or coming in from network connections.
+
+Structs are defined using a format strings-like mini language that allows you to define the arrangement of various C data types like char, int, and long, as well as their unsigned variants.
+
+Serialized structs are seldom used to represent data objects meant to be handled purely inside Python code. They’re intended primarily as a data exchange format, rather than as a way of holding data in memory that’s only used by Python code.
+
+In some cases, packing primitive data into structs may use less memory than keeping it in other data types. However, in most cases that would be quite an advanced (and probably unnecessary) optimization.
+
+from struct import Struct
+MyStruct = Struct('i?f')
+data = MyStruct.pack(23, False, 42.1)
+
+# All you get is blob of data
+print(data) # b'\x17\x00\x00\x00\x00\x00\x00\x00ff(B'
+
+# Data blobs can be unpacked again using unpack
+MyStruct.unpack(data) # (23, False, 42.099998474121094)
+
+types.SimpleNamespace – Fancy Attribute Access
+===============================================
+Here’s one more “esoteric” choice for implementing data objects in Python: types.SimpleNamespace.24 This class was added in Python 3.3 and it provides attribute access to its namespace.
+
+This means SimpleNamespace instances expose all of their keys as class attributes. This means you can use obj.key “dotted” attribute access instead of the obj['key'] square-brackets indexing syntax that’s used by regular dicts. All instances also include a meaningful __repr__ by default.
+
+As its name proclaims, SimpleNamespace is simple! It’s basically a glorified dictionary that allows attribute access and prints nicely. Attributes can be added, modified, and deleted freely.
+
+from types import SimpleNamespace
+
+car1 = SimpleNamespace(color = 'red', milage = '21.1', automatic = False)
+## Default Representation
+print (car1) # namespace(automatic=False, color='red', milage='21.1')
+
+## Instance support attribute access and are mutable
+print (car1.color) # 'red'
+car1.atomatic = True
+print(car1.automatic) # False
+car1.windshield = 'broken'
+print(car1) #namespace(automatic=False, color='red', milage='21.1', windshield='broken')
+
+Key Takeaways from dict, custom class, tuple, namedtuple, NamedTuple, Struct, SimpleNamespace:
+----------------------------------------------------------------------------------------------
+You only have a few (2-3) fields: Using a plain tuple object may be okay if the field order is easy to remember or field names are superfluous. For example, think of an (x, y, z) point in 3D space.
+
+You need immutable fields: In this case, plain tuples, collections.namedtuple, and typing.NamedTuple would all make good options for implementing this type of data object.
+
+You need to lock down field names to avoid typos: collections.namedtuple and typing.NamedTuple are your friends here.
+
+You want to keep things simple: A plain dictionary object might be a good choice due to the convenient syntax that closely resembles JSON.
+
+You need full control over your data structure: It’s time to write a custom class with @property setters and getters.
+
+You need to add behavior (methods) to the object: You should write a custom class, either from scratch or by extending collections.namedtuple or typing.NamedTuple.
+
+You need to pack data tightly to serialize it to disk or to send it over the network: Time to read up on struct.Struct because this is a great use case for it.
+
+If you’re looking for a safe default choice, my general recommendation for implementing a plain record, struct, or data object in Python would be to use collections.namedtuple in Python 2.x and its younger sibling, typing.NamedTuple in Python 3.
