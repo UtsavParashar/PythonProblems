@@ -2526,6 +2526,263 @@ Every time next() is called in this loop, we check for a StopIteration exception
 
 Being able to write a three-line for-in loop instead of an eight-line while loop is quite a nice improvement. It makes the code easier to read and more maintainable. And this is another reason why iterators in Python are such a powerful tool.
 
+Generators:
+-----------
+By looking at the class of iterator it seems for every iterator class we will need to write same piece of code again in again in different classes. Is there any solution to that, yes there is - GENERATORS
+
+Generators look like regular functions but instead of using the return statement, they use yield to pass data back to the caller.
+
+what we have done in iterator class initially to write endless loop of 'hello' can be done in generator as:
+def repeater(value):
+    while True:
+        yield value
+
+We can run the infinite loop as
+for i in repeater('Hi'):
+    print(i)
+
+Now, how do these generators work? They look like normal functions, but their behavior is quite different. For starters, calling a generator function doesn’t even run the function. It merely creates and returns a generator object:
+repeater('Hi') # <generator object repeater at 0x102e740c0>
+
+The code in the generator function only executes when next() is called on the generator object:
+generator_obj = repeater('Hi') # <generator object repeater at 0x102e740c0>
+next(generator_obj) # 'Hi'
+next(generator_obj) # 'Hi'
+
+If you read the code of the repeater function again, it looks like the yield keyword in there somehow stops this generator function in mid-execution and then resumes it at a later point in time:
+def repeater(value):
+    while True:
+        yield value
+
+And that’s quite a fitting mental model for what happens here. You see, when a return statement is invoked inside a function, it permanently passes control back to the caller of the function. When a yield is invoked, it also passes control back to the caller of the function—but it only does so temporarily.
+
+Whereas a return statement disposes of a function’s local state, a yield statement suspends the function and retains its local state. In practical terms, this means local variables and the execution state of the generator function are only stashed away temporarily and not thrown out completely. Execution can be resumed at any time by calling next() on the generator:
+
+This makes generators fully compatible with the iterator protocol. For this reason, I like to think of them primarily as syntactic sugar for implementing iterators.
+
+You’ll find that for most types of iterators, writing a generator function will be easier and more readable than defining a long-winded class-based iterator.
+
+Generators That Stop Generating
+-------------------------------
+Remember, in our class-based iterator we were able to signal the end of iteration by manually raising a StopIteration exception. Because generators are fully compatible with class-based iterators, that’s still what happens behind the scenes.
+
+Thankfully, as programmers we get to work with a nicer interface this time around. Generators stop generating values as soon as control flow returns from the generator function by any means other than a yield statement. This means you no longer have to worry about raising StopIteration at all!
+
+def repeat_thre_times(value):
+    yield value
+    yield value
+    yield value
+    
+for i in repeat_thre_times('Hi'):
+    print(i)
+
+Notice how this generator function doesn’t include any kind of loop. In fact it’s dead simple and only consists of three yield statements. If a yield temporarily suspends execution of the function and passes back a value to the caller, what will happen when we reach the end of this generator? Let’s find out
+
+As you may have expected, this generator stopped producing new values after three iterations. We can assume that it did so by raising a StopIteration exception when execution reached the end of the function. But to be sure, let’s confirm that with another experiment:
+
+iterator = repeat_thre_times('Hi')
+next(iterator) # 'Hi'
+next(iterator) # 'Hi'
+next(iterator) # 'Hi'
+next(iterator) # 'StopIteration'
+next(iterator) # 'StopIteration'
+
+This iterator behaved just like we expected. As soon as we reach the end of the generator function, it keeps raising StopIteration to signal that it has no more values to provide.
+
+Let’s come back to another example from the iterators chapter. The BoundedIterator class implemented an iterator that would only repeat a value a set number of times:
+
+Why don’t we try to re-implement this BoundedRepeater class as a generator function. Here’s my first take on it:
+
+def bounded_iterator(value, max_repeat):
+    count = 0
+    while True:
+        if count >= max_repeat:
+            return
+        count += 1
+        yield value
+
+I intentionally made the while loop in this function a little unwieldy. I wanted to demonstrate how invoking a return statement from a generator causes iteration to stop with a StopIteration exception. We’ll soon clean up and simplify this generator function some more, but first let’s try out what we’ve got so far:
+
+for i in bounded_iterator('Maghu', 3):
+    print(i)
+
+“Great! Now we have a generator that stops producing values after a configurable number of repetitions. It uses the yield statement to pass back values until it finally hits the return statement and iteration stops.
+
+Like I promised you, we can further simplify this generator. We’ll take advantage of the fact that Python adds an implicit return None statement to the end of every function. This is what our final implementation looks like:
+
+def bound_iterator(value, max_repeat):
+    for i in range(max_repeat):
+        yield i
+
+for i in bounded_iterator('Manushya', 3):
+    print(i)
+
+As you just saw, generators help “abstract away” most of the boilerplate code otherwise needed when writing class-based iterators. They can make your life as a programmer much easier and allow you to write cleaner, shorter, and more maintainable iterators. Generator functions are a great feature in Python, and you shouldn’t hesitate to use them in your own programs.
+
+Key Takeaways of Generators:
+----------------------------
+Generator functions are syntactic sugar for writing objects that support the iterator protocol. Generators abstract away much of the boilerplate code needed when writing class-based iterators.
+The yield statement allows you to temporarily suspend execution of a generator function and to pass back values from it.
+Generators start raising StopIteration exceptions after control flow leaves the generator function by any means other than a yield statement.
+
+Generator Expressions: (Expressions is the fancy name for Comprehensions)
+-------------------------
+Since we were able to write a bound_iterator function yielding value specified number of times, can't we reduce it to generator comprehension; yes, we can!
+
+iterator = ('Hellos' for _ in range(3))
+for i in iterator:
+    print (i)
+
+Shorthand for above expression will be:
+for i in ('Hellos' for _ in range(3)):
+    print (i)
+
+There’s one small caveat though: Once a generator expression has been consumed, it can’t be restarted or reused. So in some cases there is an advantage to using generator functions or class-based iterators
+
+Generator Expressions vs List Comprehensions:
+---------------------------------------------
+“As you can tell, generator expressions are somewhat similar to list comprehensions:
+
+>>> listcomp = ['Hello' for i in range(3)]
+>>> genexpr = ('Hello' for i in range(3))
+Unlike list comprehensions, however, generator expressions don’t construct list objects. Instead, they generate values “just in time” like a class-based iterator or generator function would.
+
+All you get by assigning a generator expression to a variable is an iterable “generator object”:
+
+>>> listcomp
+['Hello', 'Hello', 'Hello']
+
+>>> genexpr
+<generator object <genexpr> at 0x1036c3200>
+To access the values produced by the generator expression, you need to call next() on it, just like you would with any other iterator:
+
+>>> next(genexpr)
+'Hello'
+>>> next(genexpr)
+'Hello'
+>>> next(genexpr)
+'Hello'
+>>> next(genexpr)
+StopIteration
+
+Alternatively, you can also call the list() function on a generator expression to construct a list object holding all generated values:
+
+>>> genexpr = ('Hello' for i in range(3))
+>>> list(genexpr)
+['Hello', 'Hello', 'Hello']
+Of course, this was just a toy example to show how you can “convert” a generator expression (or any other iterator for that matter) into a list. 
+
+Just like with list comprehensions, this gives you a “cookie-cutter pattern” you can apply to many generator functions in order to transform them into concise generator expressions.
+
+Filtering values in generator expressions:
+-------------------------------------------
+print even numbers
+for x in (i for i in range(10) if i%2==0):
+    print(x)
+
+Template - genexpr = (expression for item in collection if condition)
+
+If we are passing generator expression to a function then we can drop ()
+sum(i for i in range(10) if i%2==0) # 20 everything is done in single ()
+
+Generator expression nesting:
+-----------------------------
+we can have multiple loops/conditions in a single generator expression.
+
+for i in ((x, y, z) for x in range(1,10) if x%7==0 for y in range(10,20) if y%8 == 0 for z in range(20,30) if z%9==0):
+    print (i)
+
+“And this is where I’d like to place a big caveat:
+
+Please don’t write deeply nested generator expressions like that. They can be very difficult to maintain in the long run.
+
+This is one of those “the dose makes the poison” situations where a beautiful and simple tool can be overused to create hard to read and difficult to debug programs.
+
+Just like with list comprehensions, I personally try to stay away from any generator expression that includes more than two levels of nesting.
+
+Generator expressions are a helpful and Pythonic tool in your toolbox, but that doesn’t mean they should be used for every single problem you’re facing. For complex iterators, it’s often better to write a generator function or even a class-based iterator.
+
+If you need to use nested generators and complex filtering conditions, it’s usually better to factor out sub-generators (so you can name them) and then to chain them together again at the top level called Iterator Chains.
+
+Key Takeaways on Generator Expression and Generator Nesting
+============================================================
+Generator expressions are similar to list comprehensions. However, they don’t construct list objects. Instead, generator expressions generate values “just in time” like a class-based iterator or generator function would.
+Once a generator expression has been consumed, it can’t be restarted or reused.
+Generator expressions are best for implementing simple “ad hoc” iterators. For complex iterators, it’s better to write a generator function or a class-based iterator.
+
+
+ITERATOR CHAINS:
+-----------------
+If you take advantage of Python’s generator functions and generator expressions, you’ll be building concise and powerful iterator chains in no time.
+
+Generators and generator expressions are syntactic sugar for writing iterators in Python. They abstract away much of the boilerplate code needed when writing class-based iterators.
+
+While a regular function produces a single return value, generators produce a sequence of results. You could say they generate a stream of values over the course of their lifetime.
+
+Generators can be “connected” to each other in order to build efficient data processing algorithms that work like a pipeline.
+
+Eg: Passing one generator to another:
+def integers():
+    for i in range(1,9):
+        yield i
+
+def squared(seq):
+    for i in seq:
+        yield i*i
+
+list(squared(integers())) # Converting the output to list
+
+And we can keep on adding new building blocks to this pipeline. Data flows in one direction only, and each processing step is shielded from the others via a well-defined interface.
+
+This is similar to how pipelines work in Unix. We chain together a sequence of processes so that the output of each process feeds directly as input to the next one.
+
+Why don’t we add another step to our pipeline that negates each value and then passes it on to the next processing step in the chain:
+
+def integers():
+    for i in range(1,9):
+        yield i
+
+def squared(seq):
+    for i in seq:
+        yield i*i
+
+def neg(seq):
+    for i in seq:
+        yield -i
+
+list(neg(squared(integers()))) # [-1, -4, -9, -16, -25, -36, -49, -64]
+
+My favorite thing about chaining generators is that the data processing happens one element at a time. There’s no buffering between the processing steps in the chain:
+
+The integers generator yields a single value, let’s say 3.
+This “activates” the squared generator, which processes the value and passes it on to the next stage as 3 × 3 = 9
+The square number yielded by the squared generator gets fed immediately into the negated generator, which modifies it to -9 and yields it again.
+
+Now, let's use generator expression for these generators chaining
+Eg: 
+integers = range(1,9)
+squared = (i*i for i in integers)
+neg = (-i for i in squared)
+list(neg)
+
+The only downside to using generator expressions is that they can’t be configured with function arguments, and you can’t reuse the same generator expression multiple times in the same processing pipeline.
+
+But of course, you could mix-and-match generator expressions and regular generators freely in building these pipelines. This will help improve readability with complex pipelines.
+
+Key Takeaways Generators Iterating Chains:
+==========================================
+Generators can be chained together to form highly efficient and maintainable data processing pipelines.
+Chained generators process each element going through the chain individually.
+Generator expressions can be used to write concise pipeline definitions, but this can impact readability.
+
+
+
+
+
+
+
+
+
 
 
 
