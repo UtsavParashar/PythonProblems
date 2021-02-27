@@ -2335,17 +2335,196 @@ Python includes several priority queue implementations for you to use.
 queue.PriorityQueue stands out from the pack with a nice object-oriented interface and a name that clearly states its intent. It should be your preferred choice.
 If you’d like to avoid the locking overhead of queue.PriorityQueue, using the heapq module directly is also a good option.
 
+Loops and Iterations:
+----------------------
+Writing pythonic loops:
+------------------------
+The range type represents an immutable sequence of numbers. Its advantage over a regular list is that it always takes the same small amount of memory. Range objects don’t actually store the individual values representing the number sequence—instead, they function as iterators and calculate the sequence values on the fly.
+
+for-loops are really “for-each” loops that can iterate directly over items from a container or sequence, without having to look them up by index.
+
+Eg: To get index and value of item from a list
+l = ['a','b','c']
+
+for index, item in enumerate(l):
+    print(f'index {index}, item {item}')
+
+Comprehending Comprehensions:
+-----------------------------
+The key to understanding list comprehensions is that they’re just for-loops over a collection but expressed in a more terse and compact syntax.
+
+Template for list comprehension
+values = [expression for item in collection]
+
+List comprehensions can filter values based on some arbitrary condition that decides whether or not the resulting value becomes a part of the output list.
+
+even_squares = [x * x for x in range(10) if x % 2 == 0]
+
+values = [expression for item in collection if condition]
+
+Similarly there are set and dict comprehension as well
+{ x * x for x in range(-9, 10) } # set comprehension
+{ x: x * x for x in range(5) } # dict comprehension
+
+slice operator can be used to reverse a list but it is good to stick with list.reverse() or reversed().
+slice operator can be used to clear a list and make it empty but using clear() is better.
+
+New object with the same iterator elements can be created using slice operator as shallow copy.
+lis = [1,2,3]
+orig_list = lis   ## New reference pointing to same object
+print(id(lis), id(orig_list))
+
+new_list = lis[:]
+print(id(lis), id(new_list)) ## New object is created
+
+print(orig_list is lis) ## True
+print(new_list is lis)  ## False
+
+The slice operator is not only useful for selecting sublists of elements within a list. It can also be used to clear, reverse, and copy lists.
+But be careful—this functionality borders on the arcane for many Python developers. Using it might make your code less maintainable for everyone else on your team.
+
+Beautiful Iterators:
+---------------------
+It facinates us when we can run loop over an iterator like list directly using for loop over it like
+for i in [1,2,3]:
+    print(i)
+
+Same thing can be done with our custom class as well, we just need to use two dunders for it in our class.
+__iter__ and __next__
+Objects that support the __iter__ and __next__ dunder methods automatically work with for-in loops.
+
+To start with the implementation, we’ll first define and flesh out the Repeater class.
+class RepeaterIterator:
+    def __init__(self, source):
+        self.source = source
+    def __next__(self):
+        print(id(self.source.value)) ## Called Repeatedly
+        return self.source.value
+
+class Repeater:
+    def __init__(self, value):
+        self.value = value
+    def __iter__(self):
+        print('Repeater', id(self)) ## Called Once
+        return RepeaterIterator(self)
 
 
+On first inspection, Repeater looks like a bog-standard Python class. But notice how it also includes the __iter__ dunder method.
 
+What’s the RepeaterIterator object we’re creating and returning from __iter__? It’s a helper class we also need to define for our for-in iteration example to work:
 
+Again, RepeaterIterator looks like a straightforward Python class, but you might want to take note of the following two things:
 
+In the __init__ method, we link each RepeaterIterator instance to the Repeater object that created it. That way we can hold onto the “source” object that’s being iterated over.
 
+In RepeaterIterator.__next__, we reach back into the “source” Repeater instance and return the value associated with it.
 
+In this code example, Repeater and RepeaterIterator are working together to support Python’s iterator protocol. The two dunder methods we defined, __iter__ and __next__, are the keys to making a Python object iterable.
 
+Now we have a working iterator which can do wonders by running in infinite loop.
+repeater = Repeater('hello')
+for i in repeater:
+    print(i)
 
+How to for-in loops work in python?
+It internally used while loop.
+repeater = Repeater('hello')
+iterator = repeater.__iter__()
+while True:
+    item = iterator.__next__()
+    print(item)
 
+As you can see, the for-in was just syntactic sugar for a simple while loop:
 
+It first prepared the repeater object for iteration by calling its __iter__ method. This returned the actual iterator object.
+After that, the loop repeatedly called the iterator object’s __next__ method to retrieve values from it.
+
+Because there’s never more than one element “in flight,” this approach is highly memory-efficient. Our Repeater class provides an infinite sequence of elements and we can iterate over it just fine. Emulating the same thing with a Python list would be impossible—there’s no way we could create a list with an infinite number of elements in the first place. This makes iterators a very powerful concept.
+
+On more abstract terms, iterators provide a common interface that allows you to process every element of a container while being completely isolated from the container’s internal structure.
+
+Whether you’re dealing with a list of elements, a dictionary, an infinite sequence like the one provided by our Repeater class, or another sequence type—all of that is just an implementation detail. Every single one of these objects can be traversed in the same way with the power of iterators.
+
+And as you’ve seen, there’s nothing special about for-in loops in Python. If you peek behind the curtain, it all comes down to calling the right dunder methods at the right time.
+
+repeater = Repeater('Ramesh')
+iterator = iter(repeater)
+print(next(iterator))
+print(next(iterator))
+
+This gives the same result—an infinite stream of hellos. Every time you call next(), the iterator hands out the same greeting again.
+
+By the way, I took the opportunity here to replace the calls to __iter__ and __next__ with calls to Python’s built-in functions, iter() and next().
+
+Internally, these built-ins invoke the same dunder methods, but they make this code a little prettier and easier to read by providing a clean “facade” to the iterator protocol.
+
+Python offers these facades for other functionality as well. For example, len(x) is a shortcut for calling x.__len__. Similarly, calling iter(x) invokes x.__iter__ and calling next(x) invokes x.__next__.
+
+Generally, it’s a good idea to use the built-in facade functions rather than directly accessing the dunder methods implementing a protocol. It just makes the code a little easier to read.
+
+We can place the above example in a single class
+class Repeater:
+    def __init__(self, value):
+        self.value = value
+    def __iter__(self):
+        return self
+    def __next__(self):
+        return self.value
+
+Next thing we need to do it put a stop condition so that the loop in not infinite, how can we do that?
+how does list do it?
+Let check list using iter and next:
+l = list([1,2,3])
+iterator = iter(l)
+print(next(iterator)) # 1
+print(next(iterator)) # 2
+print(next(iterator)) # 3
+print(next(iterator)) # StopIteration
+
+So now we know what list does,after exhausting all the elements it throws StopIteration Exeception so that the next dunder can be stopped.
+Aha! It raises a StopIteration exception to signal we’ve exhausted all of the available values in the iterator.
+
+That’s right: Iterators use exceptions to structure control flow. To signal the end of iteration, a Python iterator simply raises the built-in StopIteration exception.
+
+“If I keep requesting more values from the iterator, it’ll keep raising StopIteration exceptions to signal that there are no more values available to iterate over:
+
+>>> next(iterator)
+StopIteration
+>>> next(iterator)
+StopIteration
+
+Python iterators normally can’t be “reset”—once they’re exhausted they’re supposed to raise StopIteration every time next() is called on them. To iterate anew you’ll need to request a fresh iterator object with the iter() function.
+
+Now, let's write BoundedRepeater class then stops iterating after a set of numbers.
+class BoundRepeater:
+    def __init__(self, value, max_repeat):
+        self.value = value
+        self.max_repeat = max_repeat
+        self.count = 0
+    def __iter__(self):
+        return self
+    def __next__(self):
+        if self.count >= self.max_repeat:
+            raise StopIteration
+        self.count += 1
+        return self.value
+br = BoundRepeater('Chandu', 3)
+for i in br:
+    print(i)
+
+If we rewrite this last for-in loop example to take away some of the syntactic sugar, we end up with the following expanded code snippet:
+repeater = BoundRepeater('Chandu',3)
+iterator = iter()
+while True:
+    try:
+        item = next(iterator)
+    except StopIteration:
+        break
+    print(item)
+
+Every time next() is called in this loop, we check for a StopIteration exception and break the while loop if necessary.
+
+Being able to write a three-line for-in loop instead of an eight-line while loop is quite a nice improvement. It makes the code easier to read and more maintainable. And this is another reason why iterators in Python are such a powerful tool.
 
 
 
