@@ -2775,22 +2775,365 @@ Generators can be chained together to form highly efficient and maintainable dat
 Chained generators process each element going through the chain individually.
 Generator expressions can be used to write concise pipeline definitions, but this can impact readability.
 
+DICTIONARIES:
+=============
+Python’s dictionaries have a get() method on them which supports a “default” parameter that can be used as a fallback value:
 
+It support EAFP principle - Easy to ask for forgiveness than permission.
 
+When get() is called, it checks if the given key exists in the dictionary. If it does, the value for the key is returned. If it does not exist, then the value of the default parameter is returned instead.
 
+emp = {
+    382: 'Ramesh',
+    961: 'Suresh',
+    420: 'Chandu',
+}
+def greetings(userid):
+    return f'Hi {emp.get(userid, "there")}!'
+print(greetings(382))   # Hi Ramesh!
+print(greetings(1111))  # Hi there!
 
+NOT A GOOD IDEA TO WRITE CODE LIKE BELOW:
+def greeting(userid):
+    if userid in name_for_userid:
+        return 'Hi %s!' % name_for_userid[userid]
+    else:
+        return 'Hi there!
 
+OR 
 
+def greeting(userid):
+    try:
+        return 'Hi %s!' % name_for_userid[userid]
+    except KeyError:
+        return 'Hi there
 
+Key Takeaways from basics of dictionaries
+------------------------------------------
+Avoid explicit key in dict checks when testing for membership.
+EAFP-style exception handling or using the built-in get() method is preferable.
+In some cases, the collections.defaultdict class from the standard library can also be helpful.
 
+Sorting Dictionaries for Fun and Profit
+----------------------------------------
+To compare two tuples, Python compares the items stored at index zero first. If they differ, this defines the outcome of the comparison. If they’re equal, the next two items at index one are compared, and so on.
 
+Dict are internally stored as list of tuples where each key/value pair is called an item and is a tuple.
+Like:
+d = {'a':20, 'c':10, 'b':14}
+sorted(d.items()) # [('a', 20), ('b', 14), ('c', 10)]
+In above example the elements of dict are sorted by key.
+If you want to sort them by value, you can go with
+sorted(d.items(), key=lambda x:x[1]) # [('c', 10), ('b', 14), ('a', 20)]
 
+In fact, the concept is so common that Python’s standard library includes the operator module. This module implements some of the most frequently used key funcs as plug-and-play building blocks, like operator.itemgetter and operator.attrgetter.
 
+Here’s an example of how you might replace the lambda-based index lookup in the first example with operator.itemgetter:
 
+from operator import itemgetter
+sorted(d.items(), key=itemgetter(1)) # [('c', 10), ('b', 14), ('a', 20)]
 
+Using the operator module might communicate your code’s intent more clearly in some cases. On the other hand, using a simple lambda expression might be just as readable and more explicit. In this particular case, I actually prefer the lambda expression.
 
+Another benefit of using lambdas as a custom key func is that you get to control the sort order in much finer detail. For example, you could sort a dictionary based on the absolute numeric value of each value stored in it:
+sorted(d.items(), key=lambda x:abs(x[1])) # [('c', 10), ('b', 14), ('a', 20)]
 
+If you need to reverse the sort order so that larger values go first, you can use the reverse=True keyword argument when calling sorted():
 
+sorted(d.items(), key=lambda x:x[1], reverse=True) # [('a', 20), ('b', 14), ('c', 10)]
 
+Like I said earlier, it’s totally worth spending some time getting a good grip on how key funcs work in Python. They provide you with a ton of flexibility and can often save you from writing code to transform one data structure into another.
+
+Key Takeaways
+--------------------------
+When creating sorted “views” of dictionaries and other collections, you can influence the sort order with a key func.
+Key funcs are an important concept in Python. The most frequently used ones were even added to the operator module in the standard library.
+Functions are first-class citizens in Python. This is a powerful feature you’ll find used everywhere in the language.
+
+Emulating Switch/Case Statements With Dicts
+----------------------------------------------
+Python doesn’t have switch/case statements so it’s sometimes necessary to write long if…elif…else chains as a workaround. In this chapter you’ll discover a trick you can use to emulate switch/case statements in Python with dictionaries and first-class functions. Sound exciting? Great—here we go!
+
+Imagine we had the following if-chain in our program:
+
+>>> if cond == 'cond_a':
+...     handle_a()
+... elif cond == 'cond_b':
+...     handle_b()
+... else:
+...     handle_default()
+Of course, with only three different conditions, this isn’t too horrible yet. But just imagine if we had ten or more elif branches in this statement. Things would start to look a little different. I consider long if-chains to be a code smell that makes programs more difficult to read and maintain.
+
+One way to deal with long if…elif…else statements is to replace them with dictionary lookup tables that emulate the behavior of switch/case statements.
+
+The idea here is to leverage the fact that Python has first-class functions. This means they can be passed as arguments to other functions, returned as values from other functions, and assigned to variables and stored in data structures.
+
+For example, we can define a function and then store it in a list for later access:
+
+>>> def myfunc(a, b):
+...     return a + b
+...
+>>> funcs = [myfunc]
+>>> funcs[0]
+<function myfunc at 0x107012230>
+The syntax for calling this function works as you’d intuitively expect—we simply use an index into the list and then use the “()” call syntax for calling the function and passing arguments to it:
+
+>>> funcs[0](2, 3)
+5
+Now, how are we going to use first-class functions to cut our chained if-statement back to size? The core idea here is to define a dictionary that maps lookup keys for the input conditions to functions that will carry out the intended operations:
+
+>>> func_dict = {
+...     'cond_a': handle_a,
+...     'cond_b': handle_b
+... }
+Instead of filtering through the if-statement, checking each condition as we go along, we can do a dictionary key lookup to get the handler function and then call it:
+
+>>> cond = 'cond_a'
+>>> func_dict[cond]()
+This implementation already sort-of works, at least as long as cond can be found in the dictionary. If it’s not in there, we’ll get a KeyError exception.
+
+So let’s look for a way to support a default case that would match the original else branch. Luckily all Python dicts have a get() method on them that returns the value for a given key, or a default value if the key can’t be found. This is exactly what we need here:
+
+>>> func_dict.get(cond, handle_default)()
+This code snippet might look syntactically odd at first, but when you break it down, it works exactly like the earlier example. Again, we’re using Python’s first-class functions to pass handle_default to the get()-lookup as a fallback value. That way, if the condition can’t be found in the dictionary, we avoid raising a KeyError and call the default handler function instead.
+
+Let’s take a look at a more complete example for using dictionary lookups and first-class functions to replace if-chains. After reading through the following example, you’ll be able to see the pattern needed to transform certain kinds of if-statements to a dictionary-based dispatch.
+
+We’re going to write another function with an if-chain that we’ll then transform. The function takes a string opcode like
+
+def dispatch_if(operator,x,y):
+    if operator == 'add':
+        return x + y
+    if operator == 'sub':
+        return x - y
+    if operator == 'mul':
+        return x * y
+    if operator == 'div':
+        return x / y
+    
+print(dispatch_if('mul',10,15)) # 150
+print(dispatch_if('add',10,15)) # 25
+print(dispatch_if('unknown',10,15)) # None
+
+Please note that the 'unknown' case works because Python adds an implicit return None statement to the end of any function.
+
+So far so good. Let’s transform the original dispatch_if() into a new function which uses a dictionary to map opcodes to arithmetic operations with first-class functions.
+
+def dispatch_dict(operator, x, y):
+    return {
+        'add': lambda: x + y,
+        'sub': lambda: x - y,
+        'mul': lambda: x * y,
+        'div': lambda: x / y,
+    }.get(operator, lambda:None)()
+
+print(dispatch_dict('add', 10, 15))
+print(dispatch_dict('mul', 10, 15))
+print(dispatch_if('unknown', 10, 15))
+
+“There are a couple of ways this code could be further improved if it was real “production-grade” code.
+
+First of all, every time we call dispatch_dict(), it creates a temporary dictionary and a bunch of lambdas for the opcode lookup. This isn’t ideal from a performance perspective. For code that needs to be fast, it makes more sense to create the dictionary once as a constant and then to reference it when the function is called. We don’t want to recreate the dictionary every time we need to do a lookup.
+
+Second, if we really wanted to do some simple arithmetic like x + y, then we’d be better off using Python’s built-in operator module instead of the lambda functions used in the example. The operator module provides implementations for all of Python’s operators, for example operator.mul, operator.div, and so on. This is a minor point, though. I intentionally used lambdas in this example to make it more generic. This should help you apply the pattern in other situations as well.
+
+Well, now you’ve got another tool in your bag of tricks that you can use to simplify some of your if-chains should they get unwieldy. Just remember—this technique won’t apply in every situation and sometimes you’ll be better off with a plain if-statement.
+
+Key Takeaways on Usage of Dicts instead of ifs
+===============================================
+Python doesn’t have a switch/case statement. But in some cases you can avoid long if-chains with a dictionary-based dispatch table.
+Once again Python’s first-class functions prove to be a powerful tool. But with great power comes great responsibility.
+
+The Craziest Dict Expression in the West
+========================================
+{True: 'yes', 1: 'no', 1.0: 'maybe'} # {True: 'maybe'}
+
+Why the output is as {True: 'maybe'}?
+Because True == 1 == 1.0
+
+Python treats bool as a subclass of int. This is the case in Python 2 and Python 3:
+
+“The Boolean type is a subtype of the integer type, and Boolean values behave like the values 0 and 1, respectively, in almost all contexts, the exception being that when converted to a string, the strings ‘False’ or ‘True’ are returned, respectively.
+
+Why do we still get True as the key here? Shouldn’t the key also change to 1.0 at the end, due to the repeated assignments?
+After some mode research in the CPython interpreter source code, I learned that Python’s dictionaries don’t update the key object itself when a new value is associated with it:
+
+>>> ys = {1.0: 'no'}
+>>> ys[True] = 'yes'
+>>> ys
+{1.0: 'yes'}
+Of course this makes sense as a performance optimization—if the keys are considered identical, then why spend time updating the original? In the last example you saw that the initial True object is never replaced as the key. Therefore, the dictionary’s string representation still prints the key as True (instead of 1 or 1.0.)
+
+“With what we know now, it looks like the values in the resulting dict are getting overwritten only because they compare as equal. However, it turns out that this effect isn’t caused by the __eq__ equality check alone, either.
+
+Python dictionaries are backed by a hash table data structure. When I first saw this surprising dictionary expression, my hunch was that this behavior had something to do with hash collisions.
+
+You see, a hash table internally stores the keys it contains in different “buckets” according to each key’s hash value. The hash value is derived from the key as a numeric value of a fixed length that uniquely identifies the key.
+
+This allows for fast lookups. It’s much quicker to search for a key’s numeric hash value in a lookup table instead of comparing the full key object against all other keys and checking for equality.
+
+However, the way hash values are typically calculated isn’t perfect. And eventually, two or more keys that are actually different will have the same derived hash value, and they will end up in the same lookup table bucket.
+
+“If two keys have the same hash value, that’s called a hash collision, and it’s a special case that the hash table’s algorithms for inserting and finding elements need to handle.
+
+Based on that assessment, it’s fairly likely that hashing has something to do with the surprising result we got from our dictionary expression. So let’s find out if the keys’ hash values also play a role here.
+
+I’m defining the following class as our little detective tool:
+
+class AlwaysEquals:
+    def __eq__(self, other):
+        return True
+    def __hash__(self):
+        return id(self)
+
+“This class is special in two ways.
+
+First, because its __eq__ dunder method always returns True, all instances of this class will pretend they’re equal to any other object:
+
+>>> AlwaysEquals() == AlwaysEquals()
+True
+>>> AlwaysEquals() == 42
+True
+>>> AlwaysEquals() == 'waaat?'
+True
+
+“And second, each AlwaysEquals instance will also return a unique hash value generated by the built-in id() function:
+
+>>> objects = [AlwaysEquals(),
+               AlwaysEquals(),
+               AlwaysEquals()]
+>>> [hash(obj) for obj in objects]
+[4574298968, 4574287912, 4574287072]
+
+In CPython, id() returns the address of the object in memory, which is guaranteed to be unique.
+
+With this class we can now create objects that pretend to be equal to any other object but have a unique hash value associated with them. That’ll allow us to test if dictionary keys are overwritten based on their equality comparison result alone.
+
+And, as you can see, the keys in the next example are not getting overwritten, even though they always compare as equal:
+
+AlwaysEquals() == AlwaysEquals() # True
+
+{AlwaysEquals():'yes', AlwaysEquals():'no'}
+{<__main__.AlwaysEquals at 0x103e4f550>: 'yes',
+ <__main__.AlwaysEquals at 0x103e4f198>: 'no'}
+
+ a = SameHash()
+b = SameHash()
+print(a) # <__main__.SameHash object at 0x10327c470>
+print(b) # <__main__.SameHash object at 0x10327c080>
+a == b
+print(hash(a)) # 1
+print(hash(b)) # 1
+
+{a: 'a', b:'b'}
+{<__main__.SameHash at 0x10327c630>: 'a',
+ <__main__.SameHash at 0x10327c5c0>: 'b'}
+
+As this example shows, the “keys get overwritten” effect isn’t caused by hash value collisions alone either.
+
+Dictionaries check for equality and compare the hash value to determine if two keys are the same. Let’s try and summarize the findings of our investigation:
+
+The {True: 'yes', 1: 'no', 1.0: 'maybe'} dictionary expression evaluates to {True: 'maybe'} because the keys True, 1, and 1.0 all compare as equal, and they all have the same hash value:
+
+## check equality
+print(True == 1 == 1.0) # True
+
+## check hash
+print(hash(True)) # 1
+print(hash(1)) # 1
+print(hash(1.0)) # 1
+
+Perhaps not-so-surprising anymore, that’s how we ended up with this result as the dictionary’s final state:
+
+>>> {True: 'yes', 1: 'no', 1.0: 'maybe'}
+{True: 'maybe'}
+
+## Coming back to the AlwaysEquals Class, if the hash is equal and the 
+## key value is equal then key remains the same and the value overrides
+class AlwaysEquals:
+    def __eq__(self, other):
+        return True
+    def __hash__(self):
+        return 1
+
+{AlwaysEquals():'yes', AlwaysEquals():'no'} # {<__main__.AlwaysEquals at 0x10327c470>: 'no'}
+
+Key Takeaways on Dictionaries Internals
+=========================================
+Dictionaries treat keys as identical if their __eq__ comparison result says they’re equal and their hash values are the same.
+Unexpected dictionary key collisions can and will lead to surprising results.
+
+So Many Ways to Merge Dictionaries
+====================================
+If we have two dicts and we want to create a new dict y merging these dicts then we can use following ways:
+using update():
+---------------
+xs = {'a':1, 'b':2,}
+ys = {'b':2, 'c':3,}
+zs = {}
+zs.update(xs)
+zs.update(ys)
+zs # {'a': 1, 'b': 2, 'c': 3}
+
+internally update function is like below:
+def update(dict1, dict2):
+    for key, value in dict2.items():
+        dict1[key] = value
+
+You could expand this chain of update() calls for as long as you like in order to merge any number of dictionaries into one. 
+
+using unpacking:
+----------------
+dict(xs, **ys) ## {'a': 1, 'b': 2, 'c': 3}
+
+Just like making repeated update() calls, this approach only works for merging two dictionaries and cannot be generalized to combine an arbitrary number of dictionaries in one step.
+
+pretier way of unpacking since v-3.5 (This one should be preferred)
+==========================================================
+zs = {**xs, **ys} # {'a': 1, 'b': 2, 'c': 3}
+
+The right-hand side takes priority, and a value in ys overrides any existing value under the same key in xs. This becomes clear when we look at the dictionary that results from the merge operation:
+
+Key Takeaways from merging dictionaries:
+-----------------------------------------
+* In Python 3.5 and above you can use the **-operator to merge multiple dictionary objects into one with a single expression, overwriting existing keys left-to-right.
+* To stay compatible with older versions of Python, you might want to use the built-in dictionary update() method instead.
+
+“Have you ever tried hunting down a bug in one of your programs by sprinkling a bunch of debug “print” statements to trace the execution flow? Or maybe you needed to generate a log message to print some configuration settings…
+
+I have—and I’ve often been frustrated with how difficult some data structures are to read in Python when they’re printed as text strings. For example, here’s a simple dictionary. Printed in an interpreter session, the key order is arbitrary, and there’s no indentation to the resulting string:
+
+Luckily there are some easy-to-use alternatives to a straight up to-str conversion that give a more readable result. One option is using Python’s built-in json module. You can use json.dumps() to pretty-print Python dicts with nicer formatting:
+
+import json
+json.dumps(zs, indent=4, sort_keys=True)
+
+These settings result in a nicely indented string representation that also normalizes the order of the dictionary keys for better legibility.
+
+While this looks nice and readable, it isn’t a perfect solution. Printing dictionaries with the json module only works with dicts that contain primitive types—you’ll run into trouble trying to print a dictionary that contains a non-primitive data type, like a function:
+
+“>>> json.dumps({all: 'yup'})
+TypeError: "keys must be a string"
+Another downside of using json.dumps() is that it can’t stringify complex data types, like sets:
+
+>>> mapping['d'] = {1, 2, 3}
+>>> json.dumps(mapping)
+TypeError: "set([1, 2, 3]) is not JSON serializable"
+Also, you might run into trouble with how Unicode text is represented—in some cases you won’t be able to take the output from json.dumps and copy and paste it into a Python interpreter session to reconstruct the original dictionary object.
+
+The classical solution to pretty-printing objects in Python is the built-in pprint module. Here’s an example:
+
+import pprint
+pprint.pprint(zs)
+
+You can see that pprint is able to print data types like sets, and it also prints the dictionary keys in a reproducible order. Compared to the standard string representation for dictionaries, what we get here is much easier on the eyes.
+
+“However, compared to json.dumps(), it doesn’t represent nested structures as well visually. Depending on the circumstances, this can be an advantage or a disadvantage. I occasionally use json.dumps() to print dictionaries because of the improved readability and formatting, but only if I’m sure they’re free of non-primitive data types.
+
+Key Takeaways from pretty printing Dicts:
+-------------------------------------------
+The default to-string conversion for dictionary objects in Python can be difficult to read.
+The pprint and json module are “higher-fidelity” options built into the Python standard library.
+Be careful with using json.dumps() and non-primitive keys and values as this will trigger a TypeError.
 
 
