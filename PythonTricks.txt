@@ -3136,4 +3136,144 @@ The default to-string conversion for dictionary objects in Python can be difficu
 The pprint and json module are “higher-fidelity” options built into the Python standard library.
 Be careful with using json.dumps() and non-primitive keys and values as this will trigger a TypeError.
 
+Python Productivity techniques:
+-------------------------------
+Exploring Python modules and objects:
+-------------------------------------
+If you want to get the details of all the classes, methods, function in module; you can use dir() to get the details of the module.
+Let say you want to understand details of datetime.
+
+>>> import datetime
+>>> dir(datetime)
+
+Since everything is an object in python therefore not only modules but same technique works for classes and DataStructures.
+
+>>> dir(datetime.date)
+
+Sometimes calling dir() on an object will result in too much information—on a complex module or class you’ll get a long printout that’s difficult to read quickly. Here’s a little trick you can use to filter down the list of attributes to just the ones you’re interested in:
+
+import datetime
+[_ for _ in dir(datetime) if 'date' in _.lower()] # ['date', 'datetime', 'datetime_CAPI']
+
+help()
+------
+help() is another useful function which helps you get complete documentation of an object in python.
+help(datetime)
+It's similar to man of Unix
+
+Help on module datetime:
+
+NAME
+    datetime - Fast implementation of the datetime type.
+
+MODULE REFERENCE
+    https://docs.python.org/3.7/library/datetime
+    
+    The following documentation is automatically generated from the Python
+    source files.  It may be incomplete, incorrect or include features that
+    are considered implementation detail and may vary between Python
+    implementations.  When in doubt, consult the module reference at the
+    location listed above.
+
+You can call help() on arbitrary Python objects, including other built-in functions and your own Python classes. The Python interpreter automatically generates this documentation from the attributes on an object and its docstring (if available.) 
+
+help(datetime.date)
+Help on class date in module datetime:
+
+class date(builtins.object)
+ |  date(year, month, day) --> date object
+ |  
+ |  Methods defined here:
+ |  
+ |  __add__(self, value, /)
+ |      Return self+value.
+
+Key Takeaways on dir() and help()
+=================================
+Use the built-in dir() function to interactively explore Python modules and classes from an interpreter session.
+The help() built-in lets you browse through the documentation right from your interpreter (hit q to exit.)
+
+
+Peeking Behind the Bytecode Curtain
+------------------------------------
+When the CPython interpreter executes your program, it first translates it into a sequence of bytecode instructions. Bytecode is an intermediate language for the Python virtual machine that’s used as a performance optimization.
+
+Instead of directly executing the human-readable source code, compact numeric codes, constants, and references are used that represent the result of compiler parsing and semantic analysis.
+
+This saves time and memory for repeated executions of programs or parts of programs. For example, the bytecode resulting from this compilation step is cached on disk in .pyc and .pyo files so that executing the same Python file is faster the second time around.
+
+
+
+How below function is converted internally?
+
+def greet(name):
+    return 'Hello, ' + name + '!'
+>>> greet('Guido')
+'Hello, Guido!
+
+Remember how I said that CPython first translates our source code into an intermediate language before it “runs” it? Well, if that’s true, we should be able to see the results of this compilation step. And we can.
+
+Each function has a __code__ attribute (in Python 3) that we can use to get at the virtual machine instructions, constants, and variables used by our greet function:
+
+>>> greet.__code__.co_code
+b'd\x01|\x00\x17\x00d\x02\x17\x00S\x00'
+>>> greet.__code__.co_consts
+(None, 'Hello, ', '!')
+>>> greet.__code__.co_varnames
+('name',)
+You can see co_consts contains parts of the greeting string our function assembles. Constants and code are kept separate to save memory space. Constants are, well, constant—meaning they can never be modified and are used interchangeably in multiple places.
+
+So instead of repeating the actual constant values in the co_code instruction stream, Python stores constants separately in a lookup table. The instruction stream can then refer to a constant with an index into the lookup table. The same is true for variables stored in the co_varnames field.
+
+I hope this general concept is starting to become more clear. But looking at the co_code instruction stream still makes me feel a little queasy. This intermediate language is clearly meant to be easy to work with for the Python virtual machine, not humans. After all, that’s what the text-based source code is for.
+
+“The developers working on CPython realized that too. So they gave us another tool called a disassembler to make inspecting the bytecode easier.
+
+Python’s bytecode disassembler lives in the dis module that’s part of the standard library. So we can just import it and call dis.dis() on our greet function to get a slightly easier-to-read representation of its bytecode:
+
+>>> import dis
+>>> dis.dis(greet)
+  2           0 LOAD_CONST           1 ('Hello, ')
+              2 LOAD_FAST            0 (name)
+              4 BINARY_ADD
+              6 LOAD_CONST           2 ('!')
+              8 BINARY_ADD
+             10 RETURN_VALUE
+The main thing disassembling did was split up the instruction stream and give each opcode in it a human-readable name like LOAD_CONST.
+
+You can also see how constant and variable references are now interleaved with the bytecode and printed in full to spare us the mental gymnastics of a co_const or co_varnames table lookup. Neat!
+
+Looking at the human-readable opcodes, we can begin to understand how CPython represents and executes the 'Hello, ' + name + '!' expression in the original greet() function.
+
+It first retrieves the constant at index 1 ('Hello, ') and puts it on the stack. It then loads the contents of the name variable and also puts them on the stack.
+
+The stack is the data structure used as internal working storage for the virtual machine. There are different classes of virtual machines and one of them is called a stack machine. CPython’s virtual machine is an implementation of such a stack machine. If the whole thing is named after the stack, you can imagine what a central role this data structure plays.
+
+What’s interesting about a stack as an abstract data structure is that, at the bare minimum, it only supports two operations: push and pop. Push adds a value to the top of the stack and pop removes and returns the topmost value. Unlike an array, there’s no way to access elements “below” the top level.
+
+
+
+
+
+Key Takeaways on Virtual Machine and it's Internal workings
+============================================================
+CPython executes programs by first translating them into an intermediate bytecode and then running the bytecode on a stack-based virtual machine.
+You can use the built-in dis module to peek behind the scenes and inspect the bytecode.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
