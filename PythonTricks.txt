@@ -3252,9 +3252,6 @@ The stack is the data structure used as internal working storage for the virtual
 What’s interesting about a stack as an abstract data structure is that, at the bare minimum, it only supports two operations: push and pop. Push adds a value to the top of the stack and pop removes and returns the topmost value. Unlike an array, there’s no way to access elements “below” the top level.
 
 
-
-
-
 Key Takeaways on Virtual Machine and it's Internal workings
 ============================================================
 CPython executes programs by first translating them into an intermediate bytecode and then running the bytecode on a stack-based virtual machine.
