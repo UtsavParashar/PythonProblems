@@ -1,0 +1,216 @@
+PandasCookBook:
+---------------
+
+conda activate myenv
+jupyter notebook
+
+==========================
+1. Foundations:
+==========================
+You will learn how to select a single column of data from a DataFrame (a two-dimensional dataset), which is returned as a Series (a one-dimensional dataset). Working with this one-dimensional object makes it easy to show how different methods and operators work. Many Series methods return another Series as output. This leads to the possibility of calling further methods in succession, which is known as METHOD CHAINING.
+
+The pandas DataFrame 
+----------------------
+Before diving deep into pandas, it is worth knowing the components of the DataFrame. Visually, the outputted display of a pandas DataFrame (in a Jupyter Notebook) appears to be nothing more than an ordinary table of data consisting of rows and columns. Hiding beneath the surface are the three components—the INDEX, COLUMNS, AND DATA that you must be aware of to maximize the DataFrame's full potential.
+
+movies = pd.read_csv(data + 'movie.csv')
+movies.head()
+
+How it works?
+pandas first reads the data from disk into memory and into a DataFrame using the read_csv function. By convention, the terms index label and column name refer to the individual members of the index and columns, respectively. The term index refers to all the index labels as a whole, just as the term columns refers to all the column names as a whole. 
+The labels in index and column names allow for pulling out data based on the index and column name. We will show that later. The index is also used for alignment. When multiple Series or DataFrames are combined, the indexes align first before any calculation occurs. A later recipe will show this as well. 
+Collectively, the columns and the index are known as the axes. More specifically, the index is axis 0, and the columns are axis 1. 
+pandas uses NaN (not a number) to represent missing values. Notice that even though the color column has string values, it uses NaN to represent a missing value.
+
+DATAFRAME ATTRIBUTES - INDEX, COLUMNS AND DATA
+-----------------------------------------------
+Each of the three DataFrame components–the index, columns, and data–may be accessed from a DataFrame. You might want to perform operations on the individual components and not on the DataFrame as a whole. In general, though we can pull out the data into a NumPy array, unless all the columns are numeric, we usually leave it in a DataFrame. DataFrames are ideal for managing heterogenous columns of data, NumPy arrays not so much. This recipe pulls out the index, columns, and the data of the DataFrame into their own variables, and then shows how the columns and index are inherited from the same object.
+
+We Use the DataFrame attributes index, columns, and values to assign the index, columns, and data to their own variables:
+
+columns = movies.columns
+index = movies.index
+data = movies.to_numpy()
+
+Datatypes of attributes:
+type(columns) # pandas.core.indexes.base.Index
+type(index)  # pandas.core.indexes.range.RangeIndex
+type(data)   # numpy.ndarray
+
+The index and the columns are closely related. Both of them are subclasses of Index. This allows you to perform similar operations on both the index and the columns:
+
+issubclass(pd.RangeIndex, pd.Index) # True == Index --> NumericIndex --> IntegerIndex --> Int64Index -->RangeIndex
+issubclass(columns.__class__, pd.Index) # True
+
+How it works 
+-------------
+The index and the columns represent the same thing but along different axes. They are occasionally referred to as the row index and column index. There are many types of index objects in pandas. If you do not specify the index, pandas will use a RangeIndex. A RangeIndex is a subclass of an Index that is analogous to Python's range object. Its entire sequence of values is not loaded into memory until it is necessary to do so, thereby saving memory. It is completely defined by its start, stop, and step values.
+
+When possible, Index objects are implemented using hash tables that allow for very fast selection and data alignment. They are similar to Python sets in that they support operations such as intersection and union, but are dissimilar because they are ordered and can have duplicate entries. 
+
+Notice how the .values DataFrame attribute returned a NumPy n-dimensional array, or ndarray. Most of pandas relies heavily on the ndarray. Beneath the index, columns, and data are NumPy ndarrays. They could be considered the base object for pandas that many other objects are built upon. To see this, we can look at the values of the index and columns:
+
+movies.values # array([['Color', 'James Cameron', 723.0, ..., 7.9, 1.78, 33000],...
+
+Having said all of that, we usually do not access the underlying NumPy objects. We tend to leave the objects as pandas objects and use pandas operations. However, we regularly apply NumPy functions to pandas objects.
+
+UNDERSTANDING DATA TYPES 
+-------------------------
+In very broad terms, data may be classified as either continuous or categorical. Continuous data is always numeric and represents some kind of measurements, such as height, wage, or salary. Continuous data can take on an infinite number of possibilities. Categorical data, on the other hand, represents discrete, finite amounts of values such as car color, type of poker hand, or brand of cereal. pandas does not broadly classify data as either continuous or categorical. Instead, it has precise technical definitions for many distinct data types. The following describes common pandas data types: 
+float – The NumPy float type, which supports missing values 
+int – The NumPy integer type, which does not support missing values '
+Int64' – pandas nullable integer type 
+object – The NumPy type for storing strings (and mixed types) 
+'category' – pandas categorical type, which does support missing values 
+bool – The NumPy Boolean type, which does not support missing values (None becomes False, np.nan becomes True) 
+'boolean' – pandas nullable Boolean type datetime64[ns] – The NumPy date type, which does support missing values (NaT)
+
+Use the .dtypes attribute to display each column name along with its data type:
+movies.dtypes
+color                         object
+director_name                 object
+num_critic_for_reviews       float64
+
+movies.dtypes.value_counts()
+float64    13
+object     12
+int64       3
+dtype: int64
+
+movies['director_name'].value_counts()
+Steven Spielberg     26
+Woody Allen          22
+Clint Eastwood       20
+
+Look at .info() method - It provides dataframe information briefly
+The .info method prints the data type information in addition to the count of non-null values. It also lists the amount of memory used by the DataFrame. This is useful information, but is printed on the screen. The .dtypes attribute returns a pandas Series if you needed to use the data.
+
+movies.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 4916 entries, 0 to 4915
+Data columns (total 28 columns):
+ #   Column                     Non-Null Count  Dtype  
+---  ------                     --------------  -----  
+ 0   color                      4897 non-null   object 
+
+dtypes: float64(13), int64(3), object(12)
+memory usage: 1.1+ MB
+
+Each DataFrame column lists one type. For instance, every value in the column aspect_ratio is a 64-bit float, and every value in movie_facebook_likes is a 64-bit integer. pandas defaults its core numeric types, integers, and floats to 64 bits regardless of the size necessary for all data to fit in memory. Even if a column consists entirely of the integer value 0, the data type will still be int64. 
+
+The .value_counts method returns the count of all the data types in the DataFrame when called on the        .dtypes attribute. 
+
+The object data type is the one data type that is unlike the others. A column that is of the object data type may contain values that are of any valid Python object. Typically, when a column is of the object data type, it signals that the entire column is strings. When you load CSV files and string columns are missing values, pandas will stick in a NaN (float) for that cell. So the column might have both object and float (missing) values in it. The .dtypes attribute will show the column as an object (or O on the series). It will not show it as a mixed type column (that contains both strings and floats):
+
+pd.Series(['Paul', np.nan, 'George', 10.]).dtypes # dtypes('O')
+There is also a variable dtype which works on series and not on dataframe.
+
+Almost all of pandas data types are built from NumPy. This tight integration makes it easier for users to integrate pandas and NumPy operations. As pandas grew larger and more popular, the object data type proved to be too generic for all columns with string values. pandas created its own categorical data type to handle columns of strings (or numbers) with a fixed number of possible values.
+
+Selecting a column 
+--------------------
+Selecting a single column from a DataFrame returns a Series (that has the same index as the DataFrame). It is a single dimension of data, composed of just an index and the data. You can also create a Series by itself without a DataFrame, but it is more common to pull them off of a DataFrame.
+
+This recipe examines two different syntaxes to select a single column of data, a Series. One syntax uses the index operator and the other uses attribute access (or dot notation).
+
+movies['director_name'] or
+movies.director_name
+
+We can also index off of the .loc and .iloc attributes to pull out a Series. The former allows us to pull out by column name, while the latter by position. These are referred to as label-based and positional-based in the pandas documentation.
+
+The usage of .loc specifies a selector for both rows and columns separated by a comma. The row selector is a slice with no start or end name (:) which means select all of the rows. The column selector will just pull out the column named director_name. The .iloc index operation also specifies both row and column selectors. 
+The row selector is the slice with no start or end index (:) that selects all of the rows. The column selector, 1, pulls off the second column (remember that Python is zero-based):
+
+movies.loc[:, 'director_name']
+movies.iloc[:, 1]
+
+You can also view the index, type, length, and name of the series with the appropriate attributes:
+movies['director_name'].index # RangeIndex(start=0, stop=4916, step=1)
+movies['director_name'].dtype # dtype('O')
+movies['director_name'].size  # 4916
+movies['director_name'].name  # 'director_name
+type(movies['director_name']) # pandas.core.series.Series
+
+Note that even though the type is reported as OBJECT, because there are missing values, the Series has both floats and strings in it. We can use the .apply method with the type function to get back a Series that has the type of every member. Rather than looking at the whole Series result, we will chain the .unique method onto the result, to look at just the unique types that are found in the director_name column:
+
+movies['director_name'].apply(type).unique() # array([<class 'str'>, <class 'float'>], dtype=object)
+
+A pandas DataFrame typically has multiple columns (though it may also have only one column). Each of these columns can be pulled out and treated as a Series. 
+There are many mechanisms to pull out a column from a DataFrame. Typically the easiest is to try and access it as an attribute. 
+Attribute access is done with the dot operator (.notation). 
+There are good things about this: 
+Least amount of typing 
+Jupyter will provide completion on the name 
+Jupyter will provide completion on the Series attributes 
+There are some downsides as well: 
+Only works with columns that have names that are valid Python attributes and do not conflict with existing DataFrame attributes 
+Cannot create a new column, can only update existing ones.
+
+What is a valid Python attribute? 
+A sequence of alphanumerics that starts with a character and includes underscores. Typically these are in lowercase to follow standard Python naming conventions. This means that column names with spaces or special characters will not work with an attribute. 
+
+Selecting column names using the index operator ([) will work with any column name. You can also create and update columns with this operator. Jupyter will provide completion on the column name when you use the index operator, but sadly, will not complete on subsequent Series attributes. 
+
+I often find myself using attribute access because getting completion on the Series attribute is very handy. But, I also make sure that the column names are valid Python attribute names that don't conflict with existing DataFrame attributes. I also try not to update using either attribute or index assignment, but rather using the .assign method.
+
+ Calling Series methods 
+ -----------------------
+ A typical workflow in pandas will have you going back and forth between executing statements on Series and DataFrames. Calling Series methods is the primary way to use the abilities that the Series offers. Both Series and DataFrames have a tremendous amount of power. We can use the built-in dir function to uncover all the attributes and methods of a Series. 
+ In the following code, we also show the number of attributes and methods common to both Series and DataFrames. Both of these objects share the vast majority of attribute and method names:
+
+s_attr_methods = set(dir(pd.Series))
+len(s_attr_methods) # 434
+
+df_attr_methods = set(dir(pd.DataFrame))
+len(df_attr_methods) # 441
+
+len(s_attr_methods & df_attr_methods) # 384
+
+After reading in the movies dataset, select two Series with different data types. The director_name column contains strings (pandas calls this an object or O data type), and the column actor_1_facebook_likes contains numerical data (formally float64):
+
+director = movies.director_name
+fb_likes = movies.actor_1_facebook_likes
+director.dtype # dtype('O')
+fb_likes.dtype # dtype('float64')
+
+
+The .head method lists the first five entries of a Series. You may provide an optional argument to change the number of entries returned. Another option is to use the .sample method to view some of the data. Depending on your dataset, this might provide better insight into your data as the first rows might be very different from subsequent rows:
+
+director.head() ~ 5#director in kdb
+director.sample(5, random_state=42) ~ 5?director in kdb
+
+The data type of the Series usually determines which of the methods will be the most useful. For instance, one of the most useful methods for the object data type Series is .value_counts, which calculates the frequencies:
+director.value_counts()
+
+The .value_counts method is typically more useful for Series with object data types but can occasionally provide insight into numeric Series as well. Used with fb_likes, it appears that higher numbers have been rounded to the nearest thousand as it is unlikely that so many movies received exactly 1,000 likes:
+fb_likes.value_counts()
+
+Counting the number of elements in the Series may be done with the .size or .shape attribute or the built-in len function. The .unique method will return a NumPy array with the unique values:
+
+director.size # 4916
+type(director.size) # int
+director.shape # (4916,)
+type(director.shape) # tuple
+director.unique() # return numpy ndarray with unique elements from a Series
+
+Methods and variables:
+columns
+index
+to_numpy()
+head()
+tail()
+values()
+dtype - works for only series
+dtypes - works for both series and dataframe
+value_counts()
+info()
+size - get the size, upper bound of the series or dataframe, return type int
+shape - return (rows, columns) like (2, 10) for df and (2,) for series and returns a tuple
+name - get the name of the series
+apply() - apply a function over the series
+unique() - get the unique values from the series. similar to distinct funtion in kdb
+assign() - Assign value to new or existing column in a df
+sample(int, random_state=) - Get random values from the series or df, similar to 5?table in kdb
+
+
+
