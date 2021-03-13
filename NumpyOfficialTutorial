@@ -1,0 +1,49 @@
+NumpyOfficialTutorial
+---------------------
+
+ndarray - 
+==========
+NumPy’s array class is called ndarray. It is also known by the alias array. Note that numpy.array is not the same as the Standard Python Library class array.array, which only handles one-dimensional arrays and offers less functionality. The more important attributes of an ndarray object are:
+
+a = np.arange(20).reshape(5,4)
+print(a.ndim) # 2
+print(a.shape) # (5,4)
+print(a.size) # 20
+print(a.dtype) # int64
+print(a.itemsize) # 8, size of each item in a array in byte
+print(a.data) # 0x126b50520 - Memory location
+print(type(a)) # <class 'numpy.ndarray'>
+
+Array Creation
+==============
+There are several ways to create arrays.
+For example, you can create an array from a regular Python list or tuple using the array function. The type of the resulting array is deduced from the type of the elements in the sequences.
+>>> import numpy as np
+>>> a = np.array([2, 3, 4])
+
+A frequent error consists in calling array with multiple arguments, rather than providing a single sequence as an argument.
+>>> a = np.array(1, 2, 3, 4)    # WRONG
+TypeError: array() takes from 1 to 2 positional arguments but 4 were given
+
+array transforms sequences of sequences into two-dimensional arrays, sequences of sequences of sequences into three-dimensional arrays, and so on.
+a = np.array([[1,1,[2,3]], [2,[2,4],3], [[3,1],3,4]], dtype='object')
+a.shape # (3, 3)
+(If we want to create an array of more than 2D then dtype needs to be specified.)
+
+Often, the elements of an array are originally unknown, but its size is known. Hence, NumPy offers several functions to create arrays with initial placeholder content. These minimize the necessity of growing arrays, an expensive operation.
+
+The function zeros creates an array full of zeros, the function ones creates an array full of ones, and the function empty creates an array whose initial content is random and depends on the state of the memory. By default, the dtype of the created array is float64, but it can be specified via the key word argument dtype.
+
+np.zeros([2,2])
+array([[0., 0.],
+       [0., 0.]])
+
+np.ones((3,3), dtype=np.int16)
+array([[1, 1, 1],
+       [1, 1, 1],
+       [1, 1, 1]], dtype=int16)
+
+np.empty([2,2])
+array([[0.0e+000, 4.9e-324],
+       [9.9e-324, 1.5e-323]])
+
