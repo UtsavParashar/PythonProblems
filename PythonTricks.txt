@@ -521,8 +521,8 @@ def greet():
 def abuse():
     return 'bastard'
 
-print(greet())
-print(abuse())
+print(greet()) # HELLO
+print(abuse()) # BASTARD
 
 Applying Multiple Decorators to a function:
 --------------------------------------------
