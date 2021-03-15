@@ -47,3 +47,121 @@ np.empty([2,2])
 array([[0.0e+000, 4.9e-324],
        [9.9e-324, 1.5e-323]])
 
+arange - 
+To create sequences of numbers, NumPy provides the arange function which is analogous to the Python built-in range, but returns an array.
+>>> np.arange(0, 2, 0.3)  # it accepts float arguments
+array([0. , 0.3, 0.6, 0.9, 1.2, 1.5, 1.8])
+
+linspace:
+When arange is used with floating point arguments, it is generally not possible to predict the number of elements obtained, due to the finite floating point precision. For this reason, it is usually better to use the function linspace that receives as an argument the number of elements that we want, instead of the step:
+np.linspace(0,2,9)
+
+Printing Arrays
+One-dimensional arrays are then printed as rows, bidimensionals as matrices and tridimensionals as lists of matrices.
+3-D array as list of 2D array
+If we want to a 3D array with two 2D array then
+np.arange(24).reshape(2,3,4)
+
+If an array is too large to be printed, NumPy automatically skips the central part of the array and only prints the corners:
+np.arange(100000) # array([    0,     1,     2, ..., 99997, 99998, 99999])
+np.arange(10000).reshape(100,100)
+
+To disable this behaviour and force NumPy to print the entire array, you can change the printing options using set_printoptions.
+>>> np.set_printoptions(threshold=sys.maxsize)
+
+Unlike in many matrix languages, the product operator * operates elementwise in NumPy arrays. The matrix product can be performed using the @ operator (in python >=3.5) or the dot function or method:
+a = np.array([[1,1],[0,1]])
+b = np.array([[2,0],[3,4]])
+a*b
+array([[2, 0],
+       [0, 4]])
+a @ b
+array([[5, 4],
+       [3, 4]])
+a.dot(b)
+array([[5, 4],
+       [3, 4]])
+
+Some operations, such as += and *=, act in place to modify an existing array rather than create a new one.
+rg = np.random.default_rng(1) ## create instance of default random number generator
+a = np.ones([2,3], dtype=int)
+b = rg.random([2,3])
+a *= 3
+array([[3, 3, 3],
+       [3, 3, 3]])
+b += a
+array([[3.51182162, 3.9504637 , 3.14415961],
+       [3.94864945, 3.31183145, 3.42332645]])
+
+a += b # b is not automatically converted to integer type
+UFuncTypeError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
+
+When operating with arrays of different types, the type of the resulting array corresponds to the more general or precise one (a behavior known as upcasting).
+
+a = np.ones(3, dtype=np.int32)
+b = np.linspace(0, np.pi, 3)
+b.dtype.name # 'float64'
+a.dtype.name # 'int32'
+c = a + b
+c.dtype.name # 'float64'
+d = np.exp(c*1j)
+d.dtype.name # 'complex128'
+
+Many unary operations, such as computing the sum of all the elements in the array, are implemented as methods of the ndarray class.
+
+a = rg.random((2,3))
+a.sum() # 2.412
+a.max() # 0.980
+a.min() # 0.160
+a.mean() # 0.593
+a.var() # 0.0829
+a.std() # 0.329
+
+By default, these operations apply to the array as though it were a list of numbers, regardless of its shape. However, by specifying the axis parameter you can apply an operation along the specified axis of an array:
+b = np.arange(6).reshape(2,3)
+print(b)
+b.sum(axis=1) # sum of each row
+b.sum(axis=0) # sum of each column
+b.cumsum(axis=0) # cumulative sum of each 
+[[0 1 2]
+ [3 4 5]]
+array([[0, 1, 2],
+       [3, 5, 7]])
+
+NumPy provides familiar mathematical functions such as sin, cos, and exp. In NumPy, these are called “universal functions” (ufunc). Within NumPy, these functions operate elementwise on an array, producing an array as output.
+
+b = np.arange(3) # array([0, 1, 2])
+print(b)
+np.exp(b) # array([1.        , 2.71828183, 7.3890561 ])
+np.sqrt(b) # array([0.        , 1.        , 1.41421356])
+c = np.array([2., -1., 4.])
+print('*'*10)
+print(c)
+print('*'*10)
+np.add(b,c) # array([2., 0., 6.])
+np.all(b) # False
+np.any(b) # True
+d = np.array([[9 ,11, 2], [1, 6, 8]])
+print(d)
+
+# Apply a function to 1-D slices along the given axis.
+np.apply_along_axis(lambda x: (x[0] + x[-1])*.5 , 1, d )  # array([2., 8.])
+# np.apply_over_axes  ## Apply the function over multiple axis
+
+np.argmax(d) # 1  -- return the max index
+np.argmin(d) # 3  -- return the max index
+np.max(d) # 11    -- returns max value
+
+np.argsort(d) ## get the index of the elements as per sorted list
+
+np.average(np.arange(1, 5), weights=np.arange(4)) # 3.33 ## Returns weighted average
+
+# occurence of each element in an array 
+np.bincount([1,2,1,2,1,4]) #  array([0, 3, 2, 0, 1])
+
+
+
+
+
+
+
