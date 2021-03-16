@@ -2076,7 +2076,7 @@ DEBUG - 10
 NOTSET - 0
 
 import Logging
-logging.basicConfig(file='logfile.txt', level=logging.INFO) # This is the file in which logs will be added, default level is logging.WARNING which can be changes
+logging.basicConfig(file='logfile.txt', level=logging.INFO) # This is the file in which logs will be added, default level is logging.WARNING which can be changed
 Eg.
 import logging
 logging.basicConfig(filename='/Users/utsav/log.txt', level=logging.INFO)
