@@ -3305,3 +3305,25 @@ re.findall("[1-9]\d+", s)
 [^abc] -- characters other than abc in teh string
 
 
+-------------------------------------------------------
+raw string - r 
+If you don't want characters prefixed by \ to be interpreted as special characters, you can add a raw string by adding an r before the first quote
+>>> print('C:\ramesh\name')
+amesh
+ame
+>>> print(r'C:\ramesh\name')
+C:\ramesh\name
+
+Two or more string literals (i.e the ones enclosed between quotes) next to each other are automatically concatenated.
+>>> 'Py' 'thon'
+'Python'
+>>> text = ('Put several lines in parentheses '
+...             'to join them together')
+>>> print (text)
+Put several lines in parentheses to join them together
+
+Why is start included and end excluded in slice or any other method?
+So that their concatenation is always equal to string.
+>>> word = 'Python'
+>>> word[:2] + word[2:]
+'Python'
