@@ -293,3 +293,61 @@ If all the arrays are 1-D, where is equivalent to:
 a = np.arange(10)
 np.where(a>3, a, a*10)
 
+Indexing, Slicing and Iterating
+--------------------------------
+One-dimensional arrays can be indexed, sliced and iterated over, much like lists and other Python sequences.
+
+a = np.arange(10)**3
+a # array([  0,   1,   8,  27,  64, 125, 216, 343, 512, 729])
+
+a[2]
+a[:6:2]
+for i in a:
+    print(i**(1/3))
+
+np.fromfunction: Construct an array by executing a function over each coordinate(index).
+np.fromfunction(lambda i,j: i+j, (3,3), dtype=int)
+array([[0, 1, 2],
+       [1, 2, 3],
+       [2, 3, 4]])
+It is adding the index 0,0 , 0,1 etc
+
+np.fromfunction(lambda i,j: i==j, (3,3), dtype=int)
+array([[ True, False, False],
+       [False,  True, False],
+       [False, False,  True]])
+
+Multidimensional arrays can have one index per axis. These indices are given in a tuple separated by commas:
+
+b = np.fromfunction(lambda i,j:10*i+j, (5,4), dtype=int)
+print(b)
+b[2,3]
+b[0:4, 1] # # each row in the second column of b
+
+When fewer indices are provided than the number of axes, the missing indices are considered complete slices:
+b[-1] # array([40, 41, 42, 43])
+
+The expression within brackets in b[i] is treated as an i followed by as many instances of : as needed to represent the remaining axes. NumPy also allows you to write this using dots as b[i, ...].
+
+The dots (...) represent as many colons as needed to produce a complete indexing tuple. For example, if x is an array with 5 axes, then
+
+x[1, 2, ...] is equivalent to x[1, 2, :, :, :],
+x[..., 3] to x[:, :, :, :, 3] and
+x[4, ..., 5, :] to x[4, :, :, 5, :].
+
+b[1,...] # array([10, 11, 12, 13])
+
+Iterating over multidimensional arrays is done with respect to the first axis:
+for row in b:
+    print(row*10)
+
+However, if one wants to perform an operation on each element in the array, one can use the flat attribute which is an iterator over all the elements of the array:
+for element in b.flat:
+    print(element)
+
+Shape Manipulation
+
+
+
+
+
