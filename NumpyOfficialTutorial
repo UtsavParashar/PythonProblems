@@ -345,9 +345,99 @@ However, if one wants to perform an operation on each element in the array, one 
 for element in b.flat:
     print(element)
 
-Shape Manipulation
+SHAPE MANIPULATION
+------------------
+Changing the shape of an array
+An array has a shape given by the number of elements along each axis:
 
+rg = np.random.default_rng(seed=42)
+a = np.floor(10*rg.random((3,4)))
+a.shape
 
+The shape of an array can be changed with various commands. Note that the following three commands all return a modified array, but do not change the original array:
 
+a.ravel() # array([7., 4., 8., 6., 0., 9., 7., 7., 1., 4., 3., 9.])
+# returns the array, flattened  - similar to raze in kdb
+
+a.reshape(2,6) # # returns the array with a modified shape
+
+a.T # # returns the array, transposed
+
+The order of the elements in the array resulting from ravel is normally “C-style”, that is, the rightmost index “changes the fastest”, so the element after a[0, 0] is a[0, 1]. If the array is reshaped to some other shape, again the array is treated as “C-style”. NumPy normally creates arrays stored in this order, so ravel will usually not need to copy its argument, but if the array was made by taking slices of another array or created with unusual options, it may need to be copied. The functions ravel and reshape can also be instructed, using an optional argument, to use FORTRAN-style arrays, in which the leftmost index changes the fastest.
+
+The reshape function returns its argument with a modified shape, whereas the ndarray.resize method modifies the array itself:
+
+a.shape # (3, 4)
+a.resize(4,3)
+a.shape # (4, 3)
+
+If a dimension is given as -1 in a reshaping operation, the other dimensions are automatically calculated:
+a.reshape(6,-1) 
+In this case you need no do the math that I want to convert a 4*3 matrix into 6*2, you just give 6,-1, the reshape method will do the math for you and provide an array of 6 rows and 2 columns
+
+STACKING TOGETHER DIFFERENT ARRAYS -- APPENDING ARRAYS
+----------------------------------- 
+Several arrays can be stacked together along different axes:
+Arrays can be appended horizontally and vertically.
+a = np.arange(4).reshape(2,-1)
+b = np.arange(5,9).reshape(2,-1)
+np.vstack((a,b))
+array([[0, 1],
+       [2, 3],
+       [5, 6],
+       [7, 8]])
+np.hstack((a,b))
+array([[0, 1, 5, 6],
+       [2, 3, 7, 8]])
+
+Eg with single dimentional array
+a = np.arange(5)
+b = np.arange(5)
+np.vstack((a,b))
+array([[0, 1, 2, 3, 4],
+       [0, 1, 2, 3, 4]])
+
+np.hstack((a,b))
+array([0, 1, 2, 3, 4, 0, 1, 2, 3, 4])
+
+The function column_stack stacks 1D arrays as columns into a 2D array. It is equivalent to hstack only for 2D arrays:
+a = np.arange(5)
+b = np.arange(5,10)
+np.column_stack((a,b))
+array([[0, 5],
+       [1, 6],
+       [2, 7],
+       [3, 8],
+       [4, 9]])
+a = np.arange(5)
+b = np.arange(5,10)
+np.row_stack((a,b))
+array([[0, 1, 2, 3, 4],
+       [5, 6, 7, 8, 9]])
+
+On the other hand, the function row_stack is equivalent to vstack for any input arrays. In fact, row_stack is an alias for vstack:
+np.row_stack is np.vstack # True
+
+Note
+In complex cases, r_ and c_ are useful for creating arrays by stacking numbers along one axis. They allow the use of range literals :
+np.r_[1:4,11,22] # array([ 1,  2,  3, 11, 22])
+np.c_[1:4,1:4]
+       array([[1, 1],
+       [2, 2],
+       [3, 3]])
+When used with arrays as arguments, r_ and c_ are similar to vstack and hstack in their default behavior, but allow for an optional argument giving the number of the axis along which to concatenate.
+
+SPLITTING ONE ARRAY INTO SEVERAL SMALLER ONES - SEGREGATING ARRAYS
+-------------------------------------------------------------------
+np.hsplit and np.vsplit
+Using hsplit, you can split an array along its horizontal axis, either by specifying the number of equally shaped arrays to return, or by specifying the columns after which the division should occur:
+vsplit splits along the vertical axis, and array_split allows one to specify along which axis to split.
+
+a = np.arange(16).reshape(4,-1)
+np.hsplit(a, 2)
+np.vsplit(a,2)
+
+COPIES AND VIEWS
+----------------
 
 
