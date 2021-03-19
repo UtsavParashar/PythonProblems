@@ -439,5 +439,199 @@ np.vsplit(a,2)
 
 COPIES AND VIEWS
 ----------------
+Copies and Views
+When operating and manipulating arrays, their data is sometimes copied into a new array and sometimes not. This is often a source of confusion for beginners. There are three cases:
+
+NO COPY AT ALL
+---------------
+Simple assignments make no copy of objects or their data.
+a = np.arange(5)
+b = a
+print(id(a)) # 4902824816
+print(id(b)) # 4902824816
+print(a is b) # True
+print(a == b) # [ True  True  True  True  True]
+
+Python passes mutable/immutable objects as references, so function calls make no copy.
+def f(x):
+    print(id(x))
+
+l = [1,2,3,4]
+print(id(l)) # 4901244608
+f(l) # 4901244608
+
+def f(x):
+    print(id(x))
+
+t = (1,2,3,4)
+print(id(t)) # 4902145936
+f(t) # 4902145936
+
+View or Shallow Copy
+---------------------
+Different array objects can share the same data. The view method creates a new array object that looks at the same data.
+a = np.array([1,2,3])
+print(a.base)                      # None
+c = a.view()
+print(id(a.base))                  # 4527528432
+print(id(a))                       # 4902824016
+print(id(c.base))                  # 4902824016
+print(id(c))                       # 4902822896
+
+np.base - Base object if memory is from some other object.
+like c has the base memory of a in previous example.
+
+a = np.arange(6)
+print(a.flags.owndata) # True
+c = a.view()
+print(id(a)) #4902825456
+print(id(c)) #4932942384
+print(id(c.base)) # 4932943184
+
+print (c is a) # False
+print (c.base is a) # True
+
+#np.flags - Information about the memory layout of the array.
+print(c.flags.owndata) # False
+
+c = c.reshape(2,-1)
+print(c.shape) # (2, 3)
+
+print(a.shape) # (6,)
+
+c[0,0] = 1234
+print(c[0,0]) # 1234
+
+print(a) # [1234    1    2    3    4    5]
+
+SLICING AN ARRAY RETURNS THE VIEW OF IT.
+s = a[:]
+print(s) # [1234    1    2    3    4    5]
+print(a) # [1234    1    2    3    4    5]
+s[:] = 10
+print(s) # [10 10 10 10 10 10]
+print(a) # [10 10 10 10 10 10]
+
+DEEP COPY
+=========
+The copy method makes a complete copy of the array and its data.
+
+a = np.arange(4)
+print(a.base) # None
+print(id(a.base)) # 4527528432
+print(id(a)) # 4932945360
+
+d = a.copy()
+print(d.base) # None
+print(id(d.base)) # 4527528432
+print(id(d)) # 4920218768
+
+d.base is a  # False - d doesn't share anything with a
+
+d[2] = 10
+print(d) # [ 0  1 10  3]
+print(a) # [0 1 2 3]
+
+Sometimes copy should be called after slicing if the original array is not required anymore. For example, suppose a is a huge intermediate result and the final result b only contains a small fraction of a, a deep copy should be made when constructing b with slicing:
+a = np.arange(1e3)
+print(id(a)) # 4932947600
+b = a[:100].copy()
+print(id(b.base)) # 4527528432
+del a # The memory of a can be released
+
+If b = a[:100] is used instead, a is referenced by b and will persist in memory even if del a is executed.
+
+Routines - Functions which are not universal 
+----------
+In this chapter routine docstrings are presented, grouped by functionality. Many docstrings contain example code, which demonstrates basic usage of the routine. The examples assume that NumPy is imported with:
+>>> import numpy as np
+A convenient way to execute examples is the %doctest_mode mode of IPython, which allows for pasting of multi-line examples and preserves indentation.
+
+Array creation routines
+------------------------
+np.arange() - Return evenly spaced values within a given interval.
+       Values are generated within the half-open interval [start, stop) (in other words, the interval including start but excluding stop). For integer arguments the function is equivalent to the Python built-in range function, but returns an ndarray rather than a list.
+
+np.array() - Create an array
+
+np.copy() - Create a deep copy of an array. i.e np.copy(a)
+ndarray.copy() is preferable. like a.copy() 
+
+np.empty() - Return a new array of given shape and type, without initializing entries i.e with random entries.
+       np.empty(6).reshape(2,3)
+
+np.empty_like() - Return a new array with the same shape and type as a given array.
+
+a = np.empty(6).reshape(2,3)
+print(a)
+b = np.empty_like(a)
+print(b)
+
+[[0.000e+00 1.000e+00 2.000e+00]
+ [9.997e+03 9.998e+03 9.999e+03]]
+[[0.000e+00 1.000e+00 2.000e+00]
+ [9.997e+03 9.998e+03 9.999e+03]]
+
+ np.eye() - Return a 2-D array with ones on the diagonal and zeros elsewhere.
+
+ np.fromfile - Construct an array from data in a text or binary file.
+A highly efficient way of reading binary data with a known data-type, as well as parsing simply formatted text files. Data written using the tofile method can be read using this function.
+
+np.fromfunction - Construct an array by executing a function over each coordinate.
+The resulting array therefore has a value fn(x, y, z) at coordinate (x, y, z).
+np.fromfunction(lambda i,j: i*j, (3,3), dtype=int)
+array([[0, 0, 0],
+       [0, 1, 2],
+       [0, 2, 4]])
+
+np.identity - Return the identity array.
+The identity array is a square array with ones on the main diagonal.
+np.identity(3)
+
+How is it different from np.eye?
+np.identity return square array but from np.eye we can get an array of any shape.
+np.eye(2,3)
+np.identity(3)
+np.identity(2,3) # TypeError: Cannot interpret '3' as a data type
+
+np.linspace - Return evenly spaced numbers over a specified interval.
+Returns num evenly spaced samples, calculated over the interval [start, stop].
+The endpoint of the interval can optionally be excluded.
+       np.linspace(2,20,10)
+
+Performace test of linspace and arange and range
+%timeit np.linspace(2,200,10) # 32.7 µs ± 402 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+%timeit np.arange(2,201,2) # 935 ns ± 26.7 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+%timeit [i for i in range(2,201,2)]
+
+np.logspace - Return numbers spaced evenly on a log scale.
+In linear space, the sequence starts at base ** start (base to the power of start) and ends with base ** stop (see endpoint below).
+np.logspace(1,20,10)
+
+np.mgrid - nd_grid instance which returns a dense multi-dimensional “meshgrid”.
+An instance of numpy.lib.index_tricks.nd_grid which returns an dense (or fleshed out) mesh-grid when indexed, so that each returned argument has the same shape. The dimensions and number of the output arrays are equal to the number of indexing dimensions. If the step length is not a complex number, then the stop is not inclusive.
+However, if the step length is a complex number (e.g. 5j), then the integer part of its magnitude is interpreted as specifying the number of points to create between the start and stop values, where the stop value is inclusive.
+       np.mgrid[0:3,0:2]
+
+np.ogrid - nd_grid instance which returns an open multi-dimensional “meshgrid”.
+An instance of numpy.lib.index_tricks.nd_grid which returns an open (i.e. not fleshed out) mesh-grid when indexed, so that only one dimension of each returned array is greater than 1. The dimension and number of the output arrays are equal to the number of indexing dimensions. If the step length is not a complex number, then the stop is not inclusive.
+However, if the step length is a complex number (e.g. 5j), then the integer part of its magnitude is interpreted as specifying the number of points to create between the start and stop values, where the stop value is inclusive.
+       x,y = np.ogrid[:3, :4]
+       x@y
+
+np.ones : 
+Return a new array of given shape and type, filled with ones.
+np.ones([2,3])
+
+np.ones_like() - Return an array of ones with the same shape and type as a given array.
+a = np.arange(6).reshape(2,-1)
+np.ones_like(a)
+
+np.zeros  - Return a new array of given shape and type, filled with zeros.
+np.zeros_like - Return an array of zeros with the same shape and type as a given array.
+
+np.r_ - 
+
+
 
 
