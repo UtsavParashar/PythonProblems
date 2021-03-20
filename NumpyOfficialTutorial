@@ -630,7 +630,15 @@ np.ones_like(a)
 np.zeros  - Return a new array of given shape and type, filled with zeros.
 np.zeros_like - Return an array of zeros with the same shape and type as a given array.
 
-np.r_ - 
+np.r_ - Translates slice objects to concatenation along the first axis.
+This is a simple way to build up arrays quickly. There are two use cases.
+
+If the index expression contains comma separated arrays, then stack them along their first axis.
+np.r_[[1,2],[3,4]]
+
+If the index expression contains slice notation or scalars then create a 1-D array with a range indicated by the slice notation.
+np.r_[([1,2,3,4,5,6,7][1:5]),[3,4]]
+
 
 
 
