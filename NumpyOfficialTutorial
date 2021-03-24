@@ -639,7 +639,52 @@ np.r_[[1,2],[3,4]]
 If the index expression contains slice notation or scalars then create a 1-D array with a range indicated by the slice notation.
 np.r_[([1,2,3,4,5,6,7][1:5]),[3,4]]
 
+CONVERSIONS:
 
+ndarray.astype(): Change the type of ndarray
+a = np.arange(6)
+print(a.dtype) # int64
+a = a.astype(float)
+print(a.dtype) # float64
 
+np.atleast_1d = View each input array into 1-D array
+np.atleast_1d(1, [2,4], [[1,2],[3,4]])
+[array([1]),
+ array([2, 4]),
+ array([[1, 2],
+        [3, 4]])]
+
+np.atleast_2d = View each input array into 2-D array
+np.atleast_2d(1, [2,4], [[1,2],[3,4]])
+[array([[1]]),
+ array([[2, 4]]),
+ array([[1, 2],
+        [3, 4]])]
+
+np.atleast_3d(1, [2,4], [[1,2],[3,4]])
+[array([[[1]]]),
+ array([[[2],
+         [4]]]),
+ array([[[1],
+         [2]],
+ 
+        [[3],
+         [4]]])]
+
+np.asmatrix - Convert and array to a matrix.
+numpy.mat - create a matrix
+asmatrix does not make a copy if the input is already a matrix or an ndarray.
+np.asmatrix(np.arange(4).reshape(2,-1))
+matrix([[0, 1],
+        [2, 3]])
+
+Difference between Numpy arrays and matrices:
+Numpy matrices are strictly 2-dimensional, while numpy arrays (ndarrays) are N-dimensional. Matrix objects are a subclass of ndarray, so they inherit all the attributes and methods of ndarrays.
+
+The main advantage of numpy matrices is that they provide a convenient notation for matrix multiplication: if a and b are matrices, then a*b is their matrix product.
+
+On the other hand, as of Python 3.5, NumPy supports infix matrix multiplication using the @ operator, so you can achieve the same convenience of matrix multiplication with ndarrays in Python >= 3.5.
+
+MANIPULATIONS
 
 
