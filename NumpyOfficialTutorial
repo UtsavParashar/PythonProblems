@@ -927,6 +927,95 @@ masked_array(data=[1, 2, 5],
              mask=[False, False, False],
        fill_value=999999)
 
+Unmasking an entry by direct assignment will silently fail if the masked array has a hard mask, as shown by the hardmask attribute. This feature was introduced to prevent overwriting the mask. To force the unmasking of an entry where the array has a hard mask, the mask must first to be softened using the soften_mask method before the allocation. It can be re-hardened with harden_mask:
 
+If the mask is hard, it cannot be modified.
+
+a = ma.array(np.arange(4), mask=[0,0,1,0], hard_mask=True)
+a
+a[-2] = 20 ## Nothing changed after this
+
+a.soften_mask()
+a[-2] = 20
+a  ## value of a[-2] has been changed to 20
+a.harden_mask()
+
+
+To unmask all masked entries of a masked array (provided the mask isn’t a hard mask), the simplest solution is to assign the constant nomask to the mask:
+a = ma.array(np.arange(4), mask=[0,0,1,0])
+a.mask = ma.nomask
+a
+
+Indexing and slicing
+As a MaskedArray is a subclass of numpy.ndarray, it inherits its mechanisms for indexing and slicing.
+
+When accessing a single entry of a masked array with no named fields, the output is either a scalar (if the corresponding entry of the mask is False) or the special value masked (if the corresponding entry of the mask is True):
+
+a = ma.array(np.arange(4), mask=[0,0,1,0])
+a[1] # 1
+a[2] # masked
+a[2] is ma.masked ## True
+
+If the masked array has named fields, accessing a single entry returns a numpy.void object if none of the fields are masked, or a 0d masked array with the same dtype as the initial array if at least one of the fields is masked.
+
+a = ma.array(np.arange(4).reshape(2,-1), mask=[(0,0), (0,1)])
+a[0] # data=[0, 1]
+a[1] # data=[2, --]
+a[1,1] # masked
+
+
+a = ma.array(np.arange(1,6), mask=[0,1,0,0,1])
+a[1:3] # data=[--, 3],
+a.data # array([1, 2, 3, 4, 5])
+a.mask # array([False,  True, False, False,  True])
+a.compressed() # array([1, 3, 4])
+
+Operations on masked arrays
+Arithmetic and comparison operations are supported by masked arrays. As much as possible, invalid entries of a masked array are not processed, meaning that the corresponding data entries should be the same before and after the operation.
+
+Warning
+We need to stress that this behavior may not be systematic, that masked data may be affected by the operation in some cases and therefore users should not rely on this data remaining unchanged.
+
+The numpy.ma module comes with a specific implementation of most ufuncs. Unary and binary functions that have a validity domain (such as log or divide) return the masked constant whenever the input is masked or falls outside the validity domain:
+
+>>> ma.log([-1, 0, 1, 2])
+masked_array(data=[--, --, 0.0, 0.6931471805599453],
+
+Masked arrays also support standard numpy ufuncs. The output is then a masked array. The result of a unary ufunc is masked wherever the input is masked. The result of a binary ufunc is masked wherever any of the input is masked. If the ufunc also returns the optional context output (a 3-element tuple containing the name of the ufunc, its arguments and its domain), the context is processed and entries of the output masked array are masked wherever the corresponding input fall outside the validity domain:
+
+>>> x = ma.array([-1, 1, 0, 2, 3], mask=[0, 0, 0, 0, 1])
+>>> np.log(x)
+masked_array(data=[--, 0.0, --, 0.6931471805599453, --],
+
+Data with a given value representing missing data
+Let’s consider a list of elements, x, where values of -9999. represent missing data. We wish to compute the average value of the data and the vector of anomalies (deviations from the average):
+
+a = ma.concatenate((ma.arange(1,5), ma.array([999])))
+a[-1] = ma.masked
+a.mean()
+print(a-a.mean())
+
+Filling in the missing data
+Suppose now that we wish to print that same data, but with the missing values replaced by the average value.
+print(a.filled(a.mean()))
+
+Numerical operations
+Numerical operations can be easily performed without worrying about missing values, dividing by zero, square roots of negative numbers, etc.:
+>>> import numpy.ma as ma
+>>> x = ma.array([1., -1., 3., 4., 5., 6.], mask=[0,0,0,0,1,0])
+>>> y = ma.array([1., 2., 0., 4., 5., 6.], mask=[0,0,0,0,0,1])
+>>> print(ma.sqrt(x/y))
+[1.0 -- -- 1.0 -- --]
+
+Ignoring extreme values
+Let’s consider an array d of floats between 0 and 1. We wish to compute the average of the values of d while ignoring any data outside the range [0.2, 0.9]:
+
+>>> d = np.linspace(0, 1, 20)
+>>> print(d.mean() - ma.masked_outside(d, 0.2, 0.9).mean())
+-0.05263157894736836
+
+d = np.arange(10)
+d.mean() # 4.5
+ma.masked_outside(d,5,8).mean() # 6.5
 
 
