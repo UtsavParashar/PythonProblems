@@ -381,6 +381,13 @@ Several arrays can be stacked together along different axes:
 Arrays can be appended horizontally and vertically.
 a = np.arange(4).reshape(2,-1)
 b = np.arange(5,9).reshape(2,-1)
+np.stack((a,b), axis=0) ## append the array without modifying the dimensions
+array([[[0, 1],
+        [2, 3]],
+
+       [[5, 6],
+        [7, 8]]])
+
 np.vstack((a,b))
 array([[0, 1],
        [2, 3],
@@ -393,6 +400,23 @@ array([[0, 1, 5, 6],
 Eg with single dimentional array
 a = np.arange(5)
 b = np.arange(5)
+np.stack((a,b), axis=0)
+array([[0, 1, 2, 3, 4],
+       [0, 1, 2, 3, 4]])
+np.stack((a,b), axis=1)
+array([[0, 0],
+       [1, 1],
+       [2, 2],
+       [3, 3],
+       [4, 4]])
+
+np.dstack((a,b))
+array([[0, 0],
+       [1, 1],
+       [2, 2],
+       [3, 3],
+       [4, 4]])
+
 np.vstack((a,b))
 array([[0, 1, 2, 3, 4],
        [0, 1, 2, 3, 4]])
@@ -429,13 +453,44 @@ When used with arrays as arguments, r_ and c_ are similar to vstack and hstack i
 
 SPLITTING ONE ARRAY INTO SEVERAL SMALLER ONES - SEGREGATING ARRAYS
 -------------------------------------------------------------------
-np.hsplit and np.vsplit
+np.split, np.dsplit, np.hsplit and np.vsplit
 Using hsplit, you can split an array along its horizontal axis, either by specifying the number of equally shaped arrays to return, or by specifying the columns after which the division should occur:
 vsplit splits along the vertical axis, and array_split allows one to specify along which axis to split.
 
+a = np.arange(16)
+np.split(a,2)
+[array([0, 1, 2, 3, 4, 5, 6, 7]), array([ 8,  9, 10, 11, 12, 13, 14, 15])]
+
+a = np.arange(16).reshape(2,2,4)
+np.dsplit(a,2)
+[array([[[ 0,  1],
+         [ 4,  5]],
+ 
+        [[ 8,  9],
+         [12, 13]]]),
+ array([[[ 2,  3],
+         [ 6,  7]],
+ 
+        [[10, 11],
+         [14, 15]]])]
+
 a = np.arange(16).reshape(4,-1)
+
 np.hsplit(a, 2)
 np.vsplit(a,2)
+
+np.array_split: splits an array into n subarrays.
+a = np.arange(6)
+np.array_split(a, 4) # [array([0, 1]), array([2, 3]), array([4]), array([5])]
+
+a = np.arange(2)
+np.array_split(a, 3) # [array([0]), array([1]), array([], dtype=int64)]
+
+It is different from np.split in the sense that np.split can split the array into equal sized arrays but np.array_split can split the array into any number of arrays
+a = np.arange(6)
+np.split(a, 4) ## It will fail with Value error but np.array_split won't.
+
+
 
 COPIES AND VIEWS
 ----------------
@@ -686,5 +741,192 @@ The main advantage of numpy matrices is that they provide a convenient notation 
 On the other hand, as of Python 3.5, NumPy supports infix matrix multiplication using the @ operator, so you can achieve the same convenience of matrix multiplication with ndarrays in Python >= 3.5.
 
 MANIPULATIONS
+--------------
+np.array_split - Split the arrays into n sub arrays.
+np.concatenate - Join a sequence of arrays along an existing axis.
+a = np.arange(5)
+b = np.arange(5,10)
+np.concatenate((a,b))
+It is equivalent to - np.stack((a,b)).ravel()
+
+
+
+
+
+
+
+
+
+================
+Masked Arrays:
+================
+Rationale
+Masked arrays are arrays that may have missing or invalid entries. The numpy.ma module provides a nearly work-alike replacement for numpy that supports data arrays with masks.
+
+What is a masked array?
+In many circumstances, datasets can be incomplete or tainted by the presence of invalid data. For example, a sensor may have failed to record a data, or recorded an invalid value. The numpy.ma module provides a convenient way to address this issue, by introducing masked arrays.
+
+A masked array is the combination of a standard numpy.ndarray and a mask. A mask is either nomask, indicating that no value of the associated array is invalid, or an array of booleans that determines for each element of the associated array whether the value is valid or not. When an element of the mask is False, the corresponding element of the associated array is valid and is said to be unmasked. When an element of the mask is True, the corresponding element of the associated array is said to be masked (invalid).
+
+The package ensures that masked entries are not used in computations.
+As an illustration, let’s consider the following dataset:
+
+x = np.array([1,2,3,-1,5])
+print(x.mean()) # 2.0 wrong output because of invalid entry in dataset
+mx = ma.masked_array(x, mask=[0,0,0,1,0])
+mx.mean() # 2.75 correct ouput after masking x as mx
+
+The numpy.ma module
+The main feature of the numpy.ma module is the MaskedArray class, which is a subclass of numpy.ndarray.
+
+To create an array with the second element invalid, we would do:
+ma.array([1,2,3], mask=[0,1,0])
+
+To create a masked array where all values close to 1.e20 are invalid, we would do:
+ma.masked_values([1.0,1.e20, 3.0,4.0], 1.e20)
+We can find the sum of unmasked values as:
+z = ma.masked_values([1.0, 1.e20, 3.0, 4.0], 1.e20).sum()
+
+Constructing masked arrays
+There are several ways to construct a masked array.
+
+A first possibility is to directly invoke the MaskedArray class.
+A second possibility is to use the two masked array constructors, array and masked_array.
+
+array(data[, dtype, copy, order, mask, …])  --> An array class with possibly masked values.
+a = np.array([10,20,30])
+ma.array(a, mask=[0,1,0])
+
+masked_array --> alias of numpy.ma.core.MaskedArray
+a = np.array([10,20,30])
+ma.masked_array(a, mask=[0,1,0])
+
+There are many other methods to create masked array from a given array:
+a = np.arange(10)
+# you want to find mean of first 5 values
+ma.masked_where(a>=5, a).mean()
+
+Methods:
+asarray(a[, dtype, order]) --> Convert the input to a masked array of the given data-type.
+
+asanyarray(a[, dtype]) --> Convert the input to a masked array, conserving subclasses.
+
+fix_invalid(a[, mask, copy, fill_value]) --> Return input with invalid data masked and replaced by a fill value.
+
+masked_equal(x, value[, copy]) --> Mask an array where equal to a given value.
+
+masked_greater(x, value[, copy]) --> Mask an array where greater than a given value.
+
+masked_greater_equal(x, value[, copy]) --> Mask an array where greater than or equal to a given value.
+
+masked_inside(x, v1, v2[, copy]) --> Mask an array inside a given interval.
+
+masked_invalid(a[, copy]) --> Mask an array where invalid values occur (NaNs or infs).
+
+masked_less(x, value[, copy]) --> Mask an array where less than a given value.
+
+masked_less_equal(x, value[, copy]) --> Mask an array where less than or equal to a given value.
+
+masked_not_equal(x, value[, copy]) --> Mask an array where not equal to a given value.
+
+masked_object(x, value[, copy, shrink]) --> Mask the array x where the data are exactly equal to value.
+
+masked_outside(x, v1, v2[, copy]) --> Mask an array outside a given interval.
+
+masked_values(x, value[, rtol, atol, copy, …]) --> Mask using floating point equality.
+
+masked_where(condition, a[, copy]) --> Mask an array where a condition is met.
+
+Accessing the data
+The underlying data of a masked array can be accessed in several ways:
+
+through the data attribute -->  The output is a view of the array as a numpy.ndarray or one of its subclasses, depending on the type of the underlying data at the masked array creation.
+To get all entries of a masked array
+a = np.arange(10)
+ma.masked_array(a).data # array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+through the __array__ method -->  The output is then a numpy.ndarray.
+a = np.arange(10)
+ma.masked_array(a).__array__() # array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+by directly taking a view of the masked array as a numpy.ndarray or one of its subclass (which is actually what using the data attribute does).
+BY USING THE getdata FUNCTION.
+
+Accessing only the valid entries
+To retrieve only the valid entries, we can use the inverse of the mask as an index. The inverse of the mask can be calculated with the numpy.logical_not function or simply with the ~ operator:
+a = np.arange(10)
+m = ma.masked_less_equal(a, 5)
+m[~m.mask]
+# masked_array(data=[6, 7, 8, 9],
+#             mask=[False, False, False, False],
+#       fill_value=999999)
+
+Another way to retrieve the valid data is to use the compressed method, which returns a one-dimensional ndarray (or one of its subclasses, depending on the value of the baseclass attribute):
+Note that the output of compressed is always 1D.
+m.compressed() # array([6, 7, 8, 9])
+
+None of these methods is completely satisfactory if some entries have been marked as invalid. As a general rule, where a representation of the array is required without any masked entries, it is recommended to fill the array with the filled method.
+
+Accessing the mask
+The mask of a masked array is accessible through its mask attribute. We must keep in mind that a True entry in the mask indicates an invalid data.
+
+Another possibility is to use the getmask and getmaskarray functions. getmask(x) outputs the mask of x if x is a masked array, and the special value nomask otherwise. getmaskarray(x) outputs the mask of x if x is a masked array. If x has no invalid entry or is not a masked array, the function outputs a boolean array of False with as many elements as x
+
+Modifying the mask
+Masking an entry
+The recommended way to mark one or several specific entries of a masked array as invalid is to assign the special value masked to them:
+
+x = np.array([1, 2, 3])
+m = ma.array(x)
+m[0] = ma.masked
+m
+masked_array(data=[--, 2, 3],
+             mask=[ True, False, False],
+       fill_value=999999)
+
+y = ma.masked_array(np.arange(9).reshape(3,-1))
+y[(0,1,2),(1,2,0)] = ma.masked
+y
+
+masked_array(
+  data=[[0, --, 2],
+        [3, 4, --],
+        [--, 7, 8]],
+  mask=[[False,  True, False],
+        [False, False,  True],
+        [ True, False, False]],
+  fill_value=999999)
+
+  z = ma.array([1, 2, 3, 4])
+  z[:-2] = ma.masked
+
+A second possibility is to modify the mask directly, but this usage is discouraged.
+Note
+When creating a new masked array with a simple, non-structured datatype, the mask is initially set to the special value nomask, that corresponds roughly to the boolean False. Trying to set an element of nomask will fail with a TypeError exception, as a boolean does not support item assignment.
+
+All the entries of an array can be masked at once by assigning True to the mask:
+>>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
+>>> x.mask = True
+>>> x
+
+Finally, specific entries can be masked and/or unmasked by assigning to the mask a sequence of booleans:
+>>> x = ma.array([1, 2, 3])
+>>> x.mask = [0, 1, 0]
+>>> x
+
+Unmasking an entry
+To unmask one or several specific entries, we can just assign one or several new valid values to them:
+>>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
+>>> x
+masked_array(data=[1, 2, --],
+             mask=[False, False,  True],
+       fill_value=999999)
+>>> x[-1] = 5
+>>> x
+masked_array(data=[1, 2, 5],
+             mask=[False, False, False],
+       fill_value=999999)
+
+
 
 
