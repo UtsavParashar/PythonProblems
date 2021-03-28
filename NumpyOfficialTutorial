@@ -743,19 +743,147 @@ On the other hand, as of Python 3.5, NumPy supports infix matrix multiplication 
 MANIPULATIONS
 --------------
 np.array_split - Split the arrays into n sub arrays.
+
 np.concatenate - Join a sequence of arrays along an existing axis.
 a = np.arange(5)
 b = np.arange(5,10)
 np.concatenate((a,b))
 It is equivalent to - np.stack((a,b)).ravel()
+This function will not preserve masking of MaskedArray inputs.
+a = np.arange(5)
+b = ma.array([10,11,12], mask=[0,1,0])
+np.concatenate([a,b])
+masked_array(data=[ 0,  1,  2,  3,  4, 10, 11, 12],
+             mask=False,
+       fill_value=999999)
 
+np.diagonal - returns diagonal elements from a square matrix.
+a = np.arange(4).reshape(2,-1)
+print(a)
+a.diagonal()
+[[0 1]
+ [2 3]]
+array([0, 3])
 
+for a rectangular matrix, it returns diagonal values of square matrix within rectangular matrix.
+a = np.arange(6).reshape(2,-1)
+print(a)
+a.diagonal()
+[[0 1 2]
+ [3 4 5]]
+array([0, 4])
 
+for 3D matrix, it will return diagonals of two 2D matrix.
+a = np.arange(8).reshape(2,2,-1)
+print(a)
+a.diagonal()
 
+[[[0 1]
+  [2 3]]
+ [[4 5]
+  [6 7]]]
+array([[0, 6],
+       [1, 7]])
 
+How did we get this output?
+place two input matrix side by side and fetch the diagonal
+[0 1]   [4 5] 
+[2 3]   [6 7] 
 
+of these [0,6] and [1,7] are diagonal elements.
 
+It can be applied on Dataframe as below:
+df=DataFrame({
+    'a':[1,2],
+    'b':[3,4]
+})
+np.diagonal(df)
 
+The anti-diagonal can be obtained by reversing the order of elements using either numpy.flipud or numpy.fliplr.
+
+a = np.arange(4).reshape(2,2)
+print(a)
+np.fliplr(a).diagonal() # array([1, 2]) # Horizontal flip
+np.flipud(a).diagonal() # array([2, 1]) # Vertical flip
+
+np.fliplr - Flip array in left/right direction, Input array, must be at least 2-D.
+a = np.arange(4).reshape(2,-1)
+print(a)
+np.fliplr(a)
+[[0 1]
+ [2 3]]
+array([[1, 0],
+       [3, 2]])
+
+np.flipud - Flip array in the up/down direction.
+a = np.arange(4).reshape(2,-1)
+print(a)
+np.flipud(a)
+[[0 1]
+ [2 3]]
+array([[2, 3],
+       [0, 1]])
+
+np.rot90 - rotate the array 90
+a = np.arange(4).reshape(2,-1)
+print(a)
+np.rot90(a)
+
+[[0 1]
+ [2 3]]
+array([[1, 3],
+       [0, 2]])
+
+np.flip - Reverse the order of elements in an array along the given axis.
+a = np.arange(4).reshape(2,-1)
+print(a)
+np.flip(a)
+
+[[0 1]
+ [2 3]]
+array([[3, 2],
+       [1, 0]])
+
+np.diag - create an array with diagonal elements.
+np.diag([2,2])
+array([[2, 0],
+       [0, 2]])
+it is equivalent to
+(np.eye(2)*2).astype(int)
+
+ndarray.item() - get the item from an array based on index.
+
+np.random.seed(3)
+np.random.seed(3)
+x = np.random.randint(9, size=(3,3))
+print(x)
+x.item((2,1)) # 5
+
+[[8 3 8]
+ [8 0 5]
+ [3 5 7]]
+5
+
+np.newaxis - A convenient alias for None, useful for indexing arrays.
+np.newaxis is None
+x = np.array([1,2,3])
+x[:, np.newaxis]
+x[:, np.newaxis] * x
+
+np.repeat - Repeat elements of an array.
+np.repeat(3,4)
+array([3, 3, 3, 3])
+
+np.repeat(np.arange(4).reshape(2,-1), 2, axis=1)
+array([[0, 0, 1, 1],
+       [2, 2, 3, 3]])
+
+np.repeat(np.arange(4).reshape(2,-1), [2,3], axis=0)
+array([[0, 1],
+       [0, 1],
+       [2, 3],
+       [2, 3],
+       [2, 3]])
 
 ================
 Masked Arrays:
@@ -791,11 +919,12 @@ Constructing masked arrays
 There are several ways to construct a masked array.
 
 A first possibility is to directly invoke the MaskedArray class.
-A second possibility is to use the two masked array constructors, array and masked_array.
 
 array(data[, dtype, copy, order, mask, …])  --> An array class with possibly masked values.
 a = np.array([10,20,30])
 ma.array(a, mask=[0,1,0])
+
+A second possibility is to use the two masked array constructors, array and masked_array.
 
 masked_array --> alias of numpy.ma.core.MaskedArray
 a = np.array([10,20,30])
@@ -1017,5 +1146,29 @@ Let’s consider an array d of floats between 0 and 1. We wish to compute the av
 d = np.arange(10)
 d.mean() # 4.5
 ma.masked_outside(d,5,8).mean() # 6.5
+
+np.resize - Return a new array with the specified shape.
+If the new array is larger than the original array, then the new array is filled with repeated copies of a. Note that this behavior is different from a.resize(new_shape) which fills with zeros instead of repeated copies of a.
+a = np.arange(4)
+np.resize(a,3) # array([0, 1, 2])
+a= np.arange(6).reshape(2,-1)
+print(a)
+np.resize(a,[2,5])
+[[0 1 2]
+ [3 4 5]]
+array([[0, 1, 2, 3, 4],
+       [5, 0, 1, 2, 3]])
+
+np.swapaxes  - Interchange two axes of an array.
+a = np.arange(6).reshape(2,-1)
+print(a)
+np.swapaxes(a,1,0)
+[[0 1 2]
+ [3 4 5]]
+array([[0, 3],
+       [1, 4],
+       [2, 5]])
+
+
 
 
