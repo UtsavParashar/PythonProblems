@@ -1,1 +1,339 @@
 PandasOfficialDoc
+-----------------
+pandas: powerful Python data analysis toolkit Release 1.2.3
+------------------------------------------------------------
+
+In pandas a data table is called a DataFrame.
+
+pandas supports the integration with many file formats or data sources out of the box (csv, excel, sql, json, parquet,. . . ). Importing data from each of these data sources is provided by function with the prefix read_*. Similarly, the to_* methods are used to store data.
+
+There is no need to loop over all rows of your data table to do calculations. Data manipulations on a column work elementwise. Adding a column to a DataFrame based on existing data in other columns is straightforward.
+
+Split-apply-combine approach:
+Basic statistics (mean, median, min, max, counts...) are easily calculable. These or custom aggregations can be applied on the entire data set, a sliding window of the data or grouped by categories. The latter is also known as the split-apply-combine approach.
+
+Change the structure of your data table in multiple ways. You can melt() your data table from wide to long/tidy form or pivot() from long to wide format. With aggregations built-in, a pivot table is created with a single command.
+
+Multiple tables can be concatenated both column wise as row wise and database-like join/merge operations are pro- vided to combine multiple tables of data.
+
+pandas has great support for time series and has an extensive set of tools for working with dates, times, and time- indexed data.
+
+Data sets do not only contain numerical data. pandas provides a wide range of functions to clean textual data and extract useful information from it.
+
+Handling Import Errors:
+If you encounter an ImportError, it usually means that Python couldn’t find pandas in the list of available libraries. Python internally has a list of directories it searches through, to find packages. You can obtain these directories with:
+import sys 
+sys.path
+
+Dependencies 
+Package             Minimum supported version
+setuptools              24.2.0
+NumPy                   1.16.5
+python-dateutil         2.7.3
+pytz                    2017.3
+
+Package Overview:
+-----------------
+pandas is a Python package providing fast, flexible, and expressive data structures designed to make working with “relational” or “labeled” data both easy and intuitive. It aims to be the fundamental high-level building block for doing practical, real-world data analysis in Python. Additionally, it has the broader goal of becoming the most powerful and flexible open source data analysis/manipulation tool available in any language. It is already well on its way toward this goal.
+pandas is well suited for many different kinds of data:
+• Tabular data with heterogeneously-typed columns, as in an SQL table or Excel spreadsheet
+• Ordered and unordered (not necessarily fixed-frequency) time series data.
+• Arbitrary matrix data (homogeneously typed or heterogeneous) with row and column labels
+• Any other form of observational / statistical data sets. The data need not be labeled at all to be placed into a pandas data structure
+
+The two primary data structures of pandas, Series (1-dimensional) and DataFrame (2-dimensional), handle the vast majority of typical use cases in finance, statistics, social science, and many areas of engineering. pandas is built on top of NumPy and is intended to integrate well within a scientific computing environment with many other 3rd party libraries.
+
+Here are just a few of the things that pandas does well:
+Easy handling of missing data (represented as NaN) in floating point as well as non-floating point data Size mutability: columns can be inserted and deleted from DataFrame and higher dimensional objects
+Automaticandexplicitdataalignment:objectscanbeexplicitlyalignedtoasetoflabels,ortheusercansimply ignore the labels and let Series, DataFrame, etc. automatically align the data for you in computations
+Powerful, flexible group by functionality to perform split-apply-combine operations on data sets, for both ag- gregating and transforming data
+Make it easy to convert ragged, differently-indexed data in other Python and NumPy data structures into DataFrame objects
+Intelligent label-based slicing, fancy indexing, and subsetting of large data sets Intuitive merging and joining data sets
+Flexible reshaping and pivoting of data sets
+Hierarchical labeling of axes (possible to have multiple labels per tick)
+Robust IO tools for loading data from flat files (CSV and delimited), Excel files, databases, and saving / loading data from the ultrafast HDF5 format
+Time series-specific functionality: date range generation and frequency conversion, moving window statistics, date shifting, and lagging.
+
+Many of these principles are here to address the shortcomings frequently experienced using other languages / scientific research environments. For data scientists, working with data is typically divided into multiple stages: munging and cleaning data, analyzing / modeling it, then organizing the results of the analysis into a form suitable for plotting or tabular display. pandas is the ideal tool for all of these tasks.
+Some other notes
+• pandas is fast. Many of the low-level algorithmic bits have been extensively tweaked in Cython code. However, as with anything else generalization usually sacrifices performance. So if you focus on one feature for your application you may be able to create a faster specialized tool.
+• pandas is a dependency of statsmodels, making it an important part of the statistical computing ecosystem in Python.
+• pandas has been used extensively in production in financial applications.
+
+DataStructures
+df = DataFrame({
+    'Dimensions':[1,2],
+    'Name':['Series', 'DataFrame'],
+    'Description':['1D labeled homogeneously-typed array',
+                  'General 2D labeled, size-mutable tabular structure with potentially heterogeneously-typed column']
+})
+df
+
+
+Dimensions	Name	    Description
+	1	    Series	    1D labeled homogeneously-typed array
+	2	    DataFrame	General 2D labeled, size-mutable tabular structure  with
+                         potentially heterogeneously-typed column
+
+Why more than one data structure?
+The best way to think about the pandas data structures is as flexible containers for lower dimensional data. For example, DataFrame is a container for Series, and Series is a container for scalars. We would like to be able to insert and remove objects from these containers in a dictionary-like fashion.
+Also, we would like sensible default behaviors for the common API functions which take into account the typical orientation of time series and cross-sectional data sets. When using the N-dimensional array (ndarrays) to store 2- and 3-dimensional data, a burden is placed on the user to consider the orientation of the data set when writing functions; axes are considered more or less equivalent (except when C- or Fortran-contiguousness matters for performance). In pandas, the axes are intended to lend more semantic meaning to the data; i.e., for a particular data set, there is likely to be a “right” way to orient the data. The goal, then, is to reduce the amount of mental effort required to code up data transformations in downstream functions.
+For example, with tabular data (DataFrame) it is more semantically helpful to think of the index (the rows) and the columns rather than axis 0 and axis 1. Iterating through the columns of the DataFrame thus results in more readable code:
+
+for col in df.columns:
+    series = df[col]
+    # do something with series
+
+Mutability and copying of data
+All pandas data structures are value-mutable (the values they contain can be altered) but not always size-mutable. The length of a Series cannot be changed, but, for example, columns can be inserted into a DataFrame. However, the vast majority of methods produce new objects and leave the input data untouched. In general we like to favor immutability where sensible.
+
+1.4.3 Getting started tutorials
+What kind of data does pandas handle?
+
+I want to start using pandas
+import pandas as pd
+
+To load the pandas package and start working with it, import the package. The community agreed alias for pandas is pd, so loading pandas as pd is assumed standard practice for all of the pandas documentation.
+
+pandas data table representation
+I want to store passenger data of the Titanic. For a number of passengers, I know the name (characters), age (integers) and sex (male/female) data.
+
+df = pd.DataFrame({
+    'Names' : ['Ramesh Kumar', 'Suresh Kumar', 'Rupesh Kumar'],
+    'Age' : [22, 35, 58],
+    'Sex' : ['male', 'male', 'female']
+})
+df
+
+To manually store data in a table, create a DataFrame. When using a Python dictionary of lists, the dictionary keys will be used as column headers and the values in each list as columns of the DataFrame.
+
+A DataFrame is a 2-dimensional data structure that can store data of different types (including characters, integers, floating point values, categorical data and more) in columns. It is similar to a spreadsheet, a SQL table 
+
+• The table has 3 columns, each of them with a column label. The column labels are respectively Name, Age and Sex.
+• The columnName consists of textual data with each value a string,the column Age are numbers and the column Sex is textual data.
+
+EACH COLUMN IN A DATAFRAME IS A SERIES
+I’m just interested in working with the data in the column Age
+df['Age]
+
+When selecting a single column of a pandas DataFrame, the result is a pandas Series. To select the column, use the column label in between square brackets [].
+
+Note: If you are familiar to Python dictionaries, the selection of a single column is very similar to selection of dictionary values based on the key.
+
+You can create a Series from scratch as well:
+
+ages = pd.Series([22, 35, 58])
+ages
+
+0    22
+1    35
+2    58
+dtype: int64
+
+A pandas Series has no column labels, as it is just a single column of a DataFrame. A Series does have row labels.
+
+Do something with a DataFrame or Series
+I want to know the maximum Age of the passengers
+We can do this on the DataFrame by selecting the Age column and applying max():
+df['Age'].max() # DataFrame
+ages.max() # Series
+
+As illustrated by the max() method, you can do things with a DataFrame or Series. pandas provides a lot of functionalities, each of them a method you can apply to a DataFrame or Series. As methods are functions, do not forget to use parentheses ().
+I’m interested in some basic statistics of the numerical data of my data table
+df.describe()
+
+The describe() method provides a quick overview of the numerical data in a DataFrame. As the Name and Sex columns are textual data, these are by default not taken into account by the describe() method.
+Many pandas operations return a DataFrame or a Series. The describe() method is an example of a pandas operation returning a pandas Series.
+
+Bullet Points:
+--------------
+• Import the package, aka import pandas as pd
+• A table of data is stored as a pandas DataFrame
+• Each column in a DataFrame is a Series
+• You can do things by applying a method to a DataFrame or Series
+
+This tutorial uses the Titanic data set, stored as CSV. The data consists of the following data columns: • PassengerId: Id of every passenger.
+• Survived: This feature have value 0 and 1. 0 for not survived and 1 for survived.
+• Pclass: There are 3 classes: Class 1, Class 2 and Class 3.
+• Name: Name of passenger.
+• Sex: Gender of passenger.
+• Age: Age of passenger.
+• SibSp: Indication that passenger have siblings and spouse. • Parch: Whether a passenger is alone or have family.
+• Ticket: Ticket number of passenger. • Fare: Indicating the fare.
+• Cabin: The cabin of passenger.
+• Embarked: The embarked category.
+
+How do I read and write tabular data?
+I want to analyze the Titanic passenger data, available as a CSV file.
+titanic = pd.read_csv('data/titanic.csv')
+titanic
+
+pandas provides the read_csv() function to read data stored as a csv file into a pandas DataFrame. pandas supports many different file formats or data sources out of the box (csv, excel, sql, json, parquet, . . . ), each of them with the prefix read_*.
+Make sure to always have a check on the data after reading in the data. When displaying a DataFrame, the first and last 5 rows will be shown by default:
+
+I want to see the first 8 rows of a pandas DataFrame.
+titanic.head(8)
+To see the first N rows of a DataFrame, use the head() method with the required number of rows (in this case 8) as argument.
+
+Interested in the last N rows instead? pandas also provides a tail() method. For example, titanic. tail(10) will return the last 10 rows of the DataFrame.
+
+A check on how pandas interpreted each of the column data types can be done by requesting the pandas dtypes attribute:
+titanic.dtypes
+PassengerId      int64
+Pclass           int64
+Name            object
+Sex             object
+Age            float64
+
+For each of the columns, the used data type is enlisted. The data types in this DataFrame are integers (int64), floats (float64) and strings (object).
+
+NOTE: 
+Note: When asking for the dtypes, no brackets are used! dtypes is an attribute of a DataFrame and Series. Attributes of DataFrame or Series do not need brackets. Attributes represent a characteristic of a DataFrame/Series, whereas a method (which requires brackets) do something with the DataFrame/Series.
+
+My colleague requested the Titanic data as a spreadsheet.
+titanic.to_excel("titanic.xlsx", sheet_name="passengers", index=False)
+
+Whereas read_* functions are used to read data to pandas, the to_* methods are used to store data. The to_excel() method stores the data as an excel file. In the example here, the sheet_name is named passen- gers instead of the default Sheet1. By setting index=False the row index labels are not saved in the spreadsheet.
+The equivalent read function read_excel() will reload the data to a DataFrame:
+titanic = pd.read_excel("titanic.xlsx", sheet_name="passengers")
+
+I’m interested in a technical summary of a DataFrame
+
+titanic.info()
+
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 418 entries, 0 to 417
+Data columns (total 11 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   PassengerId  418 non-null    int64  
+ 1   Pclass       418 non-null    int64  
+ 2   Name         418 non-null    object 
+ 3   Sex          418 non-null    object 
+
+dtypes: float64(2), int64(4), object(5)
+memory usage: 36.0+ KB
+
+The method info() provides technical information about a DataFrame, so let’s explain the output in more detail:
+In [1]: import pandas as pd
+
+This tutorial uses the Titanic data set, stored as CSV. The data consists of the following data columns:
+• PassengerId: Id of every passenger.
+It is indeed a DataFrame.
+There are 418 entries, i.e. 418 rows.
+Each row has a row label (aka the index) with values ranging from 0 to 417.
+The table has 12 columns. Most columns have a value for each of the rows (all 891 values are non-null). Some columns do have missing values and less than 891 non-null values.
+The columns Name, Sex, Cabin and Embarked consists of textual data (strings, aka object). The other columns are numerical data with some of them whole numbers (aka integer) and others are real numbers (aka float).
+* The kind of data (characters, integers,. . . ) in the different columns are summarized by listing the dtypes. The approximate amount of RAM used to hold the DataFrame is provided as well.
+* Getting data in to pandas from many different file formats or data sources is supported by read_* functions. Exporting data out of pandas is provided by different to_* methods.
+* The head/tail/info methods and the dtypes attribute are convenient for a first check.
+
+
+How do I select a subset of a DataFrame?
+How do I select specific columns from a DataFrame?
+I’m interested in the age of the Titanic passengers.
+ages = titanic['Age']
+ages.head()
+
+To select a single column, use square brackets [] with the column name of the column of interest.
+Each column in a DataFrame is a Series. As a single column is selected, the returned object is a pandas Series.
+We can verify this by checking the type of the output:
+type(titanic['Age']) # pandas.core.series.Series
+
+And have a look at the shape of the output:
+titanic['Age'].shape # (418,)
+titanic.shape # (418, 11)
+
+DataFrame.shape is an attribute of a pandas Series and DataFrame containing the number of rows and columns: (nrows, ncolumns). A pandas Series is 1-dimensional and only the number of rows is returned.
+
+I’m interested in the age and sex of the Titanic passengers.
+age_sex = titanic[['Age', 'Sex']]
+age_sex.head()
+To select multiple columns, use a list of column names within the selection brackets [].
+Note: The inner square brackets define a Python list with columnnames,whereas the outer brackets are used to select the data from a pandas DataFrame as seen in the previous example.
+
+The returned data type is a pandas DataFrame:
+type(age_sex) # pandas.core.frame.DataFrame
+age_sex.shape # (418, 2)
+The selection returned a DataFrame with 418 rows and 2 columns. Remember, a DataFrame is 2-dimensional with both a row and column dimension.
+
+How do I filter specific rows from a DataFrame?
+I’m interested in the passengers older than 35 years.
+above_35 = titanic[titanic['Age'] > 35]
+above_35.head()
+
+To select rows based on a conditional expression, use a condition inside the selection brackets []. The condition inside the selection brackets 
+titanic["Age"] > 35
+checks for which rows the Age column has a value greater than 35
+(titanic['Age']>35).head() 
+
+0    False
+1     True
+2     True
+3    False
+4    False
+Name: Age, dtype: bool
+
+The output of the conditional expression (>, but also ==, !=, <, <=,. . . would work) is actually a pandas Series of boolean values (either True or False) with the same number of rows as the original DataFrame. Such a Series of boolean values can be used to filter the DataFrame by putting it in between the selection brackets []. Only rows for which the value is True will be selected.
+
+We know from before that the original Titanic DataFrame consists of 418 rows. Let’s have a look at the number of rows which satisfy the condition by checking the shape attribute of the resulting DataFrame above_35:
+above_35.shape # (105, 11)
+
+I’m interested in the Titanic passengers from cabin class 2 and 3.
+class_23 = titanic[titanic['Pclass'].isin([2,3])]
+class_23.head()
+
+Similar to the conditional expression, the isin() conditional function returns a True for each row the values are in the provided list. To filter the rows based on such a function, use the conditional function inside the selection brackets []. In this case, the condition inside the selection brackets titanic["Pclass"].isin([2, 3]) checks for which rows the Pclass column is either 2 or 3.
+The above is equivalent to filtering by rows for which the class is either 2 or 3 and combining the two statements with an | (or) operator:
+
+class_32 = titanic[(titanic['Pclass'] == 2 ) | (titanic['Pclass'] == 3 )]
+
+Note: When combining multiple conditional statements, each condition must be surrounded by parentheses (). Moreover, you can not use or/and but need to use the or operator | and the and operator &.
+
+I want to work with passenger data for which the age is known.
+age_not_na = titanic[titanic['Age'].notna()]
+age_not_na
+
+The notna() conditional function returns a True for each row the values are not an Null value. As such, this can be combined with the selection brackets [] to filter the data table.
+You might wonder what actually changed, as the first 5 lines are still the same values. One way to verify is to check if the shape has changed:
+age_not_na.shape # (332, 11)
+
+How do I select specific rows and columns from a DataFrame?
+I’m interested in the names of the passengers older than 35 years.
+adult_names = titanic.loc[titanic['Age']>35, 'Name']
+adult_names.head()
+
+In this case, a subset of both rows and columns is made in one go and just using selection brackets [] is not sufficient anymore. The loc/iloc operators are required in front of the selection brackets []. When using loc/iloc, the part before the comma is the rows you want, and the part after the comma is the columns you want to select.
+When using the column names, row labels or a condition expression, use the loc operator in front of the selection brackets []. For both the part before and after the comma, you can use a single label, a list of labels, a slice of labels, a conditional expression or a colon. Using a colon specifies you want to select all rows or columns.
+
+I’m interested in rows 10 till 25 and columns 3 to 5.
+titanic.iloc[9:25, 2:5]
+
+Again, a subset of both rows and columns is made in one go and just using selection brackets [] is not sufficient anymore. When specifically interested in certain rows and/or columns based on their position in the table, use the iloc operator in front of the selection brackets [].
+When selecting specific rows and/or columns with loc or iloc, new values can be assigned to the selected data. For example, to assign the name anonymous to the first 3 elements of the third column:
+titanic.iloc[:3,2] = 'anonymous'
+titanic
+
+Bullet Points for Indexing:
+• When selecting subsets of data, square brackets [] are used.
+• Inside these brackets, you can use a single column/row label, a list of column/row labels, a slice of labels, a conditional expression or a colon.
+• Select specific rows and/or columns using loc when using the row and column names
+• Select specific rows and/or columns using iloc when using the positions in the table
+• You can assign new values to a selection based on loc/iloc.
+
+
+
+Attributes:
+shape
+dtypes
+loc
+iloc
+
+Methods:
+isin()
+max()
+head()
+tail()
+describe()
+info()
+
