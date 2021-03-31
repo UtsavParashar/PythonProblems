@@ -553,6 +553,82 @@ REMEMBER
 * groupby provides the power of the split-apply-combine pattern
 * value_counts is a convenient shortcut to count the number of entries in each category of a variable.  
 
+HOW TO RESHAPE THE LAYOUT OF TABLES?
+------------------------------------
+This tutorial uses air quality data about 𝑁𝑂2 and Particulate matter less than 2.5 micrometers, made available by openaq and using the py-openaq package. The air_quality_long.csv data set provides 𝑁 𝑂2 and 𝑃 𝑀25 values for the measurement stations FR04014, BETR801 and London Westminster in respectively Paris, Antwerp and London.
+The air-quality data set has the following columns:
+• city: city where the sensor is used, either Paris, Antwerp or London
+• country: country where the sensor is used, either FR, BE or GB
+• location: the id of the sensor, either FR04014, BETR801 or London Westminster
+• parameter: the parameter measured by the sensor, either 𝑁 𝑂2 or Particulate matter • value: the measured value
+• unit: the unit of the measured parameter, in this case ‘μg/m3’
+and the index of the DataFrame is datetime, the datetime of the measurement.
+
+Note: The air-quality data is provided in a so-called long format data representation with each observation on a separate row and each variable a separate column of the data table. The long/narrow format is also known as the tidy data format.
+
+air_quality = pd.read_csv('data/air_quality_long.csv', index_col='date.utc', parse_dates=True) # date.utc is a column in dataset
+air_quality.head()
+
+How to reshape the layout of tables? 
+
+SORT TABLE ROWS
+
+I want to sort the Titanic data according to the age of the passengers.
+titanic.sort_values(by='Age').head() ## KDB equivalent - `age xasc select from ('',(,)",")0:`titanic.csv
+
+I want to sort the Titanic data according to the cabin class and age in descending order.
+titanic.sort_values(by=['Pclass','Age'], ascending=False)
+
+With Series.sort_values(), the rows in the table are sorted according to the defined column(s). The index will follow the row order.
+
+LONG TO WIDE TABLE FORMAT
+-------------------------
+Let’s use a small subset of the air quality data set. We focus on 𝑁 𝑂2 data and only use the first two measurements of each location (i.e. the head of each group). The subset of data will be called no2_subset
+
+ # filter for no2 data only
+no2 = air_quality[air_quality['parameter'] == 'no2']
+no2.head()
+
+# use 2 measurements (head) for each location (groupby)
+no2_subset = no2.sort_index().groupby(['location']).head(2)
+no2_subset
+
+I want the values for the three stations(location) as separate columns next to each other
+no2_subset.pivot(columns='location', values='value') ## OR
+no2_subset.pivot(columns='location')['value']
+
+Which one is faster?
+%timeit no2_subset.pivot(columns='location', values='value') # 2.34 ms ± 306 µs per loop
+%timeit no2_subset.pivot(columns='location')['value'] # 5.6 ms ± 204 µs per loop
+
+The pivot() function is purely reshaping of the data: a single value for each index/column combination is required.
+
+As pandas support plotting of multiple columns out of the box, the conversion from long to wide table format enables the plotting of the different time series at the same time.
+no2 = air_quality[air_quality['parameter'] == 'no2']
+no2.head()
+no2.pivot(columns='location', values='value').plot(figsize = (12, 6))
+
+Note: When the index parameter is not defined, the existing index (rowlabels) is used.
+
+PIVOT TABLE
+I want the mean concentrations for 𝑁𝑂2 and 𝑃𝑀2.5 in each of the stations(locations) in table form.
+air_quality = pd.read_csv('data/air_quality_long.csv', index_col='date.utc', parse_dates=True) # date.utc is a column in dataset
+
+air_quality.pivot_table(columns='parameter', values='value', index='location', aggfunc='mean')
+
+Difference between pivot() and pivot_table()?
+In the case of pivot(), the data is only rearranged. When multiple values need to be aggregated (in this specific case, the values on different time steps) pivot_table() can be used, providing an aggregation function (e.g. mean) on how to combine these values.
+
+Pivot table is a well known concept in spreadsheet software. When interested in summary columns for each variable separately as well, put the margin parameter to True:
+air_quality.pivot_table(columns='parameter', values='value', 
+                        index='location', aggfunc='mean', margins=True,)
+
+Note: In case you are wondering, pivot_table() is indeed directly linked to groupby().The same result can be derived by grouping on both parameter and location:
+air_quality.groupby(['parameter', 'location']).mean()
+
+
+
+
 Attributes:
 shape
 dtypes
@@ -560,8 +636,11 @@ loc
 iloc
 
 Methods:
+pivot_table(colums=, values=, index=, aggfunc=, margins=)
+pivot(columns=, values=)
 size()
 count()
+sort_index()
 sort_values()
 value_counts()
 mean(), median(), mode(), skew(), min(), max()
