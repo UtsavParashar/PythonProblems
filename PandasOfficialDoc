@@ -89,8 +89,8 @@ Mutability and copying of data
 All pandas data structures are value-mutable (the values they contain can be altered) but not always size-mutable. The length of a Series cannot be changed, but, for example, columns can be inserted into a DataFrame. However, the vast majority of methods produce new objects and leave the input data untouched. In general we like to favor immutability where sensible.
 
 1.4.3 Getting started tutorials
-What kind of data does pandas handle?
-
+WHAT KIND OF DATA DOES PANDAS HANDLE?
+---------------------------------------
 I want to start using pandas
 import pandas as pd
 
@@ -167,7 +167,8 @@ This tutorial uses the Titanic data set, stored as CSV. The data consists of the
 • Cabin: The cabin of passenger.
 • Embarked: The embarked category.
 
-How do I read and write tabular data?
+HOW DO I READ AND WRITE TABULAR DATA?
+--------------------------------------
 I want to analyze the Titanic passenger data, available as a CSV file.
 titanic = pd.read_csv('data/titanic.csv')
 titanic
@@ -232,9 +233,9 @@ The columns Name, Sex, Cabin and Embarked consists of textual data (strings, aka
 * Getting data in to pandas from many different file formats or data sources is supported by read_* functions. Exporting data out of pandas is provided by different to_* methods.
 * The head/tail/info methods and the dtypes attribute are convenient for a first check.
 
-
-How do I select a subset of a DataFrame?
-How do I select specific columns from a DataFrame?
+HOW DO I SELECT A SUBSET OF A TABLE?
+HOW DO I SELECT A SUBSET OF A DATAFRAME?
+HOW DO I SELECT SPECIFIC COLUMNS FROM A DATAFRAME?
 I’m interested in the age of the Titanic passengers.
 ages = titanic['Age']
 ages.head()
@@ -354,7 +355,8 @@ memory usage: 32.3 KB
 
 Note: The usage of the index_col and parse_dates parameters of the read_csv function to define the first (0th) column as index of the resulting DataFrame and convert the dates in the column to Timestamp objects, respectively.
 
-How to create plots in pandas?
+HOW TO CREATE PLOTS IN PANDAS?
+------------------------------
 I want a quick visual check of the data.
 air_quality.plot()
 
@@ -399,10 +401,157 @@ axs = air_quality.plot.area(figsize=(12,6) , subplots=True)
 Separate subplots for each of the data columns are supported by the subplots argument of the plot functions. The builtin options available in each of the pandas plot functions that are worthwhile to have a look.
 
 I want to further customize, extend or save the resulting plot.
+fig, axs = plt.subplots(figsize = (12, 4))
+air_quality.plot.area(ax=axs)
+axs.set_ylabel('NO$_2$ Concentration')
+fig.savefig("no2_concentration.png")
+
+Each of the plot objects created by pandas is a matplotlib object. As Matplotlib provides plenty of options to customize plots, making the link between pandas and Matplotlib explicit enables all the power of matplotlib to the plot. This strategy is applied in the previous example:
+
+fig, axs = plt.subplots(figsize=(12, 4)) ## Create an empty matplotlib Figure and Axes
+air_quality.plot.area(ax=axs ## Use pandas to put the area plot on the prepared Figure/Axes
+axs.set_ylabel("NO$_2$ concentration") ## Do any matplotlib customization you like
+fig.savefig("no2_concentrations.png") ## Save the Figure/Axes using the existing matplotlib method.
+
+Bullet Points on plots:
+• The .plot.* methods are applicable on both Series and DataFrames
+• By default, each of the columns is plotted as a different element (line, boxplot,. .) • Any plot created by pandas is a Matplotlib object.
+
+HOW TO CREATE NEW COLUMNS DERIVED FROM EXISTING COLUMNS?
+--------------------------------------------------------
+I WANT TO EXPRESS THE 𝑁𝑂2 CONCENTRATION OF THE STATION IN LONDON IN mg/m3
+
+(If we assume temperature of 25 degrees Celsius and pressure of 1013 hPa, the conversion factor is 1.882)
+
+air_quality['london_mg_per_cubic'] = air_quality['station_london']*1.882
+air_quality.head()
+
+To create a new column, use the [] brackets with the new column name at the left side of the assignment.
+Note: The calculation of the values is done element_wise.This means all values in the given column are multiplied by the value 1.882 at once. You do not need to use a loop to iterate each of the rows!
+
+I WANT TO CHECK THE RATIO OF THE VALUES IN PARIS VERSUS ANTWERP AND SAVE THE RESULT IN A NEW COLUMN
+air_quality['ratio_paris_antwerp'] = (
+    air_quality['station_paris'] / air_quality['station_antwerp']
+)
+air_quality.head()
+
+The calculation is again element-wise, so the / is applied for the values in each row.
+Also other mathematical operators (+, -, *, /) or logical operators (<, >, =,. . . ) work element wise.
+
+I WANT TO RENAME THE DATA COLUMNS TO THE CORRESPONDING STATION IDENTIFIERS USED BY openAQ
+air_quality_renamed = air_quality.rename(
+    columns={
+        'station_antwerp': 'BETR801',
+        "station_paris": "FR04014",
+        "station_london": "London Westminster",
+    }
+)
+air_quality_renamed.head()
+
+The rename() function can be used for both row labels and column labels. Provide a dictionary with the keys as the current names and the values as the new names to update the corresponding names.
+
+The mapping should not be restricted to fixed names only, but can be a mapping function as well. For example, converting the column names to lowercase letters can be done using a function as well:
+
+air_quality_renamed = air_quality_renamed.rename(columns=str.lower)
+air_quality_renamed.head()
+
+REMEMBER
+* Create a new column by assigning the output to the DataFrame with a new column name in between the [].
+* Operations are element-wise, no need to loop over rows.
+* Use rename with a dictionary or function to rename row labels or column names.
+
+HOW TO CALCULATE SUMMARY STATISTICS?
+This tutorial uses the Titanic data set, stored as CSV. The data consists of the following data columns: • PassengerId: Id of every passenger.
+• Survived: This feature have value 0 and 1. 0 for not survived and 1 for survived.
+• Pclass: There are 3 classes: Class 1, Class 2 and Class 3.
+• Name: Name of passenger.
+• Sex: Gender of passenger.
+• Age: Age of passenger.
+• SibSp: Indication that passenger have siblings and spouse. • Parch: Whether a passenger is alone or have family.
+• Ticket: Ticket number of passenger. • Fare: Indicating the fare.
+• Cabin: The cabin of passenger.
+• Embarked: The embarked category.
+
+titanic = pd.read_csv('data/titanic.csv')
+titanic.head()
+
+AGGREGATING STATISTICS
+-----------------------
+What is the average age of the Titanic passengers?
+titanic['Age'].mean() # 29.699
+
+Different statistics are available and can be applied to columns with numerical data. Operations in general exclude missing data and operate across rows by default.
+
+What is the median age and ticket fare price of the Titanic passengers?
+titanic[['Age', 'Fare']].median()
+Age     28.0000
+Fare    14.4542
+dtype: float64
+
+The statistic applied to multiple columns of a DataFrame is calculated for each numeric column.
+The aggregating statistic can be calculated for multiple columns at the same time. Remember the describe function.
+titanic[['Age', 'Fare']].describe()
+
+Instead of the predefined statistics, specific combinations of aggregating statistics for given columns can be defined using the DataFrame.agg() method:
+titanic.agg({
+    'Age':['min', 'max', 'median', 'skew', 'mean'],
+    'Fare':['min', 'max', 'median', 'skew', 'mean', 'std'],
+})
+
+AGGREGATING STATISTICS GROUPED BY CATEGORY
+-------------------------------------------
+What is the average age for male versus female Titanic passengers?
+titanic[['Sex','Age']].groupby('Sex').mean()
+	        Age
+Sex	
+female	27.915709
+male	30.726645
+
+As our interest is the average age for each gender, a subselection on these two columns is made first: titanic[[ "Sex", "Age"]]. Next, the groupby() method is applied on the Sex column to make a group per category. The average age for each gender is calculated and returned.
+Calculating a given statistic (e.g. mean age) for each category in a column (e.g. male/female in the Sex column) is a common pattern. The groupby method is used to support this type of operations. More general, this fits in the more general split-apply-combine pattern:
+• Split the data into groups
+• Apply a function to each group independently 
+• Combine the results into a data structure
+
+Split - Sex in Male and Female
+Apply - Mean function on each group splitted
+Combine - Combbine the result and present
+
+The apply and combine steps are typically done together in pandas.
+
+In the previous example, we explicitly selected the 2 columns first. If not, the mean method is applied to each column containing numerical columns:
+titanic.groupby('Sex').mean()
 
 
+It does not make much sense to get the average value of the Pclass. if we are only interested in the average age for each gender, the selection of columns (rectangular brackets [] as usual) is supported on the grouped data as well:
+titanic.groupby('Sex')['Age'].mean()
 
+Why option is Faster?
+%timeit titanic.groupby('Sex')['Age'].mean() # 801 µs ± 45.4 µs
+%timeit titanic[['Sex','Age']].groupby('Sex').mean() # 24.1 ms ± 282 µs
 
+Note: ThePclass column contains numerical data butactually represents 3 categories(orfactors) respectively the labels ‘1’, ‘2’ and ‘3’. Calculating statistics on these does not make much sense. Therefore, pandas provides a Categorical data type to handle this type of data.
+
+What is the mean ticket fare price for each of the sex and cabin class combinations?
+titanic.groupby(['Sex', 'Pclass'])['Fare'].mean()
+Grouping can be done by multiple columns at the same time. Provide the column names as a list to the groupby() method.
+
+COUNT NUMBER OF RECORDS BY CATEGORY
+What is the number of passengers in each of the cabin classes?
+titanic.Pclass.value_counts()
+The function is a shortcut, as it is actually a groupby operation in combination with counting of the number of records within each group:
+titanic.groupby('Pclass')['Pclass'].count()
+
+Why one is faster?
+%timeit titanic.Pclass.value_counts() # 389 µs ± 44.5 µs per loop
+%timeit titanic.groupby('Pclass')['Pclass'].count() # 530 µs ± 38.6 µs per loop
+
+Note: Both size and count can be used in combination with groupby.Where as size includes NaN values and just provides the number of rows (size of the table), count excludes the missing values. In the value_counts method, use the dropna argument to include or exclude the NaN value
+
+REMEMBER
+* Aggregation statistics can be calculated on entire columns or rows
+* groupby provides the power of the split-apply-combine pattern
+* value_counts is a convenient shortcut to count the number of entries in each category of a variable.  
 
 Attributes:
 shape
@@ -411,6 +560,16 @@ loc
 iloc
 
 Methods:
+size()
+count()
+sort_values()
+value_counts()
+mean(), median(), mode(), skew(), min(), max()
+groupby().aggregateFunction()
+agg({col=[fn1, fn2]})
+rename(columns={'currentCol':'newCol'})
+fig.savefig()
+plt.subplot()
 plot()
 notna()
 isin()
