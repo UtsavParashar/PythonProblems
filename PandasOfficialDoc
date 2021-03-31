@@ -14,9 +14,9 @@ Basic statistics (mean, median, min, max, counts...) are easily calculable. Thes
 
 Change the structure of your data table in multiple ways. You can melt() your data table from wide to long/tidy form or pivot() from long to wide format. With aggregations built-in, a pivot table is created with a single command.
 
-Multiple tables can be concatenated both column wise as row wise and database-like join/merge operations are pro- vided to combine multiple tables of data.
+Multiple tables can be concatenated both column wise as row wise and database-like join/merge operations are provided to combine multiple tables of data.
 
-pandas has great support for time series and has an extensive set of tools for working with dates, times, and time- indexed data.
+pandas has great support for time series and has an extensive set of tools for working with dates, times, and time-indexed data.
 
 Data sets do not only contain numerical data. pandas provides a wide range of functions to clean textual data and extract useful information from it.
 
@@ -34,19 +34,20 @@ pytz                    2017.3
 
 Package Overview:
 -----------------
-pandas is a Python package providing fast, flexible, and expressive data structures designed to make working with “relational” or “labeled” data both easy and intuitive. It aims to be the fundamental high-level building block for doing practical, real-world data analysis in Python. Additionally, it has the broader goal of becoming the most powerful and flexible open source data analysis/manipulation tool available in any language. It is already well on its way toward this goal.
+pandas is a Python package providing fast, flexible, and expressive data structures designed to make working with “relational” or “labeled” data both easy and intuitive. It aims to be the fundamental high-level building block for doing practical, real-world data analysis in Python. Additionally, it has the broader goal of becoming the most powerful and flexible open source data analysis/manipulation tool available in any language. It is already well on its way towards this goal.
 pandas is well suited for many different kinds of data:
-• Tabular data with heterogeneously-typed columns, as in an SQL table or Excel spreadsheet
+• Tabular data with heterogeneously-typed columns, as in a SQL table or Excel spreadsheet
 • Ordered and unordered (not necessarily fixed-frequency) time series data.
 • Arbitrary matrix data (homogeneously typed or heterogeneous) with row and column labels
-• Any other form of observational / statistical data sets. The data need not be labeled at all to be placed into a pandas data structure
+• Any other form of observational / statistical data sets. The data need not be labeled at all to be placed into a pandas data structure.
 
 The two primary data structures of pandas, Series (1-dimensional) and DataFrame (2-dimensional), handle the vast majority of typical use cases in finance, statistics, social science, and many areas of engineering. pandas is built on top of NumPy and is intended to integrate well within a scientific computing environment with many other 3rd party libraries.
 
 Here are just a few of the things that pandas does well:
-Easy handling of missing data (represented as NaN) in floating point as well as non-floating point data Size mutability: columns can be inserted and deleted from DataFrame and higher dimensional objects
-Automaticandexplicitdataalignment:objectscanbeexplicitlyalignedtoasetoflabels,ortheusercansimply ignore the labels and let Series, DataFrame, etc. automatically align the data for you in computations
-Powerful, flexible group by functionality to perform split-apply-combine operations on data sets, for both ag- gregating and transforming data
+Easy handling of missing data (represented as NaN) in floating point as well as non-floating point data 
+Size mutability: columns can be inserted and deleted from DataFrame and higher dimensional objects
+Automatic and explicit data alignment: objects can be explicitly aligned to a set of labels,or the user can simply ignore the labels and let Series, DataFrame, etc. automatically align the data for you in computations.
+Powerful, flexible group by functionality to perform split-apply-combine operations on data sets, for both aggregating and transforming data
 Make it easy to convert ragged, differently-indexed data in other Python and NumPy data structures into DataFrame objects
 Intelligent label-based slicing, fancy indexing, and subsetting of large data sets Intuitive merging and joining data sets
 Flexible reshaping and pivoting of data sets
@@ -152,14 +153,17 @@ Bullet Points:
 • Each column in a DataFrame is a Series
 • You can do things by applying a method to a DataFrame or Series
 
-This tutorial uses the Titanic data set, stored as CSV. The data consists of the following data columns: • PassengerId: Id of every passenger.
+This tutorial uses the Titanic data set, stored as CSV. The data consists of the following data columns: 
+• PassengerId: Id of every passenger.
 • Survived: This feature have value 0 and 1. 0 for not survived and 1 for survived.
 • Pclass: There are 3 classes: Class 1, Class 2 and Class 3.
 • Name: Name of passenger.
 • Sex: Gender of passenger.
 • Age: Age of passenger.
-• SibSp: Indication that passenger have siblings and spouse. • Parch: Whether a passenger is alone or have family.
-• Ticket: Ticket number of passenger. • Fare: Indicating the fare.
+• SibSp: Indication that passenger have siblings and spouse. 
+• Parch: Whether a passenger is alone or have family.
+• Ticket: Ticket number of passenger. 
+• Fare: Indicating the fare.
 • Cabin: The cabin of passenger.
 • Embarked: The embarked category.
 
@@ -175,7 +179,7 @@ I want to see the first 8 rows of a pandas DataFrame.
 titanic.head(8)
 To see the first N rows of a DataFrame, use the head() method with the required number of rows (in this case 8) as argument.
 
-Interested in the last N rows instead? pandas also provides a tail() method. For example, titanic. tail(10) will return the last 10 rows of the DataFrame.
+Interested in the last N rows instead? pandas also provides a tail() method. For example, titanic.tail(10) will return the last 10 rows of the DataFrame.
 
 A check on how pandas interpreted each of the column data types can be done by requesting the pandas dtypes attribute:
 titanic.dtypes
@@ -188,12 +192,12 @@ Age            float64
 For each of the columns, the used data type is enlisted. The data types in this DataFrame are integers (int64), floats (float64) and strings (object).
 
 NOTE: 
-Note: When asking for the dtypes, no brackets are used! dtypes is an attribute of a DataFrame and Series. Attributes of DataFrame or Series do not need brackets. Attributes represent a characteristic of a DataFrame/Series, whereas a method (which requires brackets) do something with the DataFrame/Series.
+When asking for the dtypes, no brackets are used! dtypes is an attribute of a DataFrame and Series. Attributes of DataFrame or Series do not need brackets. Attributes represent a characteristic of a DataFrame/Series, whereas a method (which requires brackets) do something with the DataFrame/Series.
 
 My colleague requested the Titanic data as a spreadsheet.
 titanic.to_excel("titanic.xlsx", sheet_name="passengers", index=False)
 
-Whereas read_* functions are used to read data to pandas, the to_* methods are used to store data. The to_excel() method stores the data as an excel file. In the example here, the sheet_name is named passen- gers instead of the default Sheet1. By setting index=False the row index labels are not saved in the spreadsheet.
+Whereas read_* functions are used to read data to pandas, the to_* methods are used to store data. The to_excel() method stores the data as an excel file. In the example here, the sheet_name is named passengers instead of the default Sheet1. By setting index=False the row index labels are not saved in the spreadsheet.
 The equivalent read function read_excel() will reload the data to a DataFrame:
 titanic = pd.read_excel("titanic.xlsx", sheet_name="passengers")
 
@@ -202,14 +206,14 @@ I’m interested in a technical summary of a DataFrame
 titanic.info()
 
 <class 'pandas.core.frame.DataFrame'>
-RangeIndex: 418 entries, 0 to 417
-Data columns (total 11 columns):
+RangeIndex: 891 entries, 0 to 890
+Data columns (total 12 columns):
  #   Column       Non-Null Count  Dtype  
 ---  ------       --------------  -----  
- 0   PassengerId  418 non-null    int64  
- 1   Pclass       418 non-null    int64  
- 2   Name         418 non-null    object 
- 3   Sex          418 non-null    object 
+ 0   PassengerId  891 non-null    int64  
+ 1   Survived     891 non-null    int64  
+ 2   Pclass       891 non-null    int64  
+ 3   Name         891 non-null    object
 
 dtypes: float64(2), int64(4), object(5)
 memory usage: 36.0+ KB
@@ -220,8 +224,8 @@ In [1]: import pandas as pd
 This tutorial uses the Titanic data set, stored as CSV. The data consists of the following data columns:
 • PassengerId: Id of every passenger.
 It is indeed a DataFrame.
-There are 418 entries, i.e. 418 rows.
-Each row has a row label (aka the index) with values ranging from 0 to 417.
+There are 891 entries, i.e. 891 rows.
+Each row has a row label (aka the index) with values ranging from 0 to 890.
 The table has 12 columns. Most columns have a value for each of the rows (all 891 values are non-null). Some columns do have missing values and less than 891 non-null values.
 The columns Name, Sex, Cabin and Embarked consists of textual data (strings, aka object). The other columns are numerical data with some of them whole numbers (aka integer) and others are real numbers (aka float).
 * The kind of data (characters, integers,. . . ) in the different columns are summarized by listing the dtypes. The approximate amount of RAM used to hold the DataFrame is provided as well.
@@ -241,8 +245,8 @@ We can verify this by checking the type of the output:
 type(titanic['Age']) # pandas.core.series.Series
 
 And have a look at the shape of the output:
-titanic['Age'].shape # (418,)
-titanic.shape # (418, 11)
+titanic['Age'].shape # (891,)
+titanic.shape # (891, 12)
 
 DataFrame.shape is an attribute of a pandas Series and DataFrame containing the number of rows and columns: (nrows, ncolumns). A pandas Series is 1-dimensional and only the number of rows is returned.
 
@@ -253,9 +257,11 @@ To select multiple columns, use a list of column names within the selection brac
 Note: The inner square brackets define a Python list with columnnames,whereas the outer brackets are used to select the data from a pandas DataFrame as seen in the previous example.
 
 The returned data type is a pandas DataFrame:
+age_sex = titanic[['Age', 'Sex']]
+age_sex.head()
 type(age_sex) # pandas.core.frame.DataFrame
-age_sex.shape # (418, 2)
-The selection returned a DataFrame with 418 rows and 2 columns. Remember, a DataFrame is 2-dimensional with both a row and column dimension.
+age_sex.shape # (891, 2)
+The selection returned a DataFrame with 891 rows and 2 columns. Remember, a DataFrame is 2-dimensional with both a row and column dimension.
 
 How do I filter specific rows from a DataFrame?
 I’m interested in the passengers older than 35 years.
@@ -296,15 +302,16 @@ age_not_na
 
 The notna() conditional function returns a True for each row the values are not an Null value. As such, this can be combined with the selection brackets [] to filter the data table.
 You might wonder what actually changed, as the first 5 lines are still the same values. One way to verify is to check if the shape has changed:
-age_not_na.shape # (332, 11)
+age_not_na = titanic[titanic['Age'].notna()]
+age_not_na.shape # (714, 12)
 
 How do I select specific rows and columns from a DataFrame?
 I’m interested in the names of the passengers older than 35 years.
 adult_names = titanic.loc[titanic['Age']>35, 'Name']
 adult_names.head()
 
-In this case, a subset of both rows and columns is made in one go and just using selection brackets [] is not sufficient anymore. The loc/iloc operators are required in front of the selection brackets []. When using loc/iloc, the part before the comma is the rows you want, and the part after the comma is the columns you want to select.
-When using the column names, row labels or a condition expression, use the loc operator in front of the selection brackets []. For both the part before and after the comma, you can use a single label, a list of labels, a slice of labels, a conditional expression or a colon. Using a colon specifies you want to select all rows or columns.
+In this case, a subset of both rows and columns is made in one go and just using selection brackets [] is not sufficient anymore. The loc/iloc operators are required in front of the selection brackets []. WHEN USING LOC/ILOC, THE PART BEFORE THE COMMA IS THE ROWS YOU WANT, AND THE PART AFTER THE COMMA IS THE COLUMNS YOU WANT TO SELECT.
+When using the column names, row labels or a condition expression, use the loc operator in front of the selection brackets []. For both the part before and after the comma, you can use a single label, a list of labels, a slice of labels, a conditional expression or a colon. USING A COLON SPECIFIES YOU WANT TO SELECT ALL ROWS OR COLUMNS.
 
 I’m interested in rows 10 till 25 and columns 3 to 5.
 titanic.iloc[9:25, 2:5]
@@ -321,6 +328,80 @@ Bullet Points for Indexing:
 • Select specific rows and/or columns using iloc when using the positions in the table
 • You can assign new values to a selection based on loc/iloc.
 
+For this tutorial, air quality data about 𝑁𝑂2 is used, made available by openaq and using the py-openaq package. The air_quality_no2.csv data set provides 𝑁𝑂2 values for the measurement stations FR04014, BETR801 and London Westminster in respectively Paris, Antwerp and London.
+air_quality = pd.read_csv("data/air_quality_no2.csv", index_col=0, parse_dates=True)
+air_quality.head()
+
+	                station_antwerp	    station_paris	station_london
+datetime			
+2019-05-07 02:00:00	    NaN	                NaN	            23.0
+2019-05-07 03:00:00	    50.5	            25.0	        19.0
+2019-05-07 04:00:00	    45.0	            27.7	        19.0
+2019-05-07 05:00:00	    NaN	                50.4	        16.0
+2019-05-07 06:00:00	    NaN	                61.9        	NaN
+
+air_quality.info()
+<class 'pandas.core.frame.DataFrame'>
+DatetimeIndex: 1035 entries, 2019-05-07 02:00:00 to 2019-06-21 02:00:00
+Data columns (total 3 columns):
+ #   Column           Non-Null Count  Dtype  
+---  ------           --------------  -----  
+ 0   station_antwerp  95 non-null     float64
+ 1   station_paris    1004 non-null   float64
+ 2   station_london   969 non-null    float64
+dtypes: float64(3)
+memory usage: 32.3 KB
+
+Note: The usage of the index_col and parse_dates parameters of the read_csv function to define the first (0th) column as index of the resulting DataFrame and convert the dates in the column to Timestamp objects, respectively.
+
+How to create plots in pandas?
+I want a quick visual check of the data.
+air_quality.plot()
+
+With a DataFrame, pandas creates by default one 'line plot' for each of the columns with numeric data.
+
+I want to plot only the columns of the data table with the data from Paris.
+air_quality['station_paris'].plot()
+
+To plot a specific column, use the selection method of the subset data in combination with the plot() method. Hence, the plot() method works on both Series and DataFrame.
+
+air_quality.plot.scatter(x='station_london', y='station_paris', alpha=0.7)
+# alpha make scatters solid as it reaches 1.
+
+Apart from the default line plot when using the plot function, a number of alternatives are available to plot data. Let’s use some standard Python to get an overview of the available plot methods:
+code:
+[
+    method_name
+    for method_name in dir(air_quality.plot)
+    if not method_name.startswith("_")
+]
+['area',
+ 'bar',
+ 'barh',
+ 'box',
+ 'density',
+ 'hexbin',
+ 'hist',
+ 'kde',
+ 'line',
+ 'pie',
+ 'scatter']
+
+Note: In many development environments as well as IPython and Jupyter Notebook, use the TAB button to get an overview of the available methods, for example air_quality.plot. + TAB.
+
+One of the options is DataFrame.plot.box(), which refers to a boxplot. The box method is applicable on the air quality example data:
+air_quality.plot.box()
+air_quality.describe() # to understand the boxplot.
+
+I want each of the columns in a separate subplot.
+axs = air_quality.plot.area(figsize=(12,6) , subplots=True)
+
+Separate subplots for each of the data columns are supported by the subplots argument of the plot functions. The builtin options available in each of the pandas plot functions that are worthwhile to have a look.
+
+I want to further customize, extend or save the resulting plot.
+
+
+
 
 
 Attributes:
@@ -330,6 +411,8 @@ loc
 iloc
 
 Methods:
+plot()
+notna()
 isin()
 max()
 head()
