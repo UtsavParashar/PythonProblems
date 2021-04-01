@@ -806,12 +806,61 @@ air_quality.groupby(air_quality.datetime.dt.hour)['value'].mean().plot(
     kind='bar', rot=270, ax=axs)
 plt.xlabel('Hour of the day')
 plt.ylabel('$NO_2 (μg/m^3)$')
+fig.savefig('hourlyPollution.png')
 
+Similar to the previous case, we want to calculate a given statistic (e.g. mean 𝑁𝑂2) for each hour of the day and we can use the split-apply-combine approach again. For this case, we use the datetime property hour of pandas Timestamp, which is also accessible by the dt accessor.
 
+Datetime as index
+------------------
+In the tutorial on reshaping, pivot() was introduced to reshape the data table with each of the measurements locations as a separate column:
+no_2 = air_quality.pivot(index='datetime', columns='location', values='value')
+no_2.head()
 
+Note: By pivoting the data, the datetime information became the index of the table. In general, setting a column as an index can be achieved by the set_index function.
+
+Working with a datetime index (i.e. DatetimeIndex) provides powerful functionalities. For example, we do not need the dt accessor to get the time series properties, but have these properties available on the index directly:
+no_2.index.year, no_2.index.month_name
+
+Some other advantages are the convenient subsetting of time period or the adapted time scale on plots. Let’s apply this on our data.
+
+I want to Create a plot of the 𝑁𝑂2 values in the different stations from the 20th of May till the end of 21st of May
+no_2['2019-05-20':'2019-05-21'].plot(figsize=(12,6))
+
+By providing a string that parses to a datetime, a specific subset of the data can be selected on a DatetimeIndex.
+
+RESAMPLE A TIME SERIES TO ANOTHER FREQUENCY
+--------------------------------------------
+Aggregate the current hourly(currently the dataset consists of hourly values) time series values to the monthly maximum value in each of the stations.
+
+monthly_max = no_2.resample('M').max()
+monthly_max
+
+A very powerful method on time series data with a datetime index, is the ability to resample() time series to another frequency (e.g., converting secondly data into 5-minutely data).
+The resample() method is similar to a groupby operation:
+• it provides a time-based grouping, by using a string (e.g. M, 5H,. . . ) that defines the target frequency 
+• it requires an aggregation function such as mean, max,. . .
+
+no_2.resample('6H').mean().plot(figsize=(12,6))
+
+An overview of the aliases used to define time series frequencies is given in the offset aliases overview table. When defined, the frequency of the time series is provided by the freq attribute:
+
+monthly_max.index.freq # <MonthEnd>
+monthly_max.index.freqstr # 'M'
+
+I want to Make a plot of the daily mean 𝑁𝑂2 value in each of the stations.
+no_2.resample('D').mean().plot(style='-o', figsize=(12,6))
+
+REMEMBER
+* Valid date strings can be converted to datetime objects using to_datetime function or as part of read functions.
+* Datetime objects in pandas support calculations, logical operations and convenient date-related properties using the dt accessor.
+* A DatetimeIndex contains these date-related properties and supports convenient slicing.
+* Resample is a powerful method to change the frequency of a time series.
 
 
 Attributes:
+.freqstr
+.freq
+.dt.month, .dt.year. .dt.hour, .dt.day, .dt.weekday
 index
 columns
 shape
@@ -825,6 +874,7 @@ to_datetime()
 merge(,,how, left_on, right_on)
 concat(, axis=, keys=)
 melt(id_var=, value_var=, value_name=, var_name=)
+set_index()
 reset_index()
 pivot_table(colums=, values=, index=, aggfunc=, margins=)
 pivot(columns=, values=)
