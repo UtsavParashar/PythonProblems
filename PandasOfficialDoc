@@ -953,8 +953,111 @@ sparse: Sparse data type
 
 =====================================================================================
 
+CHAPTER 2 - USER GUIDE
+------------------------
+2.1.1 Object creation
+
+Creating a Series by passing a list of values, letting pandas create a default integer index:
+s = pd.Series([1,3,5,np.nan,6,8])
+
+pd.date_range() - Return a fixed frequency DatetimeIndex.
+    start=None, end=None, periods=None, freq=None, tz=None, normalize=False, name=None, closed=None, **kwarg
+
+Creating a DataFrame by passing a NumPy array, with a datetime index and labeled columns:
+dates = pd.date_range("20210101", periods=6, freq='2D')
+df = pd.DataFrame(np.random.randn(6,4), index=dates, columns=list("ABCD"))
+df
+
+df2 = pd.DataFrame({
+    'A':1.0,
+    'B':pd.Timestamp('20210102'),
+    'C':pd.Series(1, index=list(range(4)), dtype='float32'),
+    'D':np.array([3]*4, dtype='int32'),
+    'E':pd.Categorical(['test', 'train', 'test', 'train', ]),
+    'F':'foo',
+})
+df2.info()
+
+The columns of the resulting DataFrame have different dtypes.
+df2.dtypes
+
+
+DataFrame.to_numpy() gives a NumPy representation of the underlying data. Note that this can be an expensive operation when your DataFrame has columns with different data types, which comes down to a fundamental differ- ence between pandas and NumPy: NumPy arrays have one dtype for the entire array, while pandas DataFrames have one dtype per column. When you call DataFrame.to_numpy(), pandas will find the NumPy dtype that can hold all of the dtypes in the DataFrame. This may end up being object, which requires casting every value to a Python object.
+
+For df, our DataFrame of all floating-point values, DataFrame.to_numpy() is fast and doesn’t require copying data.
+df.to_numpy()
+
+For df2, the DataFrame with multiple dtypes, DataFrame.to_numpy() is relatively expensive.
+df2.to_numpy()
+array([[1.0, Timestamp('2021-01-02 00:00:00'), 1.0, 3, 'test', 'foo'],
+       [1.0, Timestamp('2021-01-02 00:00:00'), 1.0, 3, 'train', 'foo'],
+       [1.0, Timestamp('2021-01-02 00:00:00'), 1.0, 3, 'test', 'foo'],
+       [1.0, Timestamp('2021-01-02 00:00:00'), 1.0, 3, 'train', 'foo']],
+      dtype=object)
+
+Note: DataFrame.to_numpy()does not include the index orc olumn labels in the output.
+
+2.1.2 Viewing data
+-------------------
+Transposing your data:
+df.T
+
+Sorting by an axis:
+df.sort_index(axis=1, ascending=False)
+
+                D	        C	        B	        A
+2021-01-01	-0.030514	-0.875529	-0.055480	-0.503135
+2021-01-03	0.122823	-0.488960	-1.026299	-0.982295
+
+df.sort_index(ascending=False)
+
+                A	        B	        C	        D
+2021-01-11	-0.537115	0.030939	-0.311905	0.598476
+2021-01-09	-0.873883	0.678836	-0.255343	-0.826411
+
+Sorting by values:
+df.sort_values('B')
+
+2.1.3 Selection
+----------------
+Note: While standard Python / Numpy expressions for selecting and setting are intuitive and come in handy for interactive work, for production code, we recommend the optimized pandas data access methods, .at, .iat, .loc and .iloc.
+
+Getting
+  Selecting a single column, which yields a Series, equivalent to df.A:
+  df['A']
+
+ Selecting via [], which slices the rows.
+  df[0:3]
+  df["20210102":"20210106"]
+
+ Selection by label
+ ------------------
+ For getting a cross section using a label:
+ df.loc[dates[0]]
+
+Selecting on a multi-axis by label:
+df[['A','B']] ~ df.loc[:,['A','B']]
+
+Showing label slicing, both endpoints are included:
+df.loc['20210101':'20210105',['A','C']]
+
+Reduction in the dimensions of the returned object:
+df.loc['2021-01-03',['A','C']]
+
+For getting a scalar value
+df.loc[dates[0], 'A'] # -0.5031
+
+For getting fast access to a scalar (equivalent to the prior method):
+df.at[dates[0], 'A'] # -0.5031
+
+which one is faster?
+%timeit df.loc[dates[0], 'A'] # 30.3 µs ± 1.27
+%timeit df.at[dates[0], 'A'] # 23.4 µs ± 5.19 µs
+
+
 
 Attributes:
+df.T
 .freqstr
 .freq
 .dt.month, .dt.year. .dt.hour, .dt.day, .dt.weekday
@@ -966,6 +1069,8 @@ loc
 iloc
 
 Methods:
+date_range()
+idxmax() - get the max index
 replace({from:to})
 read_csv(parse_dates=['colName'])
 to_datetime()
