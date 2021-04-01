@@ -409,7 +409,7 @@ fig.savefig("no2_concentration.png")
 Each of the plot objects created by pandas is a matplotlib object. As Matplotlib provides plenty of options to customize plots, making the link between pandas and Matplotlib explicit enables all the power of matplotlib to the plot. This strategy is applied in the previous example:
 
 fig, axs = plt.subplots(figsize=(12, 4)) ## Create an empty matplotlib Figure and Axes
-air_quality.plot.area(ax=axs ## Use pandas to put the area plot on the prepared Figure/Axes
+air_quality.plot.area(ax=axs) ## Use pandas to put the area plot on the prepared Figure/Axes
 axs.set_ylabel("NO$_2$ concentration") ## Do any matplotlib customization you like
 fig.savefig("no2_concentrations.png") ## Save the Figure/Axes using the existing matplotlib method.
 
@@ -747,6 +747,69 @@ HOW TO HANDLE TIME SERIES DATA WITH EASE?
 =========================================
 For this tutorial, air quality data about 𝑁𝑂2 and Particulate matter less than 2.5 micrometers is used, made available by openaq and downloaded using the py-openaq package. The air_quality_no2_long.csv" data set provides 𝑁 𝑂2 values for the measurement stations FR04014, BETR801 and London Westminster in respectively Paris, Antwerp and London.
 
+air_quality = pd.read_csv("data/air_quality_no2_long.csv")
+air_quality.rename(columns = {'date.utc': 'datetime'})
+air_quality.head()
+air_quality.city.unique()
+
+air_quality.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 2068 entries, 0 to 2067
+Data columns (total 7 columns):
+ #   Column     Non-Null Count  Dtype  
+---  ------     --------------  -----  
+ 0   city       2068 non-null   object 
+ 1   country    2068 non-null   object 
+ 2   datetime   2068 non-null   object
+
+Currently, datetime is object type.
+
+Using pandas datetime properties
+---------------------------------
+I want to work with the dates in the column datetime as datetime objects instead of plain text.
+
+air_quality['datetime'] = pd.to_datetime(air_quality.datetime)
+air_quality.datetime.dtype # datetime64[ns, UTC]
+
+Initially, the values in datetime are character strings and do not provide any datetime operations (e.g. extract the year, day of the week,. . . ). By applying the to_datetime function, pandas interprets the strings and convert these to datetime (i.e. datetime64[ns, UTC]) objects. In pandas we call these datetime objects similar to datetime. datetime from the standard library as pandas.Timestamp.
+
+Note: Asmanydatasetsdocontaindatetimeinformationinoneofthecolumns,pandasinputfunctionlikepandas. read_csv() and pandas.read_json() can do the transformation to dates when reading the data using the parse_dates parameter with a list of the columns to read as Timestamp:
+pd.read_csv("../data/air_quality_no2_long.csv", parse_dates=["datetime"])
+
+Why are these pandas.Timestamp objects useful? 
+Let’s illustrate the added value with some example cases. What is the start and end date of the time series data set we are working with?
+air_quality.datetime.min(), air_quality.datetime.max()
+(Timestamp('2019-05-07 01:00:00+0000', tz='UTC'),
+ Timestamp('2019-06-21 00:00:00+0000', tz='UTC'))
+
+ Using pandas.Timestamp for datetimes enables us to calculate with date information and make them comparable. Hence, we can use this to get the length of our time series:
+ air_quality.datetime.max() -  air_quality.datetime.min()
+ # Timedelta('44 days 23:00:00')
+
+ The result is a pandas.Timedelta object, similar to datetime.timedelta from the standard Python library and defining a time duration.
+
+ I want to add a new column to the DataFrame containing only the month of the measurement
+air_quality['month'] = air_quality.datetime.dt.month
+air_quality.head()
+
+By using Timestamp objects for dates, a lot of time-related properties are provided by pandas. For example the month, but also year, weekofyear, quarter,. . . All of these properties are accessible by the dt accessor.
+
+What is the average 𝑁𝑂2 concentration for each day of the week for each of the measurement locations?
+air_quality.groupby([air_quality.datetime.dt.weekday, 'location'])['value'].mean()
+
+Here, we want to calculate a given statistic (e.g. mean 𝑁𝑂2) for each weekday and for each measurement location. To group on weekdays, we use the datetime property weekday (with Monday=0 and Sunday=6) of pandas Timestamp, which is also accessible by the dt accessor. The grouping on both locations and weekdays can be done to split the calculation of the mean on each of these combinations.
+
+Plot the typical 𝑁𝑂2 pattern during the day of our time series of all stations together. In other words, what is the average value for each hour of the day?
+
+fig, axs = plt.subplots(figsize=(12,4))
+air_quality.groupby(air_quality.datetime.dt.hour)['value'].mean().plot(
+    kind='bar', rot=270, ax=axs)
+plt.xlabel('Hour of the day')
+plt.ylabel('$NO_2 (μg/m^3)$')
+
+
+
+
 
 Attributes:
 index
@@ -757,6 +820,8 @@ loc
 iloc
 
 Methods:
+read_csv(parse_dates=['colName'])
+to_datetime()
 merge(,,how, left_on, right_on)
 concat(, axis=, keys=)
 melt(id_var=, value_var=, value_name=, var_name=)
