@@ -856,6 +856,103 @@ REMEMBER
 * A DatetimeIndex contains these date-related properties and supports convenient slicing.
 * Resample is a powerful method to change the frequency of a time series.
 
+HOW TO MANIPULATE TEXTUAL DATA?
+This tutorial uses the Titanic data set, stored as CSV.
+titanic = pd.read_csv("data/titanic.csv")
+
+Make all name characters lowercase.
+To make each of the strings in the Name column lowercase, select the Name column, add the str accessor and apply the lower method. As such, each of the strings is converted element-wise.
+
+titanic.Name.str.lower()
+
+Create a new column Surname that contains the surname of the passengers by extracting the part before the comma.
+
+titanic.Name.str.split(',')
+
+Using the Series.str.split() method, each of the values is returned as a list of 2 elements. The first element is the part before the comma and the second element is the part after the comma.
+
+titanic['Surname'] = titanic.Name.str.split(',').str.get(0)
+titanic.head()
+
+As we are only interested in the first part representing the surname (element 0), we can again use the str accessor and apply Series.str.get() to extract the relevant part. Indeed, these string functions can be concatenated to combine multiple functions at once!
+
+I want to Extract the passenger data about the countesses on board of the Titanic.
+
+titanic[titanic.Name.str.contains('Countess')]
+
+The string method Series.str.contains() checks for each of the values in the column Name if the string contains the word Countess and returns for each of the values True (Countess is part of the name) or False (Countess is not part of the name). This output can be used to subselect the data using conditional (boolean) indexing introduced in the subsetting of data tutorial. As there was only one countess on the Titanic, we get one row as a result.
+
+Note: More powerful extractions on strings are supported, as the Series.str.contains() and Series. str.extract() methods accept regular expressions,
+
+Which passenger of the Titanic has the longest name?
+To get the longest name we first have to get the lengths of each of the names in the Name column. By using pandas string methods, the Series.str.len() function is applied to each of the names individually (element-wise).
+
+titanic.Name.str.len().idxmax()
+
+Next, we need to get the corresponding location, preferably the index label, in the table for which the name length is the largest. The idxmax() method does exactly that. It is not a string method and is applied to integers, so no str is used.
+
+titanic.iloc[titanic.Name.str.len().idxmax()]['Name']
+titanic.loc[titanic.Name.str.len().idxmax()]['Name']
+
+Based on the index name of the row (307) and the column (Name), we can do a selection using the loc or iloc operator.
+
+In the “Sex” column, replace values of “male” by “M” and values of “female” by “F”.
+
+titanic['Sex_short'] = titanic.Sex.replace({'male':'M', 'female':'F'})
+titanic.head(2)
+
+Whereas replace() is not a string method, it provides a convenient way to use mappings or vocabularies to translate certainvalues.Itrequiresadictionarytodefinethemapping{from : to}.
+
+Warning: There is also a replace() method available to replace a specific set of characters. However, when having a mapping of multiple values, this would become:
+titanic["Sex_short"] = titanic["Sex"].str.replace("female", "F")
+titanic["Sex_short"] = titanic["Sex_short"].str.replace("male", "M")
+This would become cumbersome and easily lead to mistakes. Just think (or try out yourself) what would happen if those two statements are applied in the opposite order.
+
+REMEMBER
+* String methods are available using the str accessor.
+* String methods work element-wise and can be used for conditional indexing.
+* The replace method is a convenient method to convert values according to a given dictionary.
+
+
+=================================Out of the box================================
+||Accessors||
+=============
+Pandas is a widely-used data analysis and manipulation library in Python. It provides numerous functions and methods to work with any type of data. There are also methods that work only with a specific data type. These methods are accessed through 4 accessors.
+The accessors extend the capabilities of Pandas and provide specific operations. For instance, extracting the month from the date can be done using the dt accessor.
+In this post, we will see various operations with 4 accessors of Pandas which are:
+str: String data type
+    Eg: Get only the row which have alphabets from a series.
+            a = pd.Series(['a',10,'bcd1',20,'efs'])
+            a[a.str.isalpha().replace(np.nan, False)]
+
+cat: Categorical data type
+    For categorical data it is more efficient to work with categorical datatype than using the object datatype. It makes a significant difference in terms of memory and speed especially when the data has low cardinality(i.e number of categories is low compared to the number of observations)
+
+    cate = pd.Series(['A','B','A','A','B','C'], dtype='category')
+    cate.cat.categories # Index(['A', 'B', 'C'], dtype='object')
+    cate.cat.rename_categories({'A':1, 'B':2, 'C':3})
+    #cate[0]='D' # ValueError: Cannot setitem on a Categorical with a new category, set the categories first
+    cate.cat.add_categories('D', inplace=True)
+    cate[0]='D'
+    cate
+
+dt: Datetime, Timedelta, Period data types
+    dts = pd.Series(pd.date_range('2021.01.01', periods=5, freq='10D'))
+        dts.dt.day
+        dts.dt.year
+        dts.dt.month
+        dts.dt.date
+        dts.dt.hour
+        dts.dt.minute
+        dts.dt.second
+        dts.dt.weekday
+        dts.dt.isocalendar().week
+        dts.dt.is_month_start
+
+sparse: Sparse data type
+
+=====================================================================================
+
 
 Attributes:
 .freqstr
@@ -869,6 +966,7 @@ loc
 iloc
 
 Methods:
+replace({from:to})
 read_csv(parse_dates=['colName'])
 to_datetime()
 merge(,,how, left_on, right_on)
