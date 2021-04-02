@@ -1298,11 +1298,62 @@ ts = pd.Series(np.random.randn(len(prng)), index=prng)
 ts.index = (prng.asfreq('M','e')+1).asfreq('H','s')+9
 ts
 
+Get the first date od provided month.
+pd.Timestamp('2020-01', freq='M').to_period().to_timestamp()
+
+2.1.10 Categoricals
+-------------------
+pandas can include categorical data in a DataFrame.
+
+df = pd.DataFrame({
+    'id':np.arange(1,7),
+    'raw_grade': [ 'a', 'b', 'b', 'a', 'a', 'e', ],
+})
+
+Convert the raw grades to a categorical data type.
+df['grade']=df['raw_grade'].astype('category')
+
+Rename the categories to more meaningful names (assigning to Series.cat.categories() is in place!).
+df['grade'].cat.categories = ['vg', 'g', 'b']
+
+Reorder the categories and simultaneously add the missing categories (methods under Series.cat() return a new Series by default).
+df['grade'] = df['grade'].cat.set_categories(['vb','b','m','g','vg'])
+
+Sorting is per order in the categories, not lexical order.
+df.sort_values('grade')
+
+Grouping by a categorical column also shows empty categories.
+df.groupby('grade').count()
+
+2.1.11 Plotting
+----------------
+We use the standard convention for referencing the matplotlib API:
+ts = pd.Series(np.random.randn(1000), index=pd.date_range(
+    '2019.01.01', periods=1000, ))
+ts = ts.cumsum()
+ts.plot()
+
+On a DataFrame, the plot() method is a convenience to plot all of the columns with labels:
+df = pd.DataFrame(np.random.randn(1000, 4), index=ts.index, 
+                  columns=['A','B','C','D'])
+df = df.cumsum()
+
+plt.figure()
+df.plot(figsize=(12,6))
+plt.legend(loc='best')
+
+2.1.12 Getting data in/out
+CSV
+Writing to a csv file. - df.to_csv("foo.csv")
+Reading from a csv file. - pd.read_csv("foo.csv")
+
+
 
 
 
 
 Attributes:
+.cat.categories
 df.T
 .freqstr
 .freq
@@ -1315,8 +1366,9 @@ loc
 iloc
 
 Methods:
-.to_timestamp - get the first day of the month
-.to_period - convert date to the freq like in Months
+.cat.set_categories()
+period.to_timestamp - get the first day of the month
+timestamp.to_period - convert date to the freq like in Months
 tz_convert - convert timezone to anotehr timezone
 tz_localize - specify timezone of a particular country
 pd.MultiIndex.from_tuples() 
