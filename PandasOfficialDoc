@@ -1347,18 +1347,274 @@ CSV
 Writing to a csv file. - df.to_csv("foo.csv")
 Reading from a csv file. - pd.read_csv("foo.csv")
 
+2.2 Intro to data structures
+============================
+We’ll start with a quick, non-comprehensive overview of the fundamental data structures in pandas to get you started. The fundamental behavior about data types, indexing, and axis labeling / alignment apply across all of the objects.
+
+Here is a basic tenet to keep in mind: DATA ALIGNMENT IS INTRINSIC. The link between labels and data will not be broken unless done so explicitly by you.
+
+2.2.1 Series
+=============
+Series is a one-dimensional labeled array capable of holding any data type (integers, strings, floating point numbers, Python objects, etc.). The axis labels are collectively referred to as the index. The basic method to create a Series is to call:
+
+s = pd.Series(data, index=index)
+
+Here, data can be many different things: • a Python dict
+• an ndarray
+• a scalar value (like 5)
+The passed index is a list of axis labels. Thus, this separates into a few cases depending on what data is:
+
+From ndarray
+If data is an ndarray, index must be the same length as data. If no index is passed, one will be created having values [0, ..., len(data) - 1].
+
+s = pd.Series(np.arange(5), index=['a','b','c','d','e'])
+s.index
+
+pd.Series(np.arange(5))
+
+Note: pandas supports non-unique index values. If an operation that does not support duplicate index values is attempted, an exception will be raised at that time. The reason for being lazy is nearly all performance-based (there are many instances in computations, like parts of GroupBy, where the index is not used).
+
+## DUPLICATE INDEX
+s = pd.Series(np.arange(5), index=['a','b','a','d','e']) 
+
+From dict
+Series can be instantiated from dicts:
+s = pd.Series({
+    'b':1,
+    'a':0,
+    'c':2,
+})
+
+Note: When the data is a dict, and an index is not passed, the Series index will be ordered by the dict’s insertion order, if you’re using Python version >= 3.6 and pandas version >= 0.23.
+
+pd.Series(s, index=['b','c','d','a'])
+
+Note: NaN (not a number)is the standard missing data marker used in pandas.
+
+From scalar value
+If data is a scalar value, an index can be provided. The value will be repeated to match the length of index.
+pd.Series(5)
+pd.Series(5, index=['b','c','d','a'])
+
+Series is ndarray-like
+Series acts very similarly to a ndarray, and is a valid argument to most NumPy functions. However, operations such as slicing will also slice the index.
+
+s[0] is s['a'] ## False
+s[0] == s['a'] ## True
+
+print(id(s[0])) # 4949691408
+id(s['a']) # 4949692112
+
+s[:3]
+
+s[s>s.median()]
+
+s[[4,3,1]]
+
+np.exp(s)
+
+Like a NumPy array, a pandas Series has a dtype.
+s.dtype # dtype('float64')
+
+This is often a NumPy dtype. However, pandas and 3rd-party libraries extend NumPy’s type system in a few places, in which case the dtype would be an ExtensionDtype. Some examples within pandas are Categorical data and Nullable integer data type. 
+
+If you need the actual array backing a Series, use Series.array.
+s.array
+<PandasArray>
+[   0.9662603314256619,  -0.10565599919230215, -0.011807389416360094,
+   -0.3584626404849454,   -1.4087244659737785]
+Length: 5, dtype: float64
+
+Accessing the array can be useful when you need to do some operation without the index (to disable automatic alignment, for example).
+type(s.array) # pandas.core.arrays.numpy_.PandasArray
+
+Series.array will always be an ExtensionArray. Briefly, an ExtensionArray is a thin wrapper around one or more concrete arrays like a numpy.ndarray. pandas knows how to take an ExtensionArray and store it in a Series or a column of a DataFrame.
+
+While Series is ndarray-like, if you need an actual ndarray, then use Series.to_numpy().
+s.to_numpy()
+
+Even if the Series is backed by a ExtensionArray, Series.to_numpy() will return a NumPy ndarray.
+
+Series is dict-like
+--------------------
+A Series is like a fixed-size dict in that you can get and set values by index label:
+
+s['a'] # 0.9662603314256619
+'e' in s # True
+'f' in s # False
+
+If a label is not contained, an exception is raised:
+s['f'] # KeyError: 'f'
+
+Using the get method, a missing label will return None or specified default:
+s.get('f')
+s.get('f', 10) # 10
+s.get('f', np.nan) nan
+
+Vectorized operations and label alignment with Series
+------------------------------------------------------
+When working with raw NumPy arrays, looping through value-by-value is usually not necessary. The same is true when working with Series in pandas. Series can also be passed into most NumPy methods expecting an ndarray.
+
+s+s
+s * 2
+
+===========What is Vectorization ===========================
+https://realpython.com/numpy-array-programming/#getting-into-shape-intro-to-numpy-arrays
+
+This practice of replacing explicit loops with array expressions is commonly referred to as vectorization. In general, vectorized array operations will often be one or two (or more) orders of magnitude faster than their pure Python equivalents, with the biggest impact [seen] in any kind of numerical computations.
+
+When looping over an array or any data structure in Python, there’s a lot of overhead involved. Vectorized operations in NumPy delegate the looping internally to highly optimized C and Fortran functions, making for cleaner and faster Python code.
+
+consider a 1-dimensional vector of True and False for which you want to count the number of “False to True” transitions in the sequence:
+In simple words we need to count the number of cases in which True comes after False.
+Eg: 
+x = np.array([False, False, True, True,False])
+np.count_nonzero(x[:-1]<x[1:]) # 1 - only once True comes after false at position 3
+
+Classic Python:
+def get_count(x) -> int:
+    count = 0
+    for i,j in list(zip(x[:-1], x[1:])):
+        if j and not i:
+            count += 1
+    return count
+%timeit get_count(x) # 1.1 ms ± 19.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+numpy:
+%timeit np.count_nonzero(x[:-1]<x[1:]) # 1.1 ms ± 19.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+Numpy solution is around 157 times faster.
+from timeit import timeit
+
+setup = 'from __main__ import count_transitions, x; import numpy as np'
+num = 100
+t1 = timeit('count_transitions(x)', setup = setup, number=num)
+print(t1)
+t2 = timeit('np.count_nonzero(x[:-1]<x[1:])', setup = setup, number=num)
+print(t2)
+print(f'Speed difference: {(t1/t2)}')
+
+17.00445253200087
+0.10794881399851874
+Speed difference: 157.52329184676546
+
+Question: Given a stock’s price history as a sequence, and assuming that you are only allowed to make one purchase and one sale, what is the maximum profit that can be obtained? For example, given prices = (20, 18, 14, 17, 20, 21, 15), the max profit would be 7, from buying at 14 and selling at 21.
+
+6 solutions:
+p = np.array([20, 18, 14, 17, 20, 21, 15])
+
+def bruteforce(a) -> int:
+    max_diff = 0
+    for i in p:
+        for j in p[1:]:
+            t = i - j
+            if t > max_diff:
+                max_diff = t
+    return max_diff
+
+def ordern(a) -> int:
+    max_val  = min_val = p[0]
+    for i in p[1:]:
+        if i>max_val:
+            max_val = i
+        elif i< min_val:
+            min_val = i
+    return max_val - min_val
+
+def realordern(p) -> int:
+    diff_px = 0
+    min_px = p[0]
+    for px in p[1:]:
+        min_px = min(min_px, px)
+        diff_px = max(px-min_px, diff_px)
+    return diff_px
+
+def basic(p) -> int:
+    return max(p)-min(p)
+
+from timeit import timeit
+
+setup = 'from __main__ import realordern, ordern, p, basic, bruteforce; import numpy as np'
+num = 10000
+t6 = timeit('np.max(p - np.minimum.accumulate(p))', setup = setup, number=num)
+print('numpy accumulate', t6)
+t5 = timeit('np.max(p) - np.min(p)', setup = setup, number=num)
+print('numpy max min', t5)
+t4 = timeit('basic(p)', setup = setup, number=num)
+print('python max min', t4)
+t1 = timeit('realordern(p)', setup = setup, number=num)
+print('solution suggested by realPython', t1)
+t2 = timeit('ordern(p)', setup = setup, number=num)
+print('My if else solution', t2)
+t3 = timeit('bruteforce(p)', setup = setup, number=num)
+print('BruteForce way ', t3)
+print(min(t1, t2, t3, t4, t5 ,t6))
+
+numpy accumulate 0.13581958799841232
+numpy max min 0.10029465600018739
+python max min 0.03708621999976458
+solution suggested by realPython 0.051151576000847854
+My if else solution 0.02522610599771724
+BruteForce way  0.21499461300118128
+0.02522610599771724
+
+AXES can be confusing term so in short - summing an array for axis=0 collapses the rows of the array with a column-wise computation.
+
+df = DataFrame({
+    'a':[10,20],
+    'b':[100, 200]
+})
+print(df)
+df.sum(axis=0)
+
+    a    b
+0  10  100
+1  20  200
+a     30
+b    300
+
+random.normal(loc=0.0, scale=1.0, size=None)
+Draw random samples from a normal (Gaussian) distribution.
+The probability density function of the normal distribution, first derived by De Moivre and 200 years later by both Gauss and Laplace independently [2], is often called the bell curve because of its characteristic shape (see the example below).
+The normal distributions occurs often in nature. For example, it describes the commonly occurring distribution of samples influenced by a large number of tiny, random disturbances, each with its own unique distribution [2].
+
+http://scipy-lectures.org/intro/numpy/array_object.html#what-are-numpy-and-numpy-arrays
+
+Interactive help for numpy
+np.array? --> Interactive help
+------------
+Docstring:
+array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
+Create an array.
+
+Looking for something:
+np.lookfor('create a random array')
+-----------------------------------
+Search results for 'create a random array'
+------------------------------------------
+numpy.matlib.rand
+    Return a matrix of random values with given shape.
+
+np.con*? 
+-----------
+np.concatenate
+np.conj
+np.conjugate
+np.convolve
 
 
+===================================================================================
 
 
 
 Attributes:
+.array
 .cat.categories
 df.T
 .freqstr
 .freq
 .dt.month, .dt.year. .dt.hour, .dt.day, .dt.weekday
-index
+.index
 columns
 shape
 dtypes
