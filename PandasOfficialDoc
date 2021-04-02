@@ -1054,6 +1054,252 @@ which one is faster?
 %timeit df.loc[dates[0], 'A'] # 30.3 µs ± 1.27
 %timeit df.at[dates[0], 'A'] # 23.4 µs ± 5.19 µs
 
+Selection by position(index)
+-----------------------------
+Select via the position of the passed integers:
+df.iloc[3]
+
+By integer slices, acting similar to numpy/Python:
+df.iloc[2:5, 2:4]
+
+By lists of integer position locations, similar to the NumPy/Python style:
+df.iloc[[1,2,4], [0,2]]
+
+For slicing rows explicitly:
+df.iloc[2:5,]
+
+For slicing columns explicitly:
+df.iloc[:, 2:4]
+
+For getting a value explicitly:
+df.iloc[2,2] # 0.79
+
+For getting fast access to a scalar (equivalent to the prior method):
+df.iat[2,2] # 0.790
+
+Boolean indexing
+-----------------
+Using a single column’s values to select data.
+df[df['A']>0]
+
+Selecting values from a DataFrame where a boolean condition is met.
+df[df>0]
+
+Using the isin() method for filtering:
+df2 = df.copy()
+df2['E'] = [ 'one', 'one', 'two', 'three', 'four', 'three', ]
+df2[df2.E.isin(['two', 'four'])]
+
+Setting
+-------
+Setting a new column automatically aligns the data by the indexes.
+s1 = pd.Series(np.arange(1,7), index=pd.date_range('20210101', periods=6))
+s1
+
+Setting values by label:
+df.at[dates[0], 'A'] = 0
+
+Setting values by position:
+df.iat[0, 1] = 0
+
+Setting by assigning with a NumPy array:
+df['D'] = np.array([3] * len(df))
+
+A where operation with setting.
+df2 = df.copy()
+df2[df2>0] = -df2
+
+df2 = df.copy()
+df2 = df2.where(df2<0,-df2)
+
+2.1.4 Missing data
+-------------------
+pandas primarily uses the value np.nan to represent missing data. It is by default not included in computations.
+
+Reindexing allows you to change/add/delete the index on a specified axis. This returns a copy of the data.
+
+reindex - assign new index to existing dataframe.
+
+df1 = df.reindex(index=dates[0:4], columns=list(df.columns)+['E'])
+df1.loc[dates[0:2], 'E'] = 1
+
+To drop any rows that have missing data.
+df.dropna(how = 'any') ~ df.dropna()
+
+which one is faster?
+%timeit df.dropna() # 1.59 ms ± 13.5 µs per loop
+%timeit df.dropna(how = 'any') # 1.67 ms ± 50.9 µs per loop
+
+%timeit titanic.dropna() # 1.97 ms ± 117 µs per loop
+%timeit titanic.dropna(how='any') # 2.2 ms ± 196 µs per loop
+
+Filling missing data.
+df1.fillna(value=5) ~ df1.fillna(5)
+
+To get the boolean mask where values are nan.
+pd.isna(df1)
+
+2.1.5 Operations
+----------------
+Stats
+Operations in general exclude missing data.
+df.mean() # To get mean of each column
+
+Same operation on the other axis:
+df.mean(axis=1) ~ df.mean(1) # To get mean of each row
+df.mean.mean() # To get a scaler which is mean of complete dataframe
+
+Operating with objects that have different dimensionality and need alignment. In addition, pandas automatically broadcasts along the specified dimension.
+
+s = pd.Series([1,3,5,np.nan,6,8], index=dates).shift(2)
+df.sub(s, axis='index')
+df.rsub(s, axis='index')
+
+Apply
+------
+Applying functions to the data:
+df.apply(np.cumprod)
+
+df.apply(lambda x: x.max() - x.min())
+df.apply(lambda x: x.max() - x.min(), axis=1)
+
+Histogramming:
+get the frequency.
+
+s = pd.Series(np.random.randint(0,7,size=10))
+s.value_counts()
+
+String Methods
+--------------
+Series is equipped with a set of string processing methods in the str accessor that make it easy to operate on each element of the array, as in the code snippet below. Note that pattern-matching in str generally uses regular expressions by default (and in some cases always uses them).
+
+s = pd.Series(['A','B','V','CABA',np.nan, 'RAVA'])
+s.str.lower()
+
+2.1.6 Merge
+------------
+Concat
+------
+pandas provides various facilities for easily combining together Series and DataFrame objects with various kinds of set logic for the indexes and relational algebra functionality in the case of join / merge-type operations.
+Concatenating pandas objects together with concat():
+
+df = pd.DataFrame(np.random.randn(10,4))
+# let's break it into pieces
+pieces = [df[:3], df[3:7], df[7:]]
+pd.concat(pieces)
+
+Note: Adding a column to a DataFrame is relatively fast. However, adding a row requires a copy, and may be expensive. We recommend passing a pre-built list of records to the DataFrame constructor instead of building a DataFrame by iteratively appending records to it.
+
+Join
+-----
+SQL style merges
+left = pd.DataFrame({"key": ["foo", "foo"], "lval": [1, 2]})
+right = pd.DataFrame({"key": ["foo", "foo"], "rval": [4, 5]})
+pd.merge(left, right, on="key")
+
+2.1.7 Grouping
+--------------
+By “group by” we are referring to a process involving one or more of the following steps: • Splitting the data into groups based on some criteria
+• Applying a function to each group independently
+• Combining the results into a data structure
+
+df = pd.DataFrame(
+    {
+    "A": ["foo", "bar", "foo", "bar", "foo", "bar", "foo", "foo"],
+    "B": ["one", "one", "two", "three", "two", "two", "one", "three"],
+    "C": np.random.randn(8),
+    "D": np.random.randn(8),
+    }
+)
+Grouping and then applying the sum() function to the resulting groups.
+df.groupby(["A", "B"]).sum()
+
+2.1.8 Reshaping
+---------------
+tuples = list(zip(*[
+    ["bar", "bar", "baz", "baz", "foo", "foo", "qux", "qux"],
+    ["one", "two", "one", "two", "one", "two", "one", "two"],
+]))
+
+index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+df = pd.DataFrame(np.random.randn(8,2), index=index, columns=['A','B'])
+df2 = df[:4]
+df2
+
+The stack() method “compresses” a level in the DataFrame’s columns.
+stacked = df2.stack()
+stacked
+(It is similar to melt but it maintains index as well)
+first  second   
+bar    one     A    0.709423
+               B   -0.276359
+       two     A    0.771991
+               B   -0.523291
+baz    one     A    0.033710
+               B   -0.099103
+       two     A   -0.046292
+               B    0.984227
+dtype: float64
+
+With a “stacked” DataFrame or Series (having a MultiIndex as the index), the inverse operation of stack() is unstack(), which by default unstacks the last level:
+
+stacked.unstack()
+                		A	       B
+first	second		
+bar	    one	        0.709423	-0.276359
+        two	        0.771991	-0.523291
+baz	    one	        0.033710	-0.099103
+        two	       -0.046292	0.984227
+
+stacked.unstack([0,1])
+first	bar	baz
+second	one	two	one	two
+A	0.709423	0.771991	0.033710	-0.046292
+B	-0.276359	-0.523291	-0.099103	0.984227
+
+Pivot tables
+------------
+Reshape - Long to Wide
+
+df = pd.DataFrame({
+    "A": ["one", "one", "two", "three"] * 3,
+    "B": ["A", "B", "C"] * 4,
+    "C": ["foo", "foo", "foo", "bar", "bar", "bar"] * 2,
+    "D": np.random.randn(12),
+    "E": np.random.randn(12),
+})
+df.pivot_table(columns=['C'], values='D', index=['A','B'])
+
+2.1.9 Time series
+------------------
+pandas has simple, powerful, and efficient functionality for performing resampling operations during frequency con- version (e.g., converting secondly data into 5-minutely data). This is extremely common in, but not limited to, financial applications.
+
+rng = pd.date_range('2021/01/01', periods=100, freq='S')
+ts = pd.Series(np.random.randint(0,500,len(rng)), index=rng)
+ts.resample('5M').mean()
+
+Time zone representation:
+rng = pd.date_range('3/6/2020 00:00', periods=5)
+ts = pd.Series(np.random.randn(len(rng)), index=rng)
+ts_utc = ts.tz_localize('UTC')
+Converting to another time zone:
+ts_utc.tz_convert('US/Eastern')
+
+Converting between time span representations:
+rng = pd.date_range('3/6/2020 00:00', periods=5, freq='M')
+ts = pd.Series(np.random.randn(len(rng)), index=rng)
+ps = ts.to_period()
+ps.to_timestamp()
+
+Converting between period and timestamp enables some convenient arithmetic functions to be used. In the following example, we convert a quarterly frequency with year ending in November to 9am of the end of the month following the quarter end:
+
+prng = pd.period_range('1990Q1', '2000Q4', freq='Q-NOV')
+ts = pd.Series(np.random.randn(len(prng)), index=prng)
+ts.index = (prng.asfreq('M','e')+1).asfreq('H','s')+9
+ts
+
+
+
 
 
 Attributes:
@@ -1069,6 +1315,18 @@ loc
 iloc
 
 Methods:
+.to_timestamp - get the first day of the month
+.to_period - convert date to the freq like in Months
+tz_convert - convert timezone to anotehr timezone
+tz_localize - specify timezone of a particular country
+pd.MultiIndex.from_tuples() 
+stack()
+df.rsub - opposite of sub(), first apply sub and then multiply values with -1
+df.sub() - subtract
+isna()
+fillna()
+dropna()
+reindex()
 date_range()
 idxmax() - get the max index
 replace({from:to})
