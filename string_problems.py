@@ -1,5 +1,5 @@
 ###1. For given input A5B7D3 output should be sorted alphabets and then sorted numbers like
-A5B7D3 should return ABD357
+# A5B7D3 should return ABD357
 
 s='A5B7D2'
 s1=s2=output=''

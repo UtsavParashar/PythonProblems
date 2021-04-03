@@ -1182,7 +1182,7 @@ mycar # Car(color='red', milage=21)
 
 Like tuples, namedtuples are immutable. When you try to overwrite one of their fields, you’ll get an AttributeError exception:
 mycar.color = 'green' # AttributeError: can't set attribute
-
+ast.literal_eval
 A good way to view them is to think that namedtuples are a memory-efficient shortcut to defining an immutable class in Python manually.
 
 Subclassing Namedtuples
@@ -1248,6 +1248,33 @@ InterestRateMarket = collections.namedtuple(
         'volatility_curve'
     ])
 InterestRateMarket.__new__.__defaults__ = (None, None, None, None, None)
+
+##### DataClass
+----------------
+Similar to NamedTuple we have dataclass which acts as a code generator and is a convenient way to create classes.
+Unlike NamedTuple they are not immutable by default and have several features similar to NamedTuples.
+Details - https://realpython.com/python-data-classes/
+
+from dataclasses import dataclass
+from typing import Any
+@dataclass
+class Car:
+    color:str
+    milage: Any # If you don't want to specify datatype that is completely fine
+
+audi = Car('black', 11.1)
+audi
+
+You can also define a dataclass similar to namedtuple
+from dataclasses import make_dataclass
+NewCar = make_dataclass('NewCar', ['color', 'milage'])
+benz = NewCar('White', 9)
+benz
+
+Like namedtuple internally many dunders like __repr__, __eq__, __hash__ will be generated automatically for you.
+Hence it saves you a lot of time while writing a class and you can also customize features based on your requirement.
+
+
 
 
 ### What is OrderedDict?

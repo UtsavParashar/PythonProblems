@@ -1457,6 +1457,205 @@ When working with raw NumPy arrays, looping through value-by-value is usually no
 
 s+s
 s * 2
+np.exp(s)
+
+A key difference between Series and ndarray is that operations between Series automatically align the data based on label. Thus, you can write computations without giving consideration to whether the Series involved have the same labels.
+
+s1 = pd.Series(np.arange(5), index=['a','b','c','d','e'])
+print(s1[:-1])
+print(s1[1:])
+s1[:-1] + s1[1:]
+a    0
+b    1
+c    2
+d    3
+dtype: int64
+b    1
+c    2
+d    3
+e    4
+dtype: int64
+a    NaN
+b    2.0
+c    4.0
+d    6.0
+e    NaN
+dtype: float64
+
+a = np.arange(5)
+print(a)
+a[:-1] + a[1:]
+
+[0 1 2 3 4]
+array([1, 3, 5, 7])
+
+
+The result of an operation between unaligned Series will have the union of the indexes involved. If a label is not found in one Series or the other, the result will be marked as missing NaN. Being able to write code without doing any explicit data alignment grants immense freedom and flexibility in interactive data analysis and research. The integrated data alignment features of the pandas data structures set pandas apart from the majority of related tools for working with labeled data.
+
+
+Note: In general, we chose to make the default result of operations between differently indexed objects yield the union of the indexes in order to avoid loss of information. Having an index label, though the data is missing, is typically important information as part of a computation. You of course have the option of dropping labels with missing data via the dropna function.
+
+Name attribute
+---------------
+Series can also have a name attribute:
+
+s1 = pd.Series(np.arange(5), index=['a','b','c','d','e'], name='something')
+print(s1)
+print(s1.name) # something
+
+The Series name will be assigned automatically in many cases, in particular when taking 1D slices of DataFrame as you will see below.
+You can rename a Series with the pandas.Series.rename() method.
+
+s2 = s1.rename('different')
+s2.name # 'different'
+print(id(s1)) # 4939539792
+print(id(s2)) # 4939597952
+
+Note that s1 and s2 refer to different objects.
+
+You can also name an existing series with rename method.
+s3 = pd.Series(np.arange(5), index=['a','b','c','d','e'],)
+s3.rename('Ramesha') # Name: Ramesha, dtype: int64
+
+2.2.2 DataFrame
+----------------
+DataFrame is a 2-dimensional labeled data structure with columns of potentially different types. You can think of it like a spreadsheet or SQL table, or a dict of Series objects. It is generally the most commonly used pandas object. Like Series, DataFrame accepts many different kinds of input:
+• Dict of 1D ndarrays, lists, dicts, or Series 
+• 2-D numpy.ndarray
+• Structured or record ndarray
+• A Series
+• Another DataFrame
+
+--------------------------------------------------------------------------------
+Structured or record ndarray - 
+
+Structured arrays are ndarrays whose datatype is a composition of simpler datatypes organized as a sequence of named fields. For example,
+
+x = np.array([
+    ('Rex', 9, 81.0,),
+    ('Fido', 3, 27.0,),
+], dtype=[('name', 'U10'), ('age','i4'), ('weight', 'f4')]
+)
+x.dtype
+
+Here x is a one-dimensional array of length two whose datatype is a structure with three fields: 
+1. A string of length 10 or less named ‘name’, 
+2. a 32-bit integer named ‘age’, and 
+3. a 32-bit float named ‘weight’.
+
+If you index x at position 1 you get a structure:
+x[1] # ('Fido', 3, 27.)
+x[1]['age'] # 3
+You can access and modify individual fields of a structured array by indexing with the field name:
+x[1]['age'] = 30
+x[1] #  ('Fido', 30, 27.)
+
+## Dataframe from structured array
+df = DataFrame(x)
+df
+
+Structured datatypes are designed to be able to mimic ‘structs’ in the C language, and share a similar memory layout. They are meant for interfacing with C code and for low-level manipulation of structured buffers, for example for interpreting binary blobs. For these purposes they support specialized features such as subarrays, nested datatypes, and unions, and allow control over the memory layout of the structure.
+
+Users looking to manipulate tabular data, such as stored in csv files, may find other pydata projects more suitable, such as xarray, pandas, or DataArray. These provide a high-level interface for tabular data analysis and are better optimized for that use. For instance, the C-struct-like memory layout of structured arrays in numpy can lead to poor cache behavior in comparison
+---------------------------------------------------------------------------------
+
+back to dataframe - 
+Along with the data, you can optionally pass index (row labels) and columns (column labels) arguments. If you pass an index and / or columns, you are guaranteeing the index and / or columns of the resulting DataFrame. Thus, a dict of Series plus a specific index will discard all data not matching up to the passed index.
+If axis labels are not passed, they will be constructed from the input data based on common sense rules.
+
+df = DataFrame({
+    'a':[10,20],
+    'b':[100, 200]
+}, index=['chandu', 'maghu']
+)
+df
+
+Note: When the data is a dict,and columns is not specified,the DataFrame columns will be ordered by the dict’s insertion order, if you are using Python version >= 3.6 and pandas >= 0.23.
+
+If you want to create a dataframe with a dict but different names:
+d = {
+    'a':[10,20],
+    'b':[100, 200]
+}
+df = DataFrame(list(d.values()), columns=['Ramesh', 'Suresh'])
+df
+
+From dict of Series or dicts
+----------------------------
+The resulting index will be the union of the indexes of the various Series. If there are any nested dicts, these will first be converted to Series. If no columns are passed, the columns will be the ordered list of dict keys.
+
+d = {
+    'one': pd.Series(np.arange(1,4).astype(float), index=['a','b','c']),
+    'two': pd.Series(np.arange(1,5).astype(float), index=['a','b','c','d']),
+}
+df = pd.DataFrame(d)
+df
+
+df = pd.DataFrame(d, index=['d','b','a'])
+
+df = pd.DataFrame(d, index=['d','b','a'], columns=['two', 'three'])
+
+The row and column labels can be accessed respectively by accessing the index and columns attributes:
+
+Note: When a particular set of columns is passed along with a dict of data, the passed columns override the keys in the dict.
+
+df.index # Index(['d', 'b', 'a'], dtype='object')
+df.columns # Index(['two', 'three'], dtype='object')
+
+From dict of ndarrays / lists
+-----------------------------
+The ndarrays must all be the same length. If an index is passed, it must clearly also be the same length as the arrays. If no index is passed, the result will be range(n), where n is the array length.
+
+d = {"one": [1.0, 2.0, 3.0, 4.0], "two": [4.0, 3.0, 2.0, 1.0]}
+pd.DataFrame(d, index=["a", "b", "c", "d"])
+
+From structured or record array
+-------------------------------
+This case is handled identically to a dict of arrays.
+data = np.zeros((2,), dtype=[("A", "i4"), ("B", "f4"), ("C", "a10")])
+data[:] = [(1, 2.0, "Hello"), (2, 3.0, "World")]
+pd.DataFrame(data)
+pd.DataFrame(data, index=['on', 'tw'])
+pd.DataFrame(data, columns=list('cab'.upper()))
+
+Note: DataFrame is not intended to work exactly like a 2-dimensional NumPy ndarray.
+
+From a list of dicts
+---------------------
+data2 = [{"a": 1, "b": 2}, {"a": 5, "b": 10, "c": 20}]
+pd.DataFrame(data2)
+pd.DataFrame(data2, index=["first", "second"])
+pd.DataFrame(data2, columns=["a", "b"])
+
+From a dict of tuples
+---------------------
+You can automatically create a MultiIndexed frame by passing a tuples dictionary.
+d = {
+    ("a", "b"): {("A", "B"): 1, ("A", "C"): 2},
+    ("a", "a"): {("A", "C"): 3, ("A", "B"): 4},
+    ("a", "c"): {("A", "B"): 5, ("A", "C"): 6},
+    ("b", "a"): {("A", "C"): 7, ("A", "B"): 8},
+    ("b", "b"): {("A", "D"): 9, ("A", "B"): 10},
+}
+DataFrame(d)
+
+From a Series
+-------------
+The result will be a DataFrame with the same index as the input Series, and with one column whose name is the original name of the Series (only if no other column name provided).
+
+From a list of namedtuples
+---------------------------
+The field names of the first namedtuple in the list determine the columns of the DataFrame. The remaining namedtuples (or tuples) are simply unpacked and their values are fed into the rows of the DataFrame. If any of those tuples is shorter than the first namedtuple then the later columns in the corresponding row are marked as missing values. If any are longer than the first namedtuple, a ValueError is raised.
+
+Point = namedtuple('Point', 'x y')
+DataFrame([Point(0,0), Point(0,1), Point(0,2)])
+
+Point = namedtuple('Point3D', 'x y z')
+DataFrame([Point(0,0,0), Point(0,1,1), Point(0,1,2)])
+
+From a list of dataclasses
+--------------------------
+
 
 ===========What is Vectorization ===========================
 https://realpython.com/numpy-array-programming/#getting-into-shape-intro-to-numpy-arrays
@@ -1608,6 +1807,7 @@ np.convolve
 
 
 Attributes:
+.name
 .array
 .cat.categories
 df.T
@@ -1622,6 +1822,7 @@ loc
 iloc
 
 Methods:
+rename()
 .cat.set_categories()
 period.to_timestamp - get the first day of the month
 timestamp.to_period - convert date to the freq like in Months
