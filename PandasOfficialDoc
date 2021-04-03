@@ -1,5 +1,9 @@
 PandasOfficialDoc
 -----------------
+
+conda activate myenv
+jupyter notebook
+
 pandas: powerful Python data analysis toolkit Release 1.2.3
 ------------------------------------------------------------
 
@@ -1353,6 +1357,153 @@ We’ll start with a quick, non-comprehensive overview of the fundamental data s
 
 Here is a basic tenet to keep in mind: DATA ALIGNMENT IS INTRINSIC. The link between labels and data will not be broken unless done so explicitly by you.
 
+===========What is Vectorization ===========================
+https://realpython.com/numpy-array-programming/#getting-into-shape-intro-to-numpy-arrays
+
+This practice of replacing explicit loops with array expressions is commonly referred to as vectorization. In general, vectorized array operations will often be one or two (or more) orders of magnitude faster than their pure Python equivalents, with the biggest impact [seen] in any kind of numerical computations.
+
+When looping over an array or any data structure in Python, there’s a lot of overhead involved. Vectorized operations in NumPy delegate the looping internally to highly optimized C and Fortran functions, making for cleaner and faster Python code.
+
+consider a 1-dimensional vector of True and False for which you want to count the number of “False to True” transitions in the sequence:
+In simple words we need to count the number of cases in which True comes after False.
+Eg:
+x = np.array([False, False, True, True,False])
+np.count_nonzero(x[:-1]<x[1:]) # 1 - only once True comes after false at position 3
+
+Classic Python:
+def get_count(x) -> int:
+    count = 0
+    for i,j in list(zip(x[:-1], x[1:])):
+        if j and not i:
+            count += 1
+    return count
+%timeit get_count(x) # 1.1 ms ± 19.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+numpy:
+%timeit np.count_nonzero(x[:-1]<x[1:]) # 1.1 ms ± 19.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+Numpy solution is around 157 times faster.
+from timeit import timeit
+
+setup = 'from __main__ import count_transitions, x; import numpy as np'
+num = 100
+t1 = timeit('count_transitions(x)', setup = setup, number=num)
+print(t1)
+t2 = timeit('np.count_nonzero(x[:-1]<x[1:])', setup = setup, number=num)
+print(t2)
+print(f'Speed difference: {(t1/t2)}')
+
+17.00445253200087
+0.10794881399851874
+Speed difference: 157.52329184676546
+
+Question: Given a stock’s price history as a sequence, and assuming that you are only allowed to make one purchase and one sale, what is the maximum profit that can be obtained? For example, given prices = (20, 18, 14, 17, 20, 21, 15), the max profit would be 7, from buying at 14 and selling at 21.
+
+6 solutions:
+p = np.array([20, 18, 14, 17, 20, 21, 15])
+
+def bruteforce(a) -> int:
+    max_diff = 0
+    for i in p:
+        for j in p[1:]:
+            t = i - j
+            if t > max_diff:
+                max_diff = t
+    return max_diff
+
+def ordern(a) -> int:
+    max_val  = min_val = p[0]
+    for i in p[1:]:
+        if i>max_val:
+            max_val = i
+        elif i< min_val:
+            min_val = i
+    return max_val - min_val
+
+def realordern(p) -> int:
+    diff_px = 0
+    min_px = p[0]
+    for px in p[1:]:
+        min_px = min(min_px, px)
+        diff_px = max(px-min_px, diff_px)
+    return diff_px
+
+def basic(p) -> int:
+    return max(p)-min(p)
+
+from timeit import timeit
+
+setup = 'from __main__ import realordern, ordern, p, basic, bruteforce; import numpy as np'
+num = 10000
+t6 = timeit('np.max(p - np.minimum.accumulate(p))', setup = setup, number=num)
+print('numpy accumulate', t6)
+t5 = timeit('np.max(p) - np.min(p)', setup = setup, number=num)
+print('numpy max min', t5)
+t4 = timeit('basic(p)', setup = setup, number=num)
+print('python max min', t4)
+t1 = timeit('realordern(p)', setup = setup, number=num)
+print('solution suggested by realPython', t1)
+t2 = timeit('ordern(p)', setup = setup, number=num)
+print('My if else solution', t2)
+t3 = timeit('bruteforce(p)', setup = setup, number=num)
+print('BruteForce way ', t3)
+print(min(t1, t2, t3, t4, t5 ,t6))
+
+numpy accumulate 0.13581958799841232
+numpy max min 0.10029465600018739
+python max min 0.03708621999976458
+solution suggested by realPython 0.051151576000847854
+My if else solution 0.02522610599771724
+BruteForce way  0.21499461300118128
+0.02522610599771724
+
+AXES can be confusing term so in short - summing an array for axis=0 collapses the rows of the array with a column-wise computation.
+
+df = DataFrame({
+    'a':[10,20],
+    'b':[100, 200]
+})
+print(df)
+df.sum(axis=0)
+
+    a    b
+0  10  100
+1  20  200
+a     30
+b    300
+
+random.normal(loc=0.0, scale=1.0, size=None)
+Draw random samples from a normal (Gaussian) distribution.
+The probability density function of the normal distribution, first derived by De Moivre and 200 years later by both Gauss and Laplace independently [2], is often called the bell curve because of its characteristic shape (see the example below).
+The normal distributions occurs often in nature. For example, it describes the commonly occurring distribution of samples influenced by a large number of tiny, random disturbances, each with its own unique distribution [2].
+
+http://scipy-lectures.org/intro/numpy/array_object.html#what-are-numpy-and-numpy-arrays
+
+Interactive help for numpy
+np.array? --> Interactive help
+------------
+Docstring:
+array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
+Create an array.
+
+Looking for something:
+np.lookfor('create a random array')
+-----------------------------------
+Search results for 'create a random array'
+------------------------------------------
+numpy.matlib.rand
+    Return a matrix of random values with given shape.
+
+np.con*?
+-----------
+np.concatenate
+np.conj
+np.conjugate
+np.convolve
+===================================================================================
+
+
+
 2.2.1 Series
 =============
 Series is a one-dimensional labeled array capable of holding any data type (integers, strings, floating point numbers, Python objects, etc.). The axis labels are collectively referred to as the index. The basic method to create a Series is to call:
@@ -1655,155 +1806,122 @@ DataFrame([Point(0,0,0), Point(0,1,1), Point(0,1,2)])
 
 From a list of dataclasses
 --------------------------
+Passing a list of dataclasses is equivalent to passing a list of dictionaries.
+Please be aware, that all values in the list should be dataclasses, mixing types in the list would result in a TypeError.
 
+from dataclasses import make_dataclass
+Point = make_dataclass('Point', [('x', int), ('y', int)])
+pd.DataFrame([Point(0, 0), Point(0,1), Point(0,2)])
 
-===========What is Vectorization ===========================
-https://realpython.com/numpy-array-programming/#getting-into-shape-intro-to-numpy-arrays
+Missing data
+Much more will be said on this topic in the Missing data section. To construct a DataFrame with missing data, we use np.nan to represent missing values. Alternatively, you may pass a numpy.MaskedArray as the data argument to the DataFrame constructor, and its masked entries will be considered missing.
 
-This practice of replacing explicit loops with array expressions is commonly referred to as vectorization. In general, vectorized array operations will often be one or two (or more) orders of magnitude faster than their pure Python equivalents, with the biggest impact [seen] in any kind of numerical computations.
+Alternate constructors
+-----------------------
+DataFrame.from_dict --
+----------------------
+DataFrame.from_dict takes a dict of dicts or a dict of array-like sequences and returns a DataFrame. It operates like the DataFrame constructor except for the orient parameter which is 'columns' by default, but which can be set to 'index' in order to use the dict keys as row labels
+pd.DataFrame.from_dict(dict([('A', np.arange(1,4)), ('B', np.arange(4,7))]))
 
-When looping over an array or any data structure in Python, there’s a lot of overhead involved. Vectorized operations in NumPy delegate the looping internally to highly optimized C and Fortran functions, making for cleaner and faster Python code.
+If you pass orient='index', the keys will be the row labels. In this case, you can also pass the desired column names:
+pd.DataFrame.from_dict(
+    dict([('A', np.arange(1,4)), ('B', np.arange(4,7))]),
+    orient = 'index',
+    columns=['one', 'two', 'three'])
 
-consider a 1-dimensional vector of True and False for which you want to count the number of “False to True” transitions in the sequence:
-In simple words we need to count the number of cases in which True comes after False.
-Eg: 
-x = np.array([False, False, True, True,False])
-np.count_nonzero(x[:-1]<x[1:]) # 1 - only once True comes after false at position 3
+DataFrame.from_records
+------------------------
+DataFrame.from_records takes a list of tuples or an ndarray with structured dtype. It works analogously to the normal DataFrame constructor, except that the resulting DataFrame index may be a specific field of the structured dtype. For example:
+x = np.array([
+    ('Rex', 9, 81.0,),
+    ('Fido', 3, 27.0,),
+], dtype=[('name', 'U10'), ('age','i4'), ('weight', 'f4')]
+)
 
-Classic Python:
-def get_count(x) -> int:
-    count = 0
-    for i,j in list(zip(x[:-1], x[1:])):
-        if j and not i:
-            count += 1
-    return count
-%timeit get_count(x) # 1.1 ms ± 19.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+pd.DataFrame.from_records(x)
 
-numpy:
-%timeit np.count_nonzero(x[:-1]<x[1:]) # 1.1 ms ± 19.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+Column selection, addition, deletion
+-------------------------------------
+You can treat a DataFrame semantically like a dict of like-indexed Series objects. Getting, setting, and deleting columns works with the same syntax as the analogous dict operations:
 
-Numpy solution is around 157 times faster.
-from timeit import timeit
+d = {
+    'one': pd.Series(np.arange(1,4).astype(float), index=['a','b','c']),
+    'two': pd.Series(np.arange(1,5).astype(float), index=['a','b','c','d']),
+}
+df = pd.DataFrame(d)
+df['one']   ## Selection
+df['three'] = df['one'] * df['two'] ## Column Addition
+df['flag'] = df['one'] > 2  ## Column Addition
+df
 
-setup = 'from __main__ import count_transitions, x; import numpy as np'
-num = 100
-t1 = timeit('count_transitions(x)', setup = setup, number=num)
-print(t1)
-t2 = timeit('np.count_nonzero(x[:-1]<x[1:])', setup = setup, number=num)
-print(t2)
-print(f'Speed difference: {(t1/t2)}')
+Columns can be deleted or popped like with a dict:
+del df['two']   ## permanently deleted
+three = df.pop('three')  ## Poped and deleated
 
-17.00445253200087
-0.10794881399851874
-Speed difference: 157.52329184676546
+When inserting a scalar value, it will naturally be propagated to fill the column:
+df['foo'] = 'bar'
 
-Question: Given a stock’s price history as a sequence, and assuming that you are only allowed to make one purchase and one sale, what is the maximum profit that can be obtained? For example, given prices = (20, 18, 14, 17, 20, 21, 15), the max profit would be 7, from buying at 14 and selling at 21.
+When inserting a Series that does not have the same index as the DataFrame, it will be conformed to the DataFrame’s index:
+df['one_trunc'] = df["one"][:2]
 
-6 solutions:
-p = np.array([20, 18, 14, 17, 20, 21, 15])
+If the index of the series to be added does not match with df, then np.nan is filled.
+s = pd.Series(np.arange(1,4), index=['z','y','x'])
+df1 = df
+print(df1)
+df1['trunc_one'] = s
+df1
 
-def bruteforce(a) -> int:
-    max_diff = 0
-    for i in p:
-        for j in p[1:]:
-            t = i - j
-            if t > max_diff:
-                max_diff = t
-    return max_diff
+one	flag	    foo	trunc_one
+a	1.0	False	bar	NaN
+b	2.0	False	bar	NaN
+c	3.0	True	bar	NaN
+d	NaN	False	bar	NaN
 
-def ordern(a) -> int:
-    max_val  = min_val = p[0]
-    for i in p[1:]:
-        if i>max_val:
-            max_val = i
-        elif i< min_val:
-            min_val = i
-    return max_val - min_val
+You can insert raw ndarrays but their length must match the length of the DataFrame’s index.
+By default, columns get inserted at the end. The insert function is available to insert at a particular location in the columns:
+df.insert(1, 'bar', df["one"])
 
-def realordern(p) -> int:
-    diff_px = 0
-    min_px = p[0]
-    for px in p[1:]:
-        min_px = min(min_px, px)
-        diff_px = max(px-min_px, diff_px)
-    return diff_px
+Assigning new columns in method chains
+--------------------------------------
+assign - DataFrame has an assign() method that allows you to easily create new columns that are potentially derived from existing columns.
+assign always returns a copy of the data, leaving the original DataFrame untouched.
+iris = pd.read_csv("data/iris.data")
+iris.head()
+iris.assign(SepalRation = iris.SepalWidth / iris.SepalLength).head()
 
-def basic(p) -> int:
-    return max(p)-min(p)
+In the example above, we inserted a precomputed value. We can also pass in a function of one argument to be evaluated on the DataFrame being assigned to.
+iris.assign(SepalRatio=lambda x:(x['SepalWidth']/x['SepalLength'])).head()
 
-from timeit import timeit
+Passing a callable, as opposed to an actual value to be inserted, is useful when you don’t have a reference to the DataFrame at hand. This is common when using assign in a chain of operations. For example, we can limit the DataFrame to just those observations with a Sepal Length greater than 5, calculate the ratio, and plot:
 
-setup = 'from __main__ import realordern, ordern, p, basic, bruteforce; import numpy as np'
-num = 10000
-t6 = timeit('np.max(p - np.minimum.accumulate(p))', setup = setup, number=num)
-print('numpy accumulate', t6)
-t5 = timeit('np.max(p) - np.min(p)', setup = setup, number=num)
-print('numpy max min', t5)
-t4 = timeit('basic(p)', setup = setup, number=num)
-print('python max min', t4)
-t1 = timeit('realordern(p)', setup = setup, number=num)
-print('solution suggested by realPython', t1)
-t2 = timeit('ordern(p)', setup = setup, number=num)
-print('My if else solution', t2)
-t3 = timeit('bruteforce(p)', setup = setup, number=num)
-print('BruteForce way ', t3)
-print(min(t1, t2, t3, t4, t5 ,t6))
+iris.query("SepalLength > 5").assign(
+    SepalRatio = iris.SepalWidth / iris.SepalLength,
+    PetalRatio = lambda x: x.PetalWidth / x.PetalLength
+).plot(kind="scatter", x="SepalRatio", y="PetalRatio")
 
-numpy accumulate 0.13581958799841232
-numpy max min 0.10029465600018739
-python max min 0.03708621999976458
-solution suggested by realPython 0.051151576000847854
-My if else solution 0.02522610599771724
-BruteForce way  0.21499461300118128
-0.02522610599771724
+Since a function is passed in, the function is computed on the DataFrame being assigned to. Importantly, this is the DataFrame that’s been filtered to those rows with sepal length greater than 5. The filtering happens first, and then the ratio calculations. This is an example where we didn’t have a reference to the filtered DataFrame available.
 
-AXES can be confusing term so in short - summing an array for axis=0 collapses the rows of the array with a column-wise computation.
+The function signature for assign is simply **kwargs. The keys are the column names for the new fields, and the values are either a value to be inserted (for example, a Series or NumPy array), or a function of one argument to be called on the DataFrame. A copy of the original DataFrame is returned, with the new values inserted.
+Starting with Python 3.6 the order of **kwargs is preserved. This allows for dependent assignment, where an expression later in **kwargs can refer to a column created earlier in the same assign().
 
-df = DataFrame({
-    'a':[10,20],
-    'b':[100, 200]
-})
-print(df)
-df.sum(axis=0)
+dfa = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+dfa.assign(C=lambda x:x.A+x.B, D=lambda x:x.A+x.C)
 
-    a    b
-0  10  100
-1  20  200
-a     30
-b    300
+In the second expression, x['C'] will refer to the newly created column,that’s equal to dfa['A'] + dfa['B'].
 
-random.normal(loc=0.0, scale=1.0, size=None)
-Draw random samples from a normal (Gaussian) distribution.
-The probability density function of the normal distribution, first derived by De Moivre and 200 years later by both Gauss and Laplace independently [2], is often called the bell curve because of its characteristic shape (see the example below).
-The normal distributions occurs often in nature. For example, it describes the commonly occurring distribution of samples influenced by a large number of tiny, random disturbances, each with its own unique distribution [2].
+Indexing / selection
+---------------------
+The basics of indexing are as follows:
+Operation                           Syntax                      Result
+Select column                       df[col]                     Series
+Select row by label                 df.loc[label]               Series
+Select row by integer location      df.iloc[loc]                Series
+Slice rows                          df[5:10]                    DataFrame
+Select rows by boolean vector       df[bool_vec]                DataFrame
 
-http://scipy-lectures.org/intro/numpy/array_object.html#what-are-numpy-and-numpy-arrays
-
-Interactive help for numpy
-np.array? --> Interactive help
-------------
-Docstring:
-array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
-Create an array.
-
-Looking for something:
-np.lookfor('create a random array')
------------------------------------
-Search results for 'create a random array'
-------------------------------------------
-numpy.matlib.rand
-    Return a matrix of random values with given shape.
-
-np.con*? 
------------
-np.concatenate
-np.conj
-np.conjugate
-np.convolve
-
-
-===================================================================================
-
+Row selection, for example, returns a Series whose index is the columns of the DataFrame:
+df.loc["b"]
+df.iloc[2]
 
 
 Attributes:
@@ -1822,7 +1940,10 @@ loc
 iloc
 
 Methods:
-rename()
+query() - query a dataframe, condition/filter can be applied on df
+assign() - assign a column to a df using calculation or lambda
+insert(position_index, column_name, value) - insert a column at a particular position
+rename() - rename a series
 .cat.set_categories()
 period.to_timestamp - get the first day of the month
 timestamp.to_period - convert date to the freq like in Months
