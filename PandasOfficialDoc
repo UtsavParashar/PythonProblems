@@ -2016,11 +2016,160 @@ df.fo<TAB>
 
 2.3 Essential basic functionality
 ==================================
+Here we discuss a lot of the essential functionality common to the pandas data structures. To begin, let’s create some example objects like we did in the 10 minutes to pandas section:
+s = pd.Series(np.random.randn(5), index=['a','b','c','d','e'])
+index = pd.date_range('1.1.2000', periods=8)
+df = pd.DataFrame(np.random.randn(8,3), index=index, columns=['A', 'B', 'C'])
 
+2.3.1 Head and tail
+-------------------
+To view a small sample of a Series or DataFrame object, use the head() and tail() methods. The default number of elements to display is five, but you may pass a custom number.
+long_series = pd.Series(np.random.randn(1000))
+long_series.head()
+long_series.tail(3)
+
+2.3.2 Attributes and underlying data
+-------------------------------------
+pandas objects have a number of attributes enabling you to access the metadata • shape: gives the axis dimensions of the object, consistent with ndarray
+• Axis labels
+– Series: index (only axis)
+– DataFrame: index (rows) and columns Note, these attributes can be safely assigned to!
+df[:2]
+df.columns = [col.lower() for col in df.columns]
+
+pandas objects (Index, Series, DataFrame) can be thought of as containers for arrays, which hold the actual data and do the actual computation. For many types, the underlying array is a numpy.ndarray. However, pandas and 3rd party libraries may extend NumPy’s type system to add support for custom arrays (see dtypes).
+To get the actual data inside a Index or Series, use the .array property
+s.array
+df.index.array
+
+array will always be an ExtensionArray. The exact details of what an ExtensionArray is and why pandas uses them are a bit beyond the scope of this introduction. We will see it in future chapter.
+s.to_numpy()
+np.asarray(s)
+
+--------------Extension Array-----------------
+
+3.15.6 pandas.api.extensions.ExtensionArray
+class pandas.api.extensions.ExtensionArray Abstract base class for custom 1-D array types.
+pandas will recognize instances of this class as proper arrays with a custom type and will not attempt to coerce them to objects. They may be stored directly inside a DataFrame or Series.
+
+----------------------------------------------
+
+When the Series or Index is backed by an ExtensionArray, to_numpy() may involve copying data and coercing values. See dtypes for more.
+to_numpy() gives some control over the dtype of the resulting numpy.ndarray. For example, consider date- times with timezones. NumPy doesn’t have a dtype to represent timezone-aware datetimes, so there are two possibly useful representations:
+1. An object-dtype numpy.ndarray with Timestamp objects, each with the correct tz
+2. A datetime64[ns] -dtype numpy.ndarray, where the values have been converted to UTC and the time-
+zone discarded
+Timezones may be preserved with dtype=object
+ser = pd.Series(pd.date_range('2000', periods=2, tz='CET'))
+ser # dtype: datetime64[ns, CET]
+ser.to_numpy() # dtype=object
+ser.to_numpy(dtype=object) # array([Timestamp('2000-01-01 00:00:00+0100', tz='CET', freq='D'),
+                           # Timestamp('2000-01-02 00:00:00+0100', tz='CET', freq='D')],
+                           # dtype=object)
+
+Or Timezones can be thrown away with dtype='datetime64[ns]'
+ser.to_numpy(dtype='datetime64[ns]') # array(['1999-12-31T23:00:00.000000000', '2000-01-01T23:00:00.000000000'],
+                                      #dtype='datetime64[ns]')
+
+Getting the “raw data” inside a DataFrame is possibly a bit more complex. When your DataFrame only has a single data type for all the columns, DataFrame.to_numpy() will return the underlying data:
+df = pd.DataFrame(np.random.randn(8,3), index=index, columns=['A', 'B', 'C'])
+df.columns = [col.lower() for col in df.columns]
+df.to_numpy()
+
+If a DataFrame contains homogeneously-typed data, the ndarray can actually be modified in-place, and the changes will be reflected in the data structure. For heterogeneous data (e.g. some of the DataFrame’s columns are not all the same dtype), this will not be the case. The values attribute itself, unlike the axis labels, cannot be assigned to.
+Note: When working with heterogeneous data,the dtype of the resulting ndarray will be chosen to accommodate all of the data involved. For example, if strings are involved, the result will be of object dtype. If there are only floats and integers, the resulting array will be of float dtype.
+
+In the past, pandas recommended Series.values or DataFrame.values for extracting the data from a Series or DataFrame. You’ll still find references to these in old code bases and online. Going forward, we recommend avoiding .values and using .array or .to_numpy(). .values has the following drawbacks:
+  1. When your Series contains an extension type, it’s unclear whether Series.values returns a NumPy array or the extension array. Series.array will always return an ExtensionArray, and will never copy data. Series.to_numpy() will always return a NumPy array, potentially at the cost of copying / coercing values.
+  2. When your DataFrame contains a mixture of data types, DataFrame.values may involve copying data and coercing values to a common dtype, a relatively expensive operation. DataFrame.to_numpy(), being a method, makes it clearer that the returned NumPy array may not be a view on the same data in the DataFrame.
+--------------- Extension Types --------------------------
+
+4.7.2 Extension types
+pandas defines an interface for implementing data types and arrays that extend NumPy’s type system. pandas itself uses the extension system for some types that aren’t built into NumPy (categorical, period, interval, datetime with timezone).
+Libraries can define a custom array and data type. When pandas encounters these objects, they will be handled properly (i.e. not converted to an ndarray of objects). Many methods like pandas.isna() will dispatch to the extension type’s implementation.
+If you’re building a library that implements the interface, please publicize it on ecosystem.extensions. The interface consists of two classes.
+
+ExtensionDtype
+A pandas.api.extensions.ExtensionDtype is similar to a numpy.dtype object. It describes the data type. Implementors are responsible for a few unique items like the name.
+One particularly important item is the type property. This should be the class that is the scalar type for your data. For example, if you were writing an extension array for IP Address data, this might be ipaddress.IPv4Address.
+See the extension dtype source for interface definition.
+New in version 0.24.0.
+pandas.api.extension.ExtensionDtype can be registered to pandas to allow creation via a string dtype name. This allows one to instantiate Series and .astype() with a registered string name, for example 'category' is a registered string accessor for the CategoricalDtype.
+See the extension dtype dtypes for more on how to register dtypes. ExtensionArray
+This class provides all the array-like functionality. ExtensionArrays are limited to 1 dimension. An ExtensionArray is linked to an ExtensionDtype via the dtype attribute.
+pandas makes no restrictions on how an extension array is created via its __new__ or __init__, and puts no restrictions on how you store your data. We do require that your array be convertible to a NumPy array, even if this is relatively expensive (as it is for Categorical).
+They may be backed by none, one, or many NumPy arrays. For example, pandas.Categorical is an extension array backed by two arrays, one for codes and one for categories. An array of IPv6 addresses may be backed by a NumPy structured array with two fields, one for the lower 64 bits and one for the upper 64 bits. Or they may be backed by some other storage type, like Python lists.
+
+----------------------------------------------------------
+
+2.3.3 Accelerated operations
+-----------------------------
+pandas has support for accelerating certain types of binary numerical and boolean operations using the numexpr library and the bottleneck libraries.
+These libraries are especially useful when dealing with large data sets, and provide large speedups. numexpr uses smart chunking, caching, and multiple cores. bottleneck is a set of specialized cython routines that are especially fast when dealing with arrays that have nans.
+You are highly encouraged to install both libraries.
+These are both enabled to be used by default, you can control this by setting the options:
+ pd.set_option("compute.use_bottleneck", False)
+ pd.set_option("compute.use_numexpr", False)
+
+2.3.4 Flexible binary operations
+---------------------------------
+
+With binary operations between pandas data structures, there are two key points of interest:
+• Broadcasting behavior between higher- (e.g. DataFrame) and lower-dimensional (e.g. Series) objects.
+• Missing data in computations.
+We will demonstrate how to manage these issues independently, though they can be handled simultaneously.
+
+Matching / broadcasting behavior
+--------------------------------
+DataFrame has the methods add(), sub(), mul(), div() and related functions radd(), rsub(), ... for carrying out binary operations. For broadcasting behavior, Series input is of primary interest. Using these functions, you can use to either match on the index or columns via the axis keyword:
+df = pd.DataFrame({
+    'one':pd.Series(np.arange(1,4), index=['a','b','c',]),
+    'two':pd.Series(np.arange(1,5), index=['a','b','c','d',]),
+    'three':pd.Series(np.arange(1,4), index=['b','c','d']),
+})
+print(df)
+row = df.iloc[1] # 2, 2, 1
+column = df['two'] # 1, 2, 3, 4
+print(df.sub(row, axis='columns'))
+print(df.sub(row, axis=1))
+
+df.sub(column, axis='index')
+df.sub(column, axis=0)
+
+Furthermore you can align a level of a MultiIndexed DataFrame with a Series.
+dfmi = df.copy()
+dfmi.index = pd.MultiIndex.from_tuples(
+    [(1,'a'), (1,'b'), (1,'c'), (2, 'a')],
+    names=['first', 'second']
+    )
+dfmi
+column = df['two'] # 1, 2, 3, 4
+dfmi.sub(column, axis=0, level=1)
+dfmi.sub(column, axis=0, level="second")
+
+Series and Index also support the divmod() builtin. This function takes the floor division and modulo operation at the same time returning a two-tuple of the same type as the left hand side. For example:
+s = pd.Series(np.arange(0,31,10))
+quo, rem = dm = divmod(s, 3)
+print(dm)
+print('*'*8)
+print(rem)
+print('*'*8)
+print(quo)
+
+idx = pd.Index(np.arange(0,31,10))
+quo, rem = divmod(idx, 3)
+quo
+rem
+
+We can also do elementwise divmod():
+quo, rem = divmod(s, [1,2,3,5])
+
+Missing data / operations with fill values
+-------------------------------------------
 
 Attributes:
 .name
-.array
+.array - get the series or index in the form of Extension array
 .cat.categories
 df.T
 .freqstr
@@ -2034,6 +2183,9 @@ loc
 iloc
 
 Methods:
+pd.set_option() - console width, height. Not use any dependent lib.
+np.asarray(s,df) - convert a dataframe or series to numpy
+to_numpy() - convert a dataframe or series to numpy
 query() - query a dataframe, condition/filter can be applied on df
 assign() - assign a column to a df using calculation or lambda
 insert(position_index, column_name, value) - insert a column at a particular position
