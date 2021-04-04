@@ -2166,6 +2166,224 @@ quo, rem = divmod(s, [1,2,3,5])
 
 Missing data / operations with fill values
 -------------------------------------------
+In Series and DataFrame, the arithmetic functions have the option of inputting a fill_value, namely a value to substitute when at most one of the values at a location are missing. For example, when adding two DataFrame objects, you may wish to treat NaN as 0 unless both DataFrames are missing that value, in which case the result will be NaN (you can later replace NaN with some other value using fillna if you wish).
+df1 = DataFrame({
+    'a':[1,2,3,],
+    'b':[11,22,33]
+})
+
+df2 = DataFrame({
+    'a':[1,2,3,],
+    'b':[11,22,33],
+    'c':[10, 20, 30]
+})
+print(df1 + df2)
+df1.add(df2, fill_value=0)
+df1.add(df2, fill_value=1)
+   a   b   c
+0  2  22 NaN
+1  4  44 NaN
+2  6  66 NaN
+a	b	c
+0	2	22	10.0
+1	4	44	20.0
+2	6	66	30.0
+	a	b	c
+0	2	22	11.0
+1	4	44	21.0
+2	6	66	31.0
+
+Flexible comparisons
+---------------------
+Series and DataFrame have the binary comparison methods eq, ne, lt, gt, le, and ge whose behavior is analogous to the binary arithmetic operations described above:
+df1.gt(df2)
+df1.ne(df2)
+
+These operations produce a pandas object of the same type as the left-hand-side input that is of dtype bool. These boolean objects can be used in indexing operations.
+
+Boolean reductions
+-------------------
+You can apply the reductions: empty, any(), all(), and bool() to provide a way to summarize a boolean result.
+df1.gt(2).all(axis=1)
+df1.gt(2).any(axis=1)
+
+You can reduce to a final boolean value.
+df1.gt(2).any(axis=1).any() # True
+
+You can test if a pandas object is empty, via the empty property.
+df1.empty # False
+pd.DataFrame(columns=list('ABC')).empty # True
+
+To evaluate single-element pandas objects in a boolean context, use the method bool():
+pd.Series([True]).bool() # True
+pd.DataFrame([False]).bool() # False
+
+Warning: You might be tempted to do the following:
+if df:
+    pass
+
+df1 and df2
+
+These will both raise errors, as you are trying to compare multiple values.:
+ValueError: The truth value of a DataFrame is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().
+
+Comparing if objects are equivalent
+------------------------------------
+Often you may find that there is more than one way to compute the same result. As a simple example, consider df + df and df * 2. To test that these two computations produce the same result, given the tools shown above, you might imagine using(df + df == df * 2).all().But in fact,this expression is False:
+( (df1 + df1) == (df1 * 2) ).all()
+
+To get a single boolean value use
+( (df1 + df1) == (df1 * 2) ).all().all()
+
+Notice that the boolean DataFrame df + df == df * 2 contains some False values! This is because NaNs do not compare as equals:
+np.nan == np.nan # False
+So, NDFrames (such as Series and DataFrames) have an equals() method for testing equality, with NaNs in corre- sponding locations treated as equal.
+pd.Series(np.nan).equals(pd.Series(np.nan)) # True
+(df1*2).equals(df1 + df1) # True
+
+Note that the Series or DataFrame index needs to be in the same order for equality to be True:
+df1 = DataFrame({'a':['foo', 0, np.nan]})
+df2 = DataFrame({'a':[0, 'foo', np.nan]}, index=[1,0,2])
+
+df1.equals(df2) # False
+df1.equals(df2.sort_index()) # True
+
+Comparing array-like objects
+-----------------------------
+You can conveniently perform element-wise comparisons when comparing a pandas data structure with a scalar value:
+pd.Series(["foo", "bar", "baz"]) == "foo"
+pd.Index(["foo", "bar", "baz"]) == "foo"
+
+pandas also handles element-wise comparisons between different array-like objects of the same length:
+pd.Series(["foo", "bar", "baz"]) == pd.Index(["foo", "bar", "qux"])
+pd.Series(["foo", "bar", "baz"]) == np.array(["foo", "bar", "qux"]) ## True True False
+pd.Series(["foo", "bar", "baz"]).equals( np.array(["foo", "bar", "qux"]) ) # False
+
+Trying to compare Index or Series objects of different lengths will raise a ValueError:
+pd.Series(['foo', 'bar', 'baz']) == pd.Series(['foo', 'bar']) ValueError: Series lengths must match to compare
+pd.Series(['foo', 'bar', 'baz']) == pd.Series(['foo']) ValueError: Series lengths must match to compare
+
+Note that this is different from the NumPy behavior where a comparison can be broadcast:
+np.array([1, 2, 3]) == np.array([2]) #  array([False, True, False])
+or it can return False if broadcasting can not be done:
+np.array([1, 2, 3]) == np.array([1, 2]) # False
+
+Combining overlapping data sets
+--------------------------------
+A problem occasionally arising is the combination of two similar data sets where values in one are preferred over the other. An example would be two data series representing a particular economic indicator where one is considered to be of “higher quality”. However, the lower quality series might extend further back in history or have more complete data coverage. As such, we would like to combine two DataFrame objects where missing values in one DataFrame are conditionally filled with like-labeled values from the other DataFrame. The function implementing this operation is combine_first(), which we illustrate:
+df1 = pd.DataFrame({
+    'A':[ 1, np.nan, 3, 5, np.nan, ],
+    'B':[ np.nan, 2, 3, np.nan, 6, ],
+})
+
+df2 = pd.DataFrame({
+    "A": [5.0, 2.0, 4.0, np.nan, 3.0, 7.0],
+    "B": [np.nan, np.nan, 3.0, 4.0, 6.0, 8.0],
+})
+
+df1.combine_first(df2)
+
+General DataFrame combine
+--------------------------
+The combine_first() method above calls the more general DataFrame.combine(). This method takes another DataFrame and a combiner function, aligns the input DataFrame and then passes the combiner function pairs of Series (i.e., columns whose names are the same).
+So, for instance, to reproduce combine_first() as above:
+def combiner(x,y):
+    return np.where(pd.isna(x),y,x)
+
+df1.combine(df2, combiner)
+
+2.3.5 Descriptive statistics
+-----------------------------
+There exists a large number of methods for computing descriptive statistics and other related operations on Series, DataFrame. Most of these are aggregations (hence producing a lower-dimensional result) like sum(), mean(), and quantile(), but some of them, like cumsum() and cumprod(), produce an object of the same size. Generally speaking, these methods take an axis argument, just like ndarray.{sum, std, . . . }, but the axis can be specified by name or integer:
+
+• Series: no axis argument needed
+• DataFrame: “index” (axis=0, default), “columns” (axis=1)
+
+df.mean(0)
+df.mean(1)
+
+All such methods have a skipna option signaling whether to exclude missing data (True by default):
+df.sum(0, skipna=False)
+df.sum(0, skipna=True)
+
+Combined with the broadcasting / arithmetic behavior, one can describe various statistical procedures, like standard- ization (rendering data zero mean and standard deviation of 1), very concisely:
+standardization formula z = x - µ / std
+
+ts_stand = (df - df.mean()) / df.std()
+ts_stand.std()
+ts_stand.mean()
+
+xs_stand = df.sub(df.mean(1), axis=0).div(df.std(1), axis=0)
+xs_stand.std(1)
+xs_stand.mean(1)
+
+Note that methods like cumsum() and cumprod() preserve the location of NaN values. This is somewhat different from expanding() and rolling() since NaN behavior is furthermore dictated by a min_periods parameter.
+df.cumsum()
+
+Here is a quick reference summary table of common functions. Each also takes an optional level parameter which applies only if the object has a hierarchical index.
+Function             Description
+count               Number of non-NA observations
+sum                 Sum of values
+mean                Mean of values
+mad                 Mean absolute deviation
+median              Arithmetic median of values
+min                 Minimum
+max                 Maximum
+mode                Mode
+abs                 Absolute Value
+prod                Product of values
+std                 Bessel-corrected sample standard deviation
+var                 Unbiased variance
+sem                 Standard error of the mean
+skew                Sample skewness (3rd moment)
+kurt                Sample kurtosis (4th moment)
+quantile            Sample quantile (value at %)
+cumsum              Cumulative sum
+cumprod             Cumulative product
+cummax              Cumulative maximum
+cummin              Cumulative minimum
+
+Note that by chance some NumPy methods, like mean, std, and sum, will exclude NAs on Series input by default:
+np.mean(df.one) # 2.0
+np.mean(df.one.to_numpy()) # nan
+
+Series.nunique() will return the number of unique non-NA values in a Series:
+series = pd.Series(np.arange(1,11))
+series[6:] = np.nan
+series[3:6] = 5
+series.nunique()
+
+Summarizing data: describe
+----------------------------
+There is a convenient describe() function which computes a variety of summary statistics about a Series or the columns of a DataFrame (excluding NAs of course):
+series = pd.Series(np.random.randn(1000))
+series[::2] = np.nan
+series.describe()
+
+frame = pd.DataFrame(np.random.randn(1000, 5), columns=["a", "b", "c", "d","e"])
+frame.iloc[::2] = np.nan
+frame.describe()
+
+You can select specific percentiles to include in the output:
+series.describe(percentiles=[0.05, 0.25, 0.75, 0.95])
+
+By default, the median is always included.
+For a non-numerical Series object, describe() will give a simple summary of the number of unique values and most frequently occurring values:
+s = pd.Series(["a", "a", "b", "b", "a", "a", np.nan, "c", "d", "a"])
+s.describe()
+
+Note that on a mixed-type DataFrame object, describe() will restrict the summary to include only numerical columns or, if none are, only categorical columns:
+frame = pd.DataFrame({"a": ["Yes", "Yes", "No", "No"], "b": range(4)})
+frame.describe()
+
+This behavior can be controlled by providing a list of types as include/exclude arguments. The special value all can also be used:
+frame.describe(include=['object'])
+frame.describe(include=['number'])
+frame.describe(include='all')
+
+That feature relies on select_dtypes.
+
+
 
 Attributes:
 .name
@@ -2183,6 +2401,15 @@ loc
 iloc
 
 Methods:
+describe([percentiles=[]) - summary desc stats, you can modify the percentiles as per your needs.
+nunique - provide the count of the unique elements in a series/df excluding np.nan
+combine - combine two dataframes based on a provided function
+combine_first() - get the non- NAN values from both df while merging
+gt(),lt(),ne() - greater than, less than, not equal
+divmod() - provide the quotient and remainder in the form of a tuple
+equals() - compare NDFrames at once, == will return boolean values per element
+fill_value - fill the nan with a value within a method
+.fillna() - fill the nan with a value
 pd.set_option() - console width, height. Not use any dependent lib.
 np.asarray(s,df) - convert a dataframe or series to numpy
 to_numpy() - convert a dataframe or series to numpy
@@ -2222,7 +2449,7 @@ sort_values()
 value_counts()
 mean(), median(), mode(), skew(), min(), max()
 groupby().aggregateFunction()
-agg({col=[fn1, fn2]})
+agg({col=[fn1, fn2]}) - aggreagate the data based on columns of a dataframe
 rename(columns={'currentCol':'newCol'})
 fig.savefig()
 plt.subplot()
