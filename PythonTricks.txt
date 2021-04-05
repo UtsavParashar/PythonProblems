@@ -1,7 +1,7 @@
 Python Tricks:
 
 Assertions:
-The proper use of assertions is to tell the programmer of the unreoverable errors.
+The proper use of assertions is to tell the programmer of the unrecoverable errors.
 Assertions are not intended to signal expected error conditions, where the user can take corrective actions or can just try again.
 Assertions are meant to be internal self checks for your program. They work by declaring some condition as impossible in your code.
 If one of these condition doesn't hold that means there is a bug in the program.
@@ -19,7 +19,7 @@ shoes = {'name':'Fancy Shoes', 'price':14900}
     (apply_discount(shoes, 2.0) / 100)
 
 Caveat #1 - Don't use asserts for Data Validation
-The biggest caveat with asserts in python is tht assertions can be globally disabled using -O or -OO.
+The biggest caveat with asserts in python is that assertions can be globally disabled using -O or -OO.
 This turns any asserts statement into a null operation which simply gets compiled away and won't be executed.
 
 Caveat #2 - Assert that never fails
@@ -44,18 +44,18 @@ Solution: It's all about the habits
     place a comma after each item, even the last item.
 
 Key takeaways:
-    Smart formatting and comma placesment can make your list, dict or set constants easy to maintain.
-    Python's string literal concatenation feature can work to your benifits or introduce hard to catch bugs.
+    Smart formatting and comma placement can make your list, dict or set constants easy to maintain.
+    Python's string literal concatenation feature can work to your benefits or introduce hard to catch bugs.
 
 Context managers and the with statement
 The with statement in python is regarded as an obscure feature by some. But when you peek behind the scenes, you'll see that there's no magic involved, and it's actually a highly useful feature that can help you write cleaner and more readable python code.
-So what'st he with statement good for? It helps simplify some common resource management patterns by abstracting their functionality and allowing them to be factored out and reused. 
+So what's the with statement good for? It helps simplify some common resource management patterns by abstracting their functionality and allowing them to be factored out and reused.
 A good way to see this feature used effectively is by looking at examples in the Python standard library. 
 The built in open function provides us with an excellent use case:
 with open('abc.txt', 'w') as f:
     f.write('hello')
 
-Opening the file using a with statement is generally recommended because it ensures open file descriptors are closed automatically after program execution leaves the context of the with statement. Internally, the above code sample transalates to something like this:
+Opening the file using a with statement is generally recommended because it ensures open file descriptors are closed automatically after program execution leaves the context of the with statement. Internally, the above code sample transaltes to something like this:
 f = open('hello.txt', 'w')
 try:
     f.write('hello')
@@ -65,10 +65,10 @@ You can already tell that this is quite a bit verbose. Note that the try.. final
 f = open('hello.txt','w')
 f.write('hello')
 f.close()
-This implementation won't gurantee the file is closed if there's an exception during the f.write() call and therefore our program might leak a file descriptor. That's why the with statement is so useful. It make properly acquiring and releasing resources a breeze.
+This implementation won't guarantee the file is closed if there's an exception during the f.write() call and therefore our program might leak a file descriptor. That's why the with statement is so useful. It make properly acquiring and releasing resources a breeze.
 
 Using a with statement allows you to abstract away most of the resource handling logic. Instead of having to write explicitly try..finally statement each time, usually the with statement takes care of that for us.
-The with statement can make code that deals with system resources more redable. It also helps you avoid bugs or leaks by making it practically impossible to forget to cleanup or release a resource when it's no longer needed.
+The with statement can make code that deals with system resources more readable. It also helps you avoid bugs or leaks by making it practically impossible to forget to cleanup or release a resource when it's no longer needed.
 
 Supporting 'with' in your own objects:
 We can provide the same functionality of open statement with our own classes and functions by implementing so-called context managers.
@@ -112,7 +112,7 @@ with manager_file('new_open.txt') as f:
 
 In this case managed_file() is a generator that first acquires the resource. After that, it temporarily suspends its own execution and yields the resource so it can be used by the caller. When the caller leaves the with context, the generator continues to execute so that any remaining clean up steps can occur and the resources can get released back to the system.
 
-The class based implementation and the generator based implementation are essentially equivalent. You might prefer one over the other depending on which approcach you find more readable.
+The class based implementation and the generator based implementation are essentially equivalent. You might prefer one over the other depending on which approach you find more readable.
 
 A downside of the @contextmanager based implementation might be that it requires some understanding of advanced python concepts like decorator and generator.
 
@@ -150,7 +150,7 @@ with time_taken():
 Takeaways:
 The with statement simplifies exception handling by encapsulating standard use of try/finally statements in a so called context managers.
 Most commonly it is used to manage the safe acquisition and release of system resources. Resources are acquired by the with statement and released automatically when execution leaves the with context.
-Using with effectively can help you avoid resource leaks and make your code easier to read.
+Using 'with' effectively can help you avoid resource leaks and make your code easier to read.
 
 Underscores, Dunders and More.
 ------------------------------

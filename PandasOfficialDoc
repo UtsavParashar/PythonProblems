@@ -2383,6 +2383,270 @@ frame.describe(include='all')
 
 That feature relies on select_dtypes.
 
+Index of min/max values
+------------------------
+The idxmin() and idxmax() functions on Series and DataFrame compute the index labels with the minimum and maximum corresponding values:
+s = pd.Series(np.random.choice(10, 5, replace=False))
+0    4
+1    6
+2    7
+3    8
+4    0
+s.idxmin(), s.idxmax() # (4, 3)
+
+df1 = pd.DataFrame(
+    np.random.choice(20, 15, replace=False).reshape(5,3),
+    columns=['A', 'B', 'C']
+)
+df1
+df1.idxmax(), df1.idxmin()
+df1.idxmax(axis=1), df1.idxmin(axis=1)
+
+When there are multiple rows (or columns) matching the minimum or maximum value, idxmin() and idxmax() return the first matching index:
+df1 = pd.DataFrame(
+    np.random.choice(20, 15).reshape(5,3),
+    columns=['A', 'B', 'C']
+)
+df1
+
+    A	B	C
+0	4	5	13
+1	19	12	16
+2	1	4	13
+3	19	19	8
+4	13	6	15
+df1['A'].idxmax(), df1.idxmin()
+df1.idxmax().idxmax() - To get the index of the max value in a df
+
+Note: idxmin and idxmax are called argmin and argmax in NumPy.
+
+Value counts (histogramming) / mode
+-------------------------------------
+The value_counts() Series method and top-level function computes a histogram of a 1D array of values. It can also be used as a function on regular arrays:
+data = np.random.randint(0,4, size=50)
+s = pd.Series(data)
+s.value_counts()
+pd.value_counts(s)
+
+The value_counts() method can be used to count combinations across multiple columns. By default all columns
+are used but a subset can be selected using the subset argument.
+data = {"a": [1, 2, 3, 4,1], "b": ["x", "x", "y", "y",'x']}
+frame = pd.DataFrame(data)
+frame.value_counts()
+a  b
+1  x    2
+2  x    1
+
+To find if a row is duplicated in a dataframe then we can go with duplicated method.
+frame[frame.duplicated()]
+
+So, if we just want to rows which is duplicated then we can go with duplicated method, if we want to counts also then we can use value_counts().
+frame.value_counts()[frame.value_counts() > 1]
+
+Similarly, you can get the most frequently occurring value(s), i.e. the mode, of the values in a Series or DataFrame:
+s5 = pd.Series([1, 1, 3, 3, 3, 3, 5, 5, 7, 7, 7,])
+s5.mode() #     0    3
+
+df = pd.DataFrame({
+    'A': np.random.randint(0,7, size=5),
+    'B': np.random.randint(-10, 15, size=5)
+})
+df.mode()
+
+Discretization and quantiling
+-------------------------------
+Continuous values can be discretized using the cut() (bins based on values) and qcut() (bins based on sample quantiles) functions:
+arr = np.arange(1,9).astype(float)
+factor = pd.cut(arr, [-5, -1, 0, 1, 5])
+factor
+
+qcut() computes sample quantiles. For example, we could slice up some normally distributed data into equal-size quartiles like so:
+arr = np.arange(1,9).astype(float)
+factor = pd.qcut(arr, [0, .25, .5, .75, 1])
+factor
+pd.value_counts(factor)
+
+We can also pass infinite values to define the bins:
+arr = np.arange(1,9).astype(float)
+factor = pd.cut(arr, [-np.inf, 0, np.inf])
+factor
+
+2.3.6 Function application
+==========================
+To apply your own or another library’s functions to pandas objects, you should be aware of the three methods below. The appropriate method to use depends on whether your function expects to operate on an entire DataFrame or Series, row- or column-wise, or elementwise.
+1. Tablewise Function Application: pipe()
+2. Row or Column-wise Function Application: apply()
+3. Aggregation API: agg() and transform()
+4. Applying Elementwise Functions: applymap()
+
+Tablewise function application
+-------------------------------
+DataFrames and Series can be passed into functions. However, if the function needs to be called in a chain, consider using the pipe() method.
+
+df_p = pd.DataFrame({'city_and_code': ['Chicago, IL']})
+df_p
+
+def extract_city_name(df):
+    """
+        Chicago, IL -> Chicago for city_name column
+    """
+    df['city_name'] = df['city_and_code'].str.split(",").str.get(0)
+    return df
+
+def add_country_name(df, country_name=None):
+    """
+        Chicago -> Chicago-US for city_name column
+    """
+    col = 'city_name'
+    df['city_and_country'] = df[col] + country_name
+    return df
+
+extract_city_name and add_country_name are functions taking and returning DataFrames.
+
+Now compare the following:
+add_country_name(extract_city_name(df_p), country_name='US')
+
+Is equivalent to:
+df_p.pipe(extract_city_name).pipe(add_country_name, country_name='US')
+
+pandas encourages the second style, which is known as method chaining. pipe makes it easy to use your own or another library’s functions in method chains, alongside pandas’ methods.
+
+In the example above, the functions extract_city_name and add_country_name each expected a DataFrame as the first positional argument. What if the function you wish to apply takes its data as, say, the second argument? In this case, provide pipe with a tuple of (callable, data_keyword). .pipe will route the DataFrame to the argument specified in the tuple.
+
+For example, we can fit a regression using statsmodels. Their API expects a formula first and a DataFrame as the second argument,data.We pass in the function, keyword pair(sm.ols, 'data')to pipe:
+bb.query("h>0").assign(ln_h=lambda df:np.log(df.h)).pipe(
+    (sm.ols, 'data'), "hr ~ ln_h + year + g + C(lg)").fit().summary()
+
+The pipe method is inspired by unix pipes and more recently dplyr and magrittr, which have introduced the popular (%>%) (read pipe) operator for R. The implementation of pipe here is quite clean and feels right at home in Python. We encourage you to view the source code of pipe().
+
+Row or column-wise function application
+----------------------------------------
+Arbitrary functions can be applied along the axes of a DataFrame using the apply() method, which, like the descriptive statistics methods, takes an optional axis argument:
+
+df.apply(np.mean)
+df.apply(np.mean)
+df.apply(np.mean, axis=1)
+df.apply(lambda x:x.max() - x.min())
+df.apply(np.cumsum)
+df.apply(np.exp)
+
+The apply() method will also dispatch on a string method name.
+df.apply("mean")
+df.apply("mean", axis=1)
+
+The return type of the function passed to apply() affects the type of the final output from DataFrame.apply for the default behaviour:
+• If the applied function returns a Series, the final output is a DataFrame. The columns match the index of the Series returned by the applied function.
+• If the applied function returns any other type, the final output is a Series.
+
+This default behaviour can be overridden using the result_type, which accepts three options: reduce,
+broadcast, and expand. These will determine how list-likes return values expand (or not) to a DataFrame.
+
+apply() combined with some cleverness can be used to answer many questions about a data set. For example,
+suppose we wanted to extract the date where the maximum value for each column occurred:
+
+tsdf.apply("idxmax")
+
+You may also pass additional arguments and keyword arguments to the apply() method. For instance, consider the following function you would like to apply:
+def sub_and_div(x, sub, div=1):
+    return (x - sub)/div
+df.apply(sub_and_div, args=(3,),div=2)
+
+Another useful feature is the ability to pass Series methods to carry out some Series operation on each column or row:
+df.apply(pd.Series.interpolate)
+-----------------------------------------------------------------------
+pd.Series.interpolate - Fill NaN values using an interpolation method.
+-----------------------------------------------------------------------
+Finally, apply() takes an argument raw which is False by default, which converts each row or column into a Series before applying the function. When set to True, the passed function will instead receive an ndarray object, which has positive performance implications if you do not need the indexing functionality.
+df.apply(np.mean, raw=True)
+
+Which one is faster?
+%timeit df.apply(np.mean, raw=True) ## 312 µs ± 28.5 µs per loop
+%timeit df.apply('mean') ## 727 µs ± 4.89 µs per loop
+
+np is way faster, another example
+%timeit df.apply(np.median, raw=True) # 423 µs ± 35.3 µs per loop, (mean ± std. dev. of 7 runs, 1000 loops each)
+%timeit df.apply('median') ## 1.6 ms ± 49.1 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+Aggregation API
+----------------
+The aggregation API allows one to express possibly multiple aggregation operations in a single concise way. This API is similar across pandas objects, see groupby API, the window API, and the resample API. The entry point for aggregation is DataFrame.aggregate(), or the alias DataFrame.agg().
+Using a single function is equivalent to apply(). You can also pass named methods as strings. These will return a Series of the aggregated output:
+We will use a similar starting frame from above:
+tsdf = pd.DataFrame(np.random.choice(20, 15, replace=False).reshape(5,3),
+                    columns=['A', 'B', 'C'],
+                   index = pd.date_range('2020.01.01', periods=5))
+tsdf.iloc[2:4] = np.nan
+tsdf.agg(np.sum)
+tsdf.agg('sum')
+# these are equivalent to a ``.sum()`` because we are aggregating # on a single function
+tsdf.sum()
+
+Single aggregations on a Series this will return a scalar value:
+tsdf["A"].agg("sum") # 31.0
+
+Aggregating with multiple functions
+-----------------------------------
+You can pass multiple aggregation arguments as a list. The results of each of the passed functions will be a row in the resulting DataFrame. These are naturally named from the aggregation function.
+Multiple functions yield multiple rows:
+tsdf.agg(['sum'])
+tsdf.agg(['sum', 'mean'])
+
+On a Series, multiple functions return a Series, indexed by the function names:
+tsdf['A'].agg(['sum', 'mean'])
+
+Passing a lambda function will yield a <lambda> named row:
+tsdf['A'].agg(['sum', lambda x: x.mean()])
+sum         31.000000
+<lambda>    10.333333
+
+Passing a named function will yield that name for the row:
+def my_mean(x):
+    return x.mean()
+tsdf['A'].agg(['sum', my_mean])
+sum        31.000000
+my_mean    10.333333
+
+Aggregating with a dict
+------------------------
+Passing a dictionary of column names to a scalar or a list of scalars, to DataFrame.agg allows you to customize which functions are applied to which columns. Note that the results are not in any particular order, you can use an OrderedDict instead to guarantee ordering.
+tsdf.agg({
+    'A':'mean',
+    'B':'sum'
+})
+
+Passing a list-like will generate a DataFrame output. You will get a matrix-like output of all of the aggregators. The output will consist of all unique functions. Those that are not noted for a particular column will be NaN:
+tsdf.agg({
+    'A':['max', 'min'],
+    'B':'sum'
+})
+
+Mixed dtypes
+------------
+When presented with mixed dtypes that cannot aggregate, .agg will only take the valid aggregations. This is similar to how .groupby.agg works.
+mdf = pd.DataFrame({
+    'A':[1,2,3],
+    'B':[1.0,2.0,3.0],
+    'C':['foo', 'bar', 'baz'],
+    'D':pd.date_range('2020.01.01', periods=3, freq='2D')
+})
+mdf.dtypes
+mdf.agg(['min', 'sum'])
+
+Custom describe
+-----------------
+With .agg() it is possible to easily create a custom describe function, similar to the built in describe function.
+from functools import partial
+from functools import partial
+q_25 = partial(pd.Series.quantile, q=0.25)
+q_25.__name__ = "25%"
+q_75 = partial(pd.Series.quantile, q=0.75)
+q_75.__name__ = "75%"
+tsdf.agg(["count", "mean", "std", "min", q_25, "median", q_75, "max"])
+
+Transform API
+===============
+
+
 
 
 Attributes:
@@ -2401,7 +2665,15 @@ loc
 iloc
 
 Methods:
-describe([percentiles=[]) - summary desc stats, you can modify the percentiles as per your needs.
+.agg(), .aggregate() -- aggregate the series or dataframe based on the function provided
+.apply() -- apply the function row-wise or column-wise.
+.pipe() -- apply the function on a dataframe by passing the dataframe as an arg to the function.
+cut(), qcut() - discretize and quantile continuous data
+mode() - get the most occurring value in a series or df
+duplicated() - get the duplicated rows in a df
+value_counts() - count the occurrence of an element in a series or df
+idxmin(), idxmax() - get the index of the min and max value in the series or dataframe
+describe([percentiles=[], include=[]) - summary desc stats, you can modify the percentiles as per your needs.
 nunique - provide the count of the unique elements in a series/df excluding np.nan
 combine - combine two dataframes based on a provided function
 combine_first() - get the non- NAN values from both df while merging
