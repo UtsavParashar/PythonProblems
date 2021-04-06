@@ -2645,8 +2645,102 @@ tsdf.agg(["count", "mean", "std", "min", q_25, "median", q_75, "max"])
 
 Transform API
 ===============
+The transform() METHOD RETURNS AN OBJECT THAT IS INDEXED THE SAME (SAME SIZE) AS THE ORIGINAL. This API allows you to provide multiple operations at the same time rather than one-by-one. Its API is quite similar to the .agg API.
+Transform the entire frame. .transform() allows input functions as: a NumPy function, a string function name or a user defined function.
+tsdf.transform(np.abs)
+tsdf.transform('abs')
+tsdf.transform(lambda x: x.abs())
 
+Here transform() received a single function; this is equivalent to a ufunc application.
+np.abs(tsdf)
 
+Passing a single function to .transform() with a Series will yield a single Series in return.
+tsdf['A'].transform('abs')
+tsdf['A'].agg('abs') # transform is similar to agg.
+
+Transform with multiple functions
+Passing multiple functions will yield a column MultiIndexed DataFrame. The first level will be the original frame column names; the second level will be the names of the transforming functions.
+tsdf.transform([np.abs, lambda x:x+1])
+
+                        A	                B	            C
+            absolute	<lambda>	absolute	<lambda>	absolute	<lambda>
+2021-01-01	4.0	            5.0	        12.0	13.0	        18.0	19.0
+2021-01-04	7.0	            8.0	        3.0	    4.0	            5.0     12.0
+
+Passing multiple functions to a Series will yield a DataFrame. The resulting column names will be the transforming functions.
+tsdf['A'].transform([np.abs, lambda x:x+1])
+
+Transforming with a dict
+Passing a dict of functions will allow selective transforming per column.
+tsdf.transform({"A": np.abs, "B": lambda x: x + 1})
+
+Passing a dict of lists will generate a MultiIndexed DataFrame with these selective transforms.
+tsdf.transform({"A": np.abs, "B": [lambda x: x + 1, "sqrt"]})
+
+Difference between agg and transform?
+https://stackoverflow.com/questions/40957932/transform-vs-aggregate-in-pandas#:~:text=1%20Answer&text=maybe%20you%20want%20these%20values,as%20what%20you%20started%20with.&text=agg%20is%20used%20when%20you,run%20on%20the%20same%20column.
+
+consider the dataframe df
+dft = pd.DataFrame(dict(A=list('aabb'), B=[1, 2, 3, 4], C=[0, 9, 0, 9]))
+
+groupby is the standard use aggregater
+dft.groupby('A').mean()
+
+	B	C
+A
+a	1.5	4.5
+b	3.5	4.5
+
+maybe you want these values broadcast across the whole group and return something with the same index as what you started with.
+use transform
+dft.groupby('A').transform('mean')
+	B	C
+0	1.5	4.5
+1	1.5	4.5
+2	3.5	4.5
+3	3.5	4.5
+
+dft.set_index('A').groupby(level='A').transform('mean')
+	B	C
+A
+a	1.5	4.5
+a	1.5	4.5
+b	3.5	4.5
+b	3.5	4.5
+
+agg is used when you have specific things you want to run for different columns or more than one thing run on the same column.
+df.groupby('A').agg(['mean', 'std'])
+
+        B	            C
+    mean	std	    mean	std
+A
+a	1.5	0.707107	4.5	6.363961
+b	3.5	0.707107	4.5	6.363961
+
+dft.groupby('A').agg(dict(B='sum', C=['mean', 'prod']))
+
+        B	        C
+        sum	    mean	prod
+A
+a	    3	    4.5	    0
+b	    7	    4.5	    0
+
+Applying elementwise functions
+===============================
+Since not all functions can be vectorized (accept NumPy arrays and return another array or value), the methods applymap() on DataFrame and analogously map() on Series accept any Python function taking a single value and returning a single value. For example:
+def f(x):
+    return len(str(x))
+
+tsdf.A.map(f)
+tsdf.applymap(f)
+
+Series.map() has an additional feature; it can be used to easily “link” or “map” values defined by a secondary series. This is closely related to merging/joining functionality:
+s = pd.Series(["six", "seven", "six", "seven", "six"], index=["a", "b", "c", "d", "e"])
+t = pd.Series({"six": 6.0, "seven": 7.0})
+s.map(t)
+
+2.3.7 Reindexing and altering labels
+=====================================
 
 
 Attributes:
@@ -2665,6 +2759,8 @@ loc
 iloc
 
 Methods:
+applymap(), map() - since all functions are not vectorized, these functions are applied on elements. applymap on dict and map on series.
+.transform() - aggregating the data, similar to agg but the index remains same
 .agg(), .aggregate() -- aggregate the series or dataframe based on the function provided
 .apply() -- apply the function row-wise or column-wise.
 .pipe() -- apply the function on a dataframe by passing the dataframe as an arg to the function.
