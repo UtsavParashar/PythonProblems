@@ -2902,7 +2902,99 @@ df.rename_axis(index=str.upper)
 ================
 2.3.8 Iteration
 ================
+The behavior of basic iteration over pandas objects depends on the type. When iterating over a Series, it is regarded as array-like, and basic iteration produces the values. DataFrames follow the dict-like convention of iterating over the “keys” of the objects.
+Inshort,basic iteration(for i in object)produces:
+• Series: values
+• DataFrame: column labels
+Thus, for example, iterating over a DataFrame gives you the column names:
+df = pd.DataFrame(
+    np.arange(6).reshape(3,2),
+    index = ['a', 'b', 'c'],
+    columns=['col1', 'col2']
+)
+for col in df:
+    print (col)
 
+for val in s:
+    print(val)
+
+pandas objects also have the dict-like items() method to iterate over the (key, value) pairs. To iterate over the rows of a DataFrame, you can use the following methods:
+• iterrows(): Iterate over the rows of a DataFrame as (index, Series) pairs. This converts the rows to Series objects, which can change the dtypes and has some performance implications.
+• itertuples(): Iterate over the rows of a DataFrame as namedtuples of the values. This is a lot faster than iterrows(), and is in most cases preferable to use to iterate over the values of a DataFrame.
+ Warning: Iterating through pandas objects is generally slow.In many cases,iterating manually over the rows is not needed and can be avoided with one of the following approaches:
+• Look for a vectorized solution: many operations can be performed using built-in methods or NumPy functions, (boolean) indexing etc
+• When you have a function that cannot work on the full Data Frame/Series at once,it is better to use apply() instead of iterating over the values.
+• If you need to do iterative manipulations on the values but performance is important,consider writing the inner loop with cython or numba.
+
+Warning: You should never modify something you are iterating over.This is not guaranteed to work in all cases. Depending on the data types, the iterator returns a copy and not a view, and writing to it will have no effect!
+For example, in the following case setting the value has no effect:
+df = pd.DataFrame({"a": [1, 2, 3], "b": ["a", "b", "c"]})
+for index, row in df.iterrows():
+    print(index)
+    print(row)
+    row['a'] = 10
+df
+
+items
+------
+Consistent with the dict-like interface, items() iterates through key-value pairs:
+• Series: (index, scalar value) pairs
+• DataFrame: (column, Series) pairs
+
+for label, ser in df.items():
+    print(ser)
+    print(label)
+
+iterrows():
+-----------
+iterrows() allows you to iterate through the rows of a DataFrame as Series objects. It returns an iterator yielding each index value along with a Series containing the data in each row:
+for index,colNameValue in df.iterrows():
+    print(index)
+    print(colNameValue)
+
+Note: Because iterrows() returns a Series for each row, it does not preserve dtypes across the rows (dtypes are preserved across columns for DataFrames). For example,
+df_orig = pd.DataFrame([[1, 1.5]], columns=["int", "float"])
+df_orig
+df_orig.dtypes
+row = next(df_orig.iterrows())[1]
+print(row)
+type(row) # pandas.core.series.Series
+row['int'].dtype # dtype('float64')
+df_orig['int'].dtype # dtype('int64')
+
+To preserve dtypes while iterating over the rows, it is better to use itertuples() which returns namedtuples of the values and which is generally much faster than iterrows().
+
+For instance, a contrived way to transpose the DataFrame would be:
+df2 = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
+df2.T
+
+pd.DataFrame({index: colSeries for index, colSeries in df2.iterrows()}) ~ df2.T
+
+itertuples
+----------
+The itertuples() method will return an iterator yielding a namedtuple for each row in the DataFrame. The first element of the tuple will be the row’s corresponding index value, while the remaining values are the row values.
+For instance:
+for row in df.itertuples():
+    print(row)
+Pandas(Index=0, a=1, b='a')
+Pandas(Index=1, a=2, b='b')
+Pandas(Index=2, a=3, b='c')
+
+This method does not convert the row to a Series object; it merely returns the values inside a namedtuple. Therefore, itertuples() preserves the data type of the values and is generally faster as iterrows().
+Note: The column names will be renamed to positional names if they are invalid Python identifiers,repeated,or start with an underscore. With a large number of columns (>255), regular tuples are returned.
+
+---------------------
+2.3.9 .dt accessor
+---------------------
+
+---------next()--------------
+The next() function returns the next item in an iterator.
+You can add a default return value, to return if the iterable has reached to its end.
+Syntax - next(iterable, default)
+mylist = iter(["apple", "banana", "cherry"])
+x = next(mylist, "orange")
+print(x)
+------------------------------
 
 Attributes:
 .name
@@ -2920,6 +3012,9 @@ loc
 iloc
 
 Methods:
+itertuples() - iterates over the rows, return namedTuple of index, colValues of a df
+iterrows() - iterates over the rows, return index, colValues of a df
+items() - similar to dict, return index, colValues of a df
 rename_axis() - rename the name of axis labels i.e index and column for multiindex df.
 rename() - rename the name of axis labels i.e index and column.
 align() - to get the values of both df, series in the form of tuple by join across various options.
