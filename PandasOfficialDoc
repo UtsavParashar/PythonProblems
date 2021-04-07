@@ -2741,6 +2741,126 @@ s.map(t)
 
 2.3.7 Reindexing and altering labels
 =====================================
+reindex() is the fundamental data alignment method in pandas. It is used to implement nearly all other features relying on label-alignment functionality. To reindex means to conform the data to match a given set of labels along a particular axis. This accomplishes several things:
+• Reorders the existing data to match a new set of labels
+• Inserts missing value (NA) markers in label locations where no data for that label existed
+• If specified, fill data for missing labels using logic (highly relevant to working with time series data)
+Here is a simple example:
+s = pd.Series(np.random.randn(5), index=["a", "b", "c", "d", "e"])
+s.reindex(["e", "b", "f", "d"])
+
+Here, the f label was not contained in the Series and hence appears as NaN in the result.
+With a DataFrame, you can simultaneously reindex the index and columns:
+df = DataFrame(
+    np.random.randn(4, 3),
+    columns=['one', 'two', 'three'],
+    index=['a', 'b', 'c', 'd']
+)
+df.loc['a']['three'] = np.nan
+df.loc['d']['one'] = np.nan
+df
+
+df.reindex(index=['c', 'f', 'a'], columns=['three', 'two', 'one'])
+
+which one is faster to rearrange columns?
+%timeit df.reindex(columns=['three', 'two', 'one']) # 435 µs ± 17.1 µs per loop
+%timeit df[['three', 'two', 'one']] # 572 µs ± 26.2 µs per loop
+
+You may also use reindex with an axis keyword:
+df.reindex(["c", "f", "b"], axis="index")
+
+Note that the Index objects containing the actual axis labels can be shared between objects. So if we have a Series and a DataFrame, the following can be done:
+rs = s.reindex(df.index)
+rs.index is df.index # True
+
+This means that the reindexed Series’s index is the same Python object as the DataFrame’s index.
+DataFrame.reindex() also supports an “axis-style” calling convention, where you specify a single labels argument and the axis it applies to.
+df.reindex(["c", "f", "b"], axis="index")
+df.reindex(["three", "two", "one"], axis="columns")
+
+Note: When writing performance-sensitive code, there is a good reason to spend some time becoming a reindexing ninja: many operations are faster on pre-aligned data. Adding two unaligned DataFrames internally triggers a reindexing step. For exploratory analysis you will hardly notice the difference (because reindex has been heavily optimized), but when CPU cycles matter sprinkling a few explicit reindex calls here and there can have an impact.
+
+Reindexing to align with another object
+----------------------------------------
+You may wish to take an object and reindex its axes to be labeled the same as another object. While the syntax for this is straightforward albeit verbose, it is a common enough operation that the reindex_like() method is available to make this simpler:
+This means, you can change the shape of the dataframe as per another dataframe.
+In below example we are changing the shape of df(4,3) similar to df2(3,2)
+df2 = DataFrame(
+    np.random.randn(3,2),
+    columns=['one', 'two'],
+    index = ['a', 'b', 'c']
+)
+df2
+
+df.reindex_like(df2)
+
+Aligning objects with each other with align:
+--------------------------------------------
+The align() method is the fastest way to simultaneously align two objects. It supports a join argument (related to joining and merging):
+• join='outer': take the union of the indexes (default)
+• join='left': use the calling object’s index
+• join='right': use the passed object’s index
+• join='inner': intersect the indexes
+
+It returns a tuple with both of the reindexed Series:
+s = pd.Series(np.arange(1,6), index=['a', 'b', 'c', 'd', 'e'])
+s1 = s[:4]
+s2 = s[1:]
+s1.align(s2)
+s1.align(s2, join='inner')
+s1.align(s2, join='left')
+
+For DataFrames, the join method will be applied to both the index and the columns by default:
+df2.align(df)
+df2.align(df, join='inner')
+df2.align(df, join='right')
+
+You can also pass an axis option to only align on the specified axis:
+df.align(df2, join='inner', axis=0)
+
+If you pass a Series to DataFrame.align(), you can choose to align both objects either on the DataFrame’s index or columns using the axis argument:
+df.align(df.iloc[0], axis=1)
+
+Filling while reindexing
+-------------------------
+reindex() takes an optional parameter method which is a filling method chosen from the following table:
+Method              Action
+pad / ffill         Fill values forward
+bfill / backfill    Fill values backward
+nearest             Fill from the nearest index value
+
+We illustrate these fill methods on a simple Series:
+rng = pd.date_range('2021.01.01', periods=8)
+ts = pd.Series(np.arange(1,9), index=rng)
+ts2 = ts[[0, 3, 6]]
+ts2.reindex(ts.index)
+ts2.reindex(ts.index, method='ffill')
+ts2.reindex(ts.index, method='bfill')
+ts2.reindex(ts.index, method='nearest')
+
+These methods require that the indexes are ordered increasing or decreasing.
+Note that the same result could have been achieved using fillna (except for method='nearest') or interpolate:
+ts2.reindex(ts.index).fillna(method="ffill")
+ts2.reindex(ts.index).fillna(method="bfill")
+
+reindex() will raise a ValueError if the index is not monotonically increasing or decreasing. fillna() and interpolate() will not perform any checks on the order of the index.
+tst = pd.Series(np.arange(1,5), index=['4', '1', '3', '2'])
+tst.reindex(index = ['2', '8', '4'], method='ffill') # ValueError
+tst.reindex(index = ['2', '8', '4']).fillna(method='ffill')
+
+Limits on filling while reindexing
+------------------------------------
+The limit and tolerance arguments provide additional control over filling while reindexing. Limit specifies the maximum count of consecutive matches:
+ts2.reindex(ts.index, method='ffill', limit=1)
+
+In contrast, tolerance specifies the maximum distance between the index and indexer value
+ts2.reindex(ts.index, method='ffill', tolerance='1 day')
+
+Notice that when used on a DatetimeIndex, TimedeltaIndex or PeriodIndex, tolerance will coerced into a Timedelta if possible. This allows you to specify tolerance with appropriate strings.
+
+Dropping labels from an axis
+-----------------------------
+
 
 
 Attributes:
@@ -2759,6 +2879,9 @@ loc
 iloc
 
 Methods:
+align() - to get the values of both df, series in the form of tuple by join across various options.
+reindex_like() - change the shape of a df, series similar to another df, series
+reindex() - reindex the index or columns, it is faster than normal rearrange of columns.
 applymap(), map() - since all functions are not vectorized, these functions are applied on elements. applymap on dict and map on series.
 .transform() - aggregating the data, similar to agg but the index remains same
 .agg(), .aggregate() -- aggregate the series or dataframe based on the function provided
