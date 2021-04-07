@@ -2962,6 +2962,15 @@ type(row) # pandas.core.series.Series
 row['int'].dtype # dtype('float64')
 df_orig['int'].dtype # dtype('int64')
 
+---------next()--------------
+The next() function returns the next item in an iterator.
+You can add a default return value, to return if the iterable has reached to its end.
+Syntax - next(iterable, default)
+mylist = iter(["apple", "banana", "cherry"])
+x = next(mylist, "orange")
+print(x)
+------------------------------
+
 To preserve dtypes while iterating over the rows, it is better to use itertuples() which returns namedtuples of the values and which is generally much faster than iterrows().
 
 For instance, a contrived way to transpose the DataFrame would be:
@@ -2986,15 +2995,85 @@ Note: The column names will be renamed to positional names if they are invalid P
 ---------------------
 2.3.9 .dt accessor
 ---------------------
+Series has an accessor to succinctly return datetime like properties for the values of the Series, if it is a date- time/period like Series. This will return a Series, indexed like the existing Series.
+s = pd.Series(pd.date_range('2021.01.01 10:30:15', periods=4))
+s.dt.second
+This enables nice expressions like this:
+s[s.dt.day == 2]
+You can easily produces tz aware transformations:
+s.dt.tz_localize('US/Eastern')
+You can also chain these types of operations:
+s.dt.tz_localize('UTC').dt.tz_convert('US/Eastern')
 
----------next()--------------
-The next() function returns the next item in an iterator.
-You can add a default return value, to return if the iterable has reached to its end.
-Syntax - next(iterable, default)
-mylist = iter(["apple", "banana", "cherry"])
-x = next(mylist, "orange")
-print(x)
-------------------------------
+You can also format datetime values as strings with Series.dt.strftime() which supports the same format as the standard strftime().
+datetime to object(str)
+s = pd.Series(pd.date_range("20130101", periods=4))
+s.dt.strftime('%Y/%m/%d')
+
+The .dt accessor works for period and timedelta dtypes.
+period to object(Str)
+s = pd.Series(pd.period_range("20130101", periods=4))
+s.dt.strftime('%Y/%m/%d')
+s.dt.month
+s.dt.day
+
+timedelta:
+s = pd.Series(pd.timedelta_range('1 day 00:05:10', periods=4, freq="s"))
+s.dt.days
+s.dt.seconds
+s.dt.components
+
+Hence different forms of dateTime for timeseries
+* DatetimeIndex
+* PeriodIndex
+* Period
+* timedelta
+
+Note: Series.dt will raise a TypeError if you access with a non-datetime-like values.
+
+2.3.10 Vectorized string methods
+---------------------------------
+Series is equipped with a set of string processing methods that make it easy to operate on each element of the array. Perhaps most importantly, these methods exclude missing/NA values automatically. These are accessed via the Series’s str attribute and generally have names matching the equivalent (scalar) built-in string methods. For example:
+s = pd.Series( ["A", "B", "C", "Aaba", "Baca", np.nan, "CABA", "dog", "cat"], dtype="string")
+s.str.lower()
+
+Powerful pattern-matching methods are provided as well, but note that pattern-matching generally uses regular expres- sions by default (and in some cases always uses them).
+
+2.3.11 Sorting
+---------------
+pandas supports three kinds of sorting: sorting by index labels, sorting by column values, and sorting by a combination of both.
+
+By index
+--------
+The Series.sort_index() and DataFrame.sort_index() methods are used to sort a pandas object by its index levels.
+
+df = pd.DataFrame({
+    "one": pd.Series(np.random.choice(10, 3, replace=False), index=["a", "b", "c"]),
+    "two": pd.Series(np.random.choice(10, 4, replace=False), index=["a", "b", "c", "d"]),
+    "three": pd.Series(np.random.choice(10, 3, replace=False), index=["b", "c", "d"]),
+})
+df
+
+unsorted_df = df.reindex(index=["a", "d", "c", "b"], columns=["three", "two", "one"])
+print(unsorted_df)
+
+unsorted_df.sort_index()
+unsorted_df.sort_index(ascending=False)
+unsorted_df.sort_index(axis=1) ## sorted column name alphabetically
+unsorted_df["three"].sort_index() # Series
+
+Sorting by index also supports a key parameter that takes a callable function to apply to the index being sorted. For
+MultiIndex objects, the key is applied per-level to the levels specified by level.
+s1 = pd.DataFrame({"a": ["B", "a", "C"], "b": [1, 2, 3], "c": [2, 3, 4]}
+                 ).set_index(list('ab'))
+s1.sort_index(level='a')
+s1.sort_index(level="a", key=lambda idx: idx.str.lower())
+
+By values
+----------
+
+
+
 
 Attributes:
 .name
@@ -3012,6 +3091,7 @@ loc
 iloc
 
 Methods:
+sort_index() - sort index, row wise or column wise or both.
 itertuples() - iterates over the rows, return namedTuple of index, colValues of a df
 iterrows() - iterates over the rows, return index, colValues of a df
 items() - similar to dict, return index, colValues of a df
