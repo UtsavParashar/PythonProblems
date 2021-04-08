@@ -3277,6 +3277,152 @@ dft.loc[:, ["a", "b"]].astype(np.uint8).dtypes
 dft.loc[:, ["a", "b"]] = dft.loc[:, ["a", "b"]].astype(np.uint8)
 dft.dtypes
 
+object conversion
+------------------
+pandas offers various functions to try to force conversion of types from the object dtype to other types. In cases where the data is already of the correct type, but stored in an object array, the DataFrame.infer_objects() and Series.infer_objects() methods can be used to soft convert to the correct type.
+import datetime
+df = pd.DataFrame([
+    [1, 2,],
+    ["a", "b"],
+    [datetime.datetime(2019,1,2), datetime.datetime(2019,2,3)]
+])
+df = df.T
+df.dtypes
+
+0            object
+1            object
+2    datetime64[ns]
+
+Because the data was transposed the original inference stored all columns as object, which infer_objects will correct.
+df.infer_objects().dtypes
+0             int64
+1            object
+2    datetime64[ns]
+
+The following functions are available for one dimensional object arrays or scalars to perform hard conversion of objects to a specified type:
+• to_numeric() (conversion to numeric dtypes)
+m = [1.1, 2, 3]
+pd.to_numeric(m)
+
+• to_datetime() (conversion to datetime objects)
+import datetime
+m = ['2021.01.02', datetime.datetime(2021,1,3)]
+pd.to_datetime(m)
+
+• to_timedelta() (conversion to timedelta objects)
+m = ['5µs', pd.Timedelta("1day")]
+pd.to_timedelta(m)
+
+To force a conversion, we can pass in an errors argument, which specifies how pandas should deal with elements that cannot be converted to desired dtype or object. By default, errors='raise', meaning that any errors encountered will be raised during the conversion process. However, if errors='coerce', these errors will be ignored and pandas will convert problematic elements to pd.NaT (for datetime and timedelta) or np.nan (for numeric). This might be useful if you are reading in data which is mostly of the desired dtype (e.g. numeric, datetime), but occasionally has non-conforming elements intermixed that you want to represent as missing:
+import datetime
+m = ['apple', datetime.datetime(2020, 4, 8)]
+pd.to_datetime(m, errors='coerce') # DatetimeIndex(['NaT', '2020-04-08'],
+
+m = ['apple', 2, 3.3]
+pd.to_numeric(m, errors='coerce') # array([nan, 2. , 3.3])
+
+m = ['apple', pd.Timedelta("1day")]
+pd.to_timedelta(m, errors='coerce') # TimedeltaIndex([NaT, '1 days']
+
+The errors parameter has a third option of errors='ignore', which will simply return the passed in data if it encounters any errors with the conversion to a desired data type:
+import datetime
+m = ['apple', datetime.datetime(2020, 4, 8)]
+pd.to_datetime(m, errors='ignore') # Index(['apple', 2020-04-08 00:00:00], dtype='object')
+
+m = ['apple', 2, 3.3]
+pd.to_numeric(m, errors='ignore') # array(['apple', 2, 3.3], dtype=object)
+
+m = ['apple', pd.Timedelta("1day")]
+pd.to_timedelta(m, errors='ignore') # array(['apple', Timedelta('1 days 00:00:00')], dtype=object)
+
+In addition to object conversion, to_numeric() provides another argument downcast, which gives the option of downcasting the newly (or already) numeric data to a smaller dtype, which can conserve memory:
+In [410]: m = ["1", 2, 3]
+In [411]: pd.to_numeric(m, downcast="integer") # smallest signed int dtype
+Out[411]: array([1, 2, 3], dtype=int8)
+In [412]: pd.to_numeric(m, downcast="signed") # same as 'integer'
+Out[412]: array([1, 2, 3], dtype=int8)
+In [413]: pd.to_numeric(m, downcast="unsigned") # smallest unsigned int dtype
+Out[413]: array([1, 2, 3], dtype=uint8)
+In [414]: pd.to_numeric(m, downcast="float") # smallest float dtype Out[414]: array([1., 2., 3.], dtype=float32)
+
+As these methods apply only to one-dimensional arrays, lists or scalars; they cannot be used directly on multi- dimensional objects such as DataFrames. However, with apply(), we can “apply” the function over each column efficiently:
+
+import datetime
+df = pd.DataFrame([['2021.02.21', datetime.datetime(2021,3,2)]]*2)
+print(df.info())
+df.apply(pd.to_datetime).info()
+
+df = pd.DataFrame([["1.1", 2, 3]] * 2, dtype="O")
+print(df.dtypes)
+df.apply(pd.to_numeric).dtypes
+
+df = pd.DataFrame([["5us", pd.Timedelta("1day")]] * 2, dtype="O")
+print(df.dtypes)
+df.apply(pd.to_timedelta).dtypes
+
+gotchas
+-------
+Performing selection operations on integer type data can easily upcast the data to floating. The dtype of the input data will be preserved in cases where nans are not introduced.
+df3
+print(df3.dtypes)
+dfi = df3.astype("int32")
+print(dfi.dtypes)
+dfi['E'] = 1
+print(dfi.dtypes)
+dfi[dfi>0].dtypes
+
+While float dtypes are unchanged.
+dfa = df3.copy()
+print(dfa.dtypes)
+dfa['A'] = dfa['A'].astype('float32')
+dfa[dfa>0].dtypes
+
+2.3.14 Selecting columns based on dtype
+---------------------------------------
+The select_dtypes() method implements subsetting of columns based on their dtype.
+First, let’s create a DataFrame with a slew of different dtypes:
+df = pd.DataFrame({
+    'string': list('abc'),
+    'int64': list(range(1,4)),
+    "uint8": np.arange(3, 6).astype("u1"),
+    "float64": np.arange(4.0, 7.0),
+    "bool1": [True, False, True],
+    "bool2": [False, True, False],
+    "dates": pd.date_range("now", periods=3),
+    "category": pd.Series(list("ABC")).astype("category"),
+})
+df["tdeltas"] = df.dates.diff()
+df["uint64"] = np.arange(3, 6).astype("u8")
+df["other_dates"] = pd.date_range("20130101", periods=3)
+df["tz_aware_dates"] = pd.date_range("20130101", periods=3, tz="US/Eastern")
+df.dtypes
+
+select_dtypes() has two parameters include and exclude that allow you to say “give me the columns with these dtypes” (include) and/or “give the columns without these dtypes” (exclude).
+For example, to select bool columns:
+df.select_dtypes(include=['bool'])
+You can also pass the name of a dtype in the NumPy dtype hierarchy:
+df.select_dtypes(include=['datetime64'])
+
+select_dtypes() also works with generic dtypes as well.
+For example, to select all numeric and boolean columns while excluding unsigned integers:
+df.select_dtypes(include=['number', 'bool'], exclude=['unsignedinteger'])
+
+To select string columns you must use the object dtype:
+df.select_dtypes(include=['object'])
+
+To see all the child dtypes of a generic dtype like numpy.number you can define a function that returns a tree of child dtypes:
+def subtypes(dtype):
+    subs = dtype.__subclasses__()
+    if not subs:
+        return dtype
+    return [dtype, [subtypes(dt) for dt in subs]]
+subtypes(np.number)
+subtypes(np.integer)
+subtypes(np.generic)
+
+Note: pandas also defines the types category, and datetime64[ns, tz], which are not integrated into the normal NumPy hierarchy and won’t show up with the above function.
+
+
 
 
 
@@ -3298,6 +3444,9 @@ loc
 iloc
 
 Methods:
+select_dtypes(include=[], exclude=[]) - select columns of particular datatype from a df
+to_datetime(), to_timedelta() - similar to to_numeric() but for datetime and timedelta type.
+to_numeric(errors='raise|coerce', downcast='integer|float') - convert a series, array to numeric value of certain type.
 astype() - convert a series, df column to other datatype
 copy() - copy() the dataframe and series, it is used for deepcopy.
 nsmallest(), nlargest() - get n smallest or n largest numbers from a series or df.
@@ -3504,7 +3653,7 @@ pd.read_csv('data/data_6.csv',
 For more about parsing date columns, please check out this article
 4 tricks you should know to parse date columns with Pandas read_csv()
 Some of the most helpful Pandas tricks
-towardsdatascience.com
+
 
 5. Setting data type
 If you want to set the data type for the DataFrame columns, you can use the argument dtype , for example
@@ -3570,3 +3719,159 @@ pd.read_csv('data/big_file.csv',
                   'name': str
               }).groupby('name').col_2.agg(['count', 'sum'])
 And you should get the same output.
+
+
+
+
+-------------__init__------------
+
+What’s __init__ for me?
+Designing for Python package import patterns
+Jacob Deppen
+Jacob Deppen
+
+Jan 8, 2019·9 min read
+
+
+I have had a few conversations lately about Python packaging, particularly around structuring the import statements to access the various modules of a package. This was something I had to do a lot of investigation of and experimentation with when I was organizing the leiap package. Still, I have not seen a good guide to best practices in various scenarios, so I thought I would share my thoughts here.
+Import patterns
+
+The key to designing how the user will interact with the modules is the package’s __init__.py file. This will define what gets brought into the namespace with the import statement.
+Modules
+It is usually a good idea to split code into smaller modules for a couple of reasons. Primarily, modules can contain all of the code related to a particular coherent topic (e.g., all of the I/O functionality) without being cluttered by code related to something completely different (e.g., plotting). For this reason, it is common to see large classes get a dedicated module (e.g., geodataframe.py within geopandas). Secondarily, dividing code into appropriate logical units makes it easier to read and easier to understand.
+However, a good module structure for the developer may or may not be a good module structure for the user. In some cases, the user might not need to know that there are various modules underlying the package. In other cases, there might be good reasons that the user should explicitly ask only for the modules they need. That is what I want to explore here: what are the different use cases and what approach do they call for from the package developer.
+An example package
+Python packages come in a variety of structures, but let’s create a simple demo one here that we can use in all the examples.
+/src
+    /example_pkg
+        __init__.py
+        foo.py
+        bar.py
+        baz.py
+    setup.py
+    README.md
+    LICENSE
+It is composed of three modules: foo.py, bar.py, and baz.py, each of which has a single function that prints the name of the module where the function resides.
+foo.py
+def foo_func():
+    print(‘this is a foo function’)
+bar.py
+def bar_func():
+    print(‘this is a bar function’)
+baz.py
+def baz_func():
+    print(‘this is a baz function’)
+Your code as a grocery store
+Now is a good time to acknowledge that talking about import statements and package structures can be pretty hard to follow, especially in text. To help make things a bit clearer, let’s think about a Python package as a grocery store and your users as the shoppers. As the developer, you are the store owner and manager. Your job is to figure out how to set up your store so that you serve your customers best. The structure of your __init__.py file will determine that setup. Below, I’ll walk through three alternative ways to set up that file: the general store, the convenience store, and the online store.
+The General Store
+
+In this scenario, the user gets access to everything right away on import example_pkg. In their code, they only need to type the package name and the class, function, or other object they want, regardless of what module of the source code it lives in.
+This scenario is like an old-timey general store. Once the customer walks in the door, they can see all the goods placed with minimal fuss in bins and shelves around the store.
+Behind the scenes
+# __init__.py
+from .foo import *
+from .bar import *
+from .baz import *
+User implementation
+import example_pkg
+example_pkg.foo_func()
+example_pkg.bar_func()
+example_pkg.baz_func()
+Advantages
+Users do not need to know module names or remember, for instance, which function is in which module. They only need the package name and the function name. In the general store, all the products are on display with minimal signage. The customer doesn’t need to know which aisle to go down.
+Users can access any functionality once the top-level package is imported. Everything is on display.
+Tab-completion gives you everything with just example_pkg.<TAB>. Tab-completion is like the general store grocer who knows exactly where everything is and is happy to help.
+When new features are added to modules, you do not need to update any import statements; they will automatically be included. In the general store, there is no fancy signage to change. Just put a new item on the shelf.
+Disadvantages
+Requires that all functions and classes must be uniquely named (i.e., there are not functions called save() in both the foo and bar modules). You don’t want to confuse your customers by putting apples in two different bins.
+If the package is large, it can add a lot to the namespace and (depending on a lot of factors) can slow things down. A general store can have a lot of little odds and ends that any individual customer might not want. That can might be overwhelming for your customers.
+Requires a bit more effort and vigilance to keep some elements away from the user. For example, you might need to use underscores to keep functions from importing (e.g., _function_name()). Most general stores don’t have a big storage area where things like brooms and mops are kept; those items are visible to the customer. Even if it is unlikely that they would pick up a broom and start sweeping your floors, you might not want them to. In that case, you have to take extra steps to hide those supplies from view.
+Recommendations
+Use when it is hard to predict the workflow of a typical user (e.g., general packages like pandas or numpy). This is the “general” part of general store.
+Use when the user might frequently bounce around between different modules (e.g., the leiap package)
+Use when function and class names are very descriptive and easy to remember and specifying the module names will not improve readability. If your products are familiar things like fruits and vegetables, you don’t need a lot of signage; customers will figure things out quite easily.
+Use with just a few modules. If there are many modules, it can be more difficult for a new user to find the functionality they want in the docs. If your general store gets too big, customers won’t be able to find the things they want.
+Use when objects might be added or removed frequently. It’s easy to add and remove products in the general store without disrupting the customer.
+Well-known examples
+pandas
+numpy (with additional complexity)
+seaborn
+The Convenience Store
+
+Photo by Caio Resende from Pexels
+By far the easiest to read and understand is a variation on the general store scenario that I call the convenience store. Instead of from .module import *, you can specify exactly what to import with from .module import func within __init__.py.
+The convenience store shares a lot of traits with the general store. It has a relatively limited selection of goods which can be replaced at any time with minimal hassle. The customer doesn’t need a lot of signage to find what they need because most of the goods are easily in view. The biggest difference is that a convenience store has a bit more order. The empty boxes, brooms, and mops are all kept out of view of the customer and only the products for sale are on the shelves.
+Behind the scenes
+# __init__.py
+from .foo import foo_func
+from .bar import bar_func
+from .baz import baz_func
+User implementation
+import example_pkg
+example_pkg.foo_func()
+example_pkg.bar_func()
+example_pkg.baz_func()
+Advantages
+Shares all of the advantages of the general store, and adds:
+Somewhat easier to control what objects are made available to the user
+Disadvantages
+__init__.py can end up very cluttered if there are many modules with many functions. Like the general store, a convenience store that is too cluttered will be harder for customers to navigate.
+When new features are added to a module (i.e., new class or functions), they have to be explicitly added to the __init__.py file too. Modern IDEs can help detect missed imports, but it is still easy to forget. Your convenience store has some minimal signage and price tags. You have to remember to update these when you change what is on the shelf.
+Recommendations
+I would add the following to the recommendations from the general store:
+Especially useful when your modules more or less consist of a single Class (e.g., from geopandas.geodataframe import GeoDataFrame)
+Use when you have a small number of objects to import
+Use when your objects have clear names
+Use when you know exactly which objects your users will need and which they will not
+Use when you do not expect to frequently add a lot of new modules and objects that will need to be imported.
+Well-known example
+geopandas
+Online grocery shopping
+
+Anyone who has bought groceries online knows that ordering the right product can take some effort on the part of the customer. You have to search for the product, choose a brand, choose the desired size, etc. All of these steps, however, allow you to buy exactly what you want from a nearly limitless stockroom.
+In the case of Python packages, in some cases, it might be more prudent to eschew the convenience of simply importing the entire package and instead force the user to be more clear about what pieces are being imported. This allows you as the developer to include a lot more pieces to the package without overwhelming the user.
+Behind the scenes
+# __init__.py
+import example_pkg.foo
+import example_pkg.bar
+import example_pkg.baz
+User implementation
+There are (at least) three different methods that a user could adopt in this case.
+import example_pkg
+example_pkg.foo.foo_func()
+example_pkg.bar.bar_func()
+example_pkg.bar.baz_func()
+or
+from example_pkg import foo, bar, baz
+foo.foo_func()
+bar.bar_func()
+baz.baz_func()
+or
+import example_pkg.foo as ex_foo
+import example_pkg.bar as ex_bar
+import example_pkg.baz as ex_baz
+ex_foo.foo_func()
+ex_bar.bar_func()
+ex_baz.baz_func()
+Advantages
+Simplifies the __init__.py file. Only needs to be updated when a new module is added. Updating your online store is relatively painless. You only need to change a setting in your product database.
+It is flexible. It can be used to import only what the user needs or to import everything. The customers in your online store can search for only what they want or need. No need to bother looking through a “fruit” bin when all you need is an apple. But if they do want everything in the “fruit” bin, they can get that too.
+Aliasing can clean up long package.module specifications (e.g., import matplotlib.pyplot as plt). While online grocery shopping can be a big pain at first, if you save your shopping list for the future, your shopping can be done a lot quicker.
+Can have multiple objects with the same name (e.g., functions called save() in both the foo and bar modules)
+Disadvantages
+Some of the import methods can make code more complicated to read. For example, foo.foo_func() does not indicate which package foo comes from.
+The most readable method (import example_pkg, with no alias) can lead to long code chunks (e.g., example_pkg.foo.foo_func()) that clutter things up.
+Can be hard for users to track down all of the possible functionality. In your online grocery store, it would be hard for the shopper to see all of the possible goods.
+Recommendations
+Use when you have a complex series of modules, most of which any one user will never need.
+Use when import example_pkg imports a LOT of objects and might be slow.
+Use when you can define pretty clear workflows for different kinds of users.
+Use when you can expect the user to be able to navigate your documentation well.
+Examples
+matplotlib *
+scikit-learn *
+bokeh *
+scipy *
+* These packages actually use combinations of different approaches in their __init__.py files. I include them here because to users, they are generally used à la carte (e.g., import matplotlib.pyplot as plt or import scipy.stats.kde).
+Conclusion
+The three scenarios I outlined are certainly not the only possible structures for a Python package, but I hope they cover most of the cases that anyone reading learning this from a blog might be considering. In conclusion, I’ll return to a point I made earlier: a good module structure for the developer may or may not be a good module structure for the user. Whatever your decision, don’t forget to put yourself in the user’s shoes even, or especially, because that user is most likely to be you.
