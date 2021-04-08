@@ -3153,6 +3153,132 @@ df1.sort_values(by=("a", "two"))
 
 2.3.12 Copying
 ---------------
+The copy() method on pandas objects copies the underlying data (though not the axis indexes, since they are im- mutable) and returns a new object. Note that it is seldom necessary to copy objects. For example, there are only a handful of ways to alter a DataFrame in-place:
+• Inserting, deleting, or modifying a column.
+• Assigning to the index or columns attributes.
+• For homogeneous data, directly modifying the values via the values attribute or advanced indexing.
+To be clear, no pandas method has the side effect of modifying your data; almost every method returns a new object, leaving the original object untouched. If the data is modified, it is because you did so explicitly.
+
+2.3.13 dtypes
+-------------
+For the most part, pandas uses NumPy arrays and dtypes for Series or individual columns of a DataFrame. NumPy provides support for float, int, bool, timedelta64[ns] and datetime64[ns] (note that NumPy does not support timezone-aware datetimes).
+pandas and third-party libraries extend NumPy’s type system in a few places. This section describes the extensions pandas has made internally.
+The following table lists all of pandas extension types. For methods requiring dtype arguments, strings can be specified as indicated. See the respective documentation sections for more on each type.
+
+Kind of Data        Data Type       Scalar      Array                       String Aliases          Documentation
+tz-aware datetime   DatetimeTZDtype Timestamp   arrays.DatetimeArray    'datetime64[ns, <tz>]'  Time zone handling
+Categorical         CategoricalDtype (none)     Categorical             'category'               Categorical data
+period (time spans) PeriodDtype     Period      arrays.PeriodArray  'period[<freq>]', 'Period[<freq>]'  Time span representation
+sparse              SparseDtype     (none)      arrays.SparseArray      'Sparse', 'Sparse[int]', 'Sparse[float]'
+Sparse data structures
+intervals           IntervalDtype   Interval    arrays.IntervalArray
+'interval', 'Interval', 'Interval[<numpy_dtype>]', 'Interval[datetime64[ns, <tz>]]', 'Interval[timedelta64[<freq>]]'
+IntervalIndex
+
+nullable integer    Int64Dtype, …   (none)      arrays.IntegerArray 'Int8', 'Int16', 'Int32', 'Int64', 'UInt8', 'UInt16', 'UInt32', 'UInt64'        Nullable integer data type
+
+Strings             StringDtype         str     arrays.StringArray          'string'        Working with text data
+Boolean (with NA)   BooleanDtype        bool    arrays.BooleanArray         'boolean'   Boolean data with missing values
+
+pandas has two ways to store strings.
+1. object dtype, which can hold any Python object, including strings.
+2. StringDtype, which is dedicated to strings.
+Generally, we recommend using StringDtype.
+
+Finally, arbitrary objects may be stored using the object dtype, but should be avoided to the extent possible (for
+performance and interoperability with other libraries and methods.
+
+A convenient dtypes attribute for DataFrame returns a Series with the data type of each column.
+
+dft = pd.DataFrame({
+    "A": np.random.rand(3),
+    "B": 1,
+    "C": "foo",
+    "D": pd.Timestamp("20010102"),
+    "E": pd.Series([1.0] * 3).astype("float32"),
+    "F": False,
+    "G": pd.Series([1] * 3, dtype="int8"),
+})
+dft.dtypes
+
+On a Series object, use the dtype attribute.
+dft['A'].dtype
+
+If a pandas object contains data with multiple dtypes in a single column, the dtype of the column will be chosen to accommodate all of the data types (object is the most general).
+# these ints are coerced to floats
+pd.Series([1, 2, 3, 4, 5, 6.0])
+
+# string data forces an ``object`` dtype
+pd.Series([1, 2, 3, 6.0, "foo"])
+
+The number of columns of each type in a DataFrame can be found by calling DataFrame.dtypes. value_counts().
+dft.dtypes.value_counts()
+
+Numeric dtypes will propagate and can coexist in DataFrames. If a dtype is passed (either directly via the dtype keyword, a passed ndarray, or a passed Series), then it will be preserved in DataFrame operations. Furthermore, different numeric dtypes will NOT be combined. The following example will give you a taste.
+
+df1 = pd.DataFrame(np.random.randn(8, 1), columns=["A"], dtype="float32")
+df1.dtypes
+
+df2 = pd.DataFrame({
+    "A": pd.Series(np.random.randn(8), dtype="float16"),
+    "B": pd.Series(np.random.randn(8)),
+    "C": pd.Series(np.array(np.random.randn(8), dtype="uint8")),
+})
+df2.dtypes
+## float64 is not combined with float16 in above example.
+
+defaults
+---------
+By default integer types are int64 and float types are float64, regardless of platform (32-bit or 64-bit). The following will all result in int64 dtypes.
+
+pd.DataFrame([1, 2], columns=["a"]).dtypes # a    int64
+pd.DataFrame({"a": [1, 2]}).dtypes # a    int64
+pd.DataFrame({"a": 1}, index=list(range(2))).dtypes # a    int64
+
+Note that Numpy will choose platform-dependent types when creating arrays. The following WILL result in int32 on 32-bit platform.
+frame = pd.DataFrame(np.array([1, 2]))
+
+upcasting:
+----------
+Types can potentially be upcasted when combined with other types, meaning they are promoted from the current type (e.g. int to float).
+print(df1.head())
+print(df1.dtypes)
+print('*'*10)
+print(df2.head())
+print(df2.dtypes)
+df3 = df1.reindex_like(df2).fillna(value=0.0) + df2
+df3.dtypes
+
+DataFrame.to_numpy() will return the lower-common-denominator of the dtypes, meaning the dtype that can accommodate ALL of the types in the resulting homogeneous dtyped NumPy array. This can force some upcasting.
+df3.to_numpy().dtype # dtype('float64')
+
+astype
+------
+You can use the astype() method to explicitly convert dtypes from one to another. These will by default return a copy, even if the dtype was unchanged (pass copy=False to change this behavior). In addition, they will raise an exception if the astype operation is invalid.
+Upcasting is always according to the NumPy rules. If two different dtypes are involved in an operation, then the more general one will be used as the result of the operation.
+# conversion of dtypes
+df3.astype('float32').dtypes
+
+Convert a subset of columns to a specified type using astype().
+dft = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+dft.dtypes
+dft[["a", "b"]] = dft[["a", "b"]].astype(np.uint8)
+dft.dtypes
+
+Convert certain columns to a specific dtype by passing a dict to astype().
+dft1 = pd.DataFrame({"a": [1, 0, 1], "b": [4, 5, 6], "c": [7, 8, 9]})
+dft1 = dft1.astype({"a": np.bool_, "c": np.float64})
+dft1.dtypes
+
+Note: When trying to convert a subset of columns to a specified type using astype() and loc(),upcasting occurs. loc() tries to fit in what we are assigning to the current dtypes, while [] will overwrite them taking the dtype from
+the right hand side. Therefore the following piece of code produces the unintended result.
+dft = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+dft.loc[:, ["a", "b"]].astype(np.uint8).dtypes
+dft.loc[:, ["a", "b"]] = dft.loc[:, ["a", "b"]].astype(np.uint8)
+dft.dtypes
+
+
+
 
 
 Attributes:
@@ -3166,11 +3292,14 @@ df.T
 .index
 columns
 shape
-dtypes
+dtypes - get the datatypes of a df
+dtype - get the datatype of a series
 loc
 iloc
 
 Methods:
+astype() - convert a series, df column to other datatype
+copy() - copy() the dataframe and series, it is used for deepcopy.
 nsmallest(), nlargest() - get n smallest or n largest numbers from a series or df.
 searchsorted() - in a sorted array tell the index where the value can be placed to maintain the sorting order. It is similar to np.searchsorted().
 sort_values() - sort values by columns, custom functions can be applied with key argument.
@@ -3254,3 +3383,190 @@ tail()
 describe()
 info()
 
+Important points while reading csv in pandas:
+----------------------------------------------
+source - https://towardsdatascience.com/all-the-pandas-read-csv-you-should-know-to-speed-up-your-data-analysis-1e16fe1039f3
+Pandas read_csv() tricks you should know to speed up your data analysis
+Some of the most helpful Pandas tricks to speed up your data analysis
+
+Importing data is the first step in any data science project. Often, you’ll work with data in CSV files and run into problems at the very beginning. In this article, you’ll see how to use the Pandas read_csv() function to deal with the following common problems.
+Dealing with different character encodings
+Dealing with headers
+Dealing with columns
+Parsing date columns
+Setting data type for columns
+Finding and locating invalid value
+Appending data to an existing CSV file
+Loading a huge CSV file with chunksize
+Please check out my Github repo for the source code.
+1. Dealing with different character encodings
+Character encodings are specific sets of rules for mapping from raw binary byte strings to characters that make up the human-readable text [1]. Python has built-in support for a list of standard encodings.
+Character encoding mismatches are less common today as UTF-8 is the standard text encoding in most of the programming languages including Python. However, it is definitely still a problem if you are trying to read a file with a different encoding than the one it was originally written. You are most likely to end up with something like below or DecodeError when that happens:
+
+Source from Kaggle character encoding
+The Pandas read_csv() function has an argument call encoding that allows you to specify an encoding to use when reading a file.
+Let’s take a look at an example below:
+First, we create a DataFrame with some Chinese characters and save it with encoding='gb2312' .
+df = pd.DataFrame({'name': '一 二 三 四'.split(), 'n': [2, 0, 2, 3]})
+df.to_csv('data/data_1.csv', encoding='gb2312', index=False)
+Then, you should get an UnicodeDecodeError when trying to read the file with the default utf8 encoding.
+# Read it with default encoding='utf8'
+# You should get an error
+pd.read_csv('data/data_1.csv')
+
+In order to read it correctly, you should pass the encoding that the file was written.
+pd.read_csv('data/data_1.csv', encoding='gb2312')
+
+2. Dealing with headers
+Headers refer to the column names. For some datasets, the headers may be completely missing, or you might want to consider a different row as headers. The read_csv() function has an argument called header that allows you to specify the headers to use.
+No headers
+If your CSV file does not have headers, then you need to set the argument header to None and the Pandas will generate some integer values as headers
+For example to import data_2_no_headers.csv
+pd.read_csv('data/data_2_no_headers.csv', header=None)
+
+Consider different row as headers
+Let’s take a look at data_2.csv
+x1,       x2,      x3,     x4
+product,  price,   cost,   profit
+a,        10,      5,      1
+b,        20,      12,     2
+c,        30,      20,     3
+d,        40,      30,     4
+It seems like more sensible columns name would be product, price, … profit, but they are not in the first row. The argument header also allows you to specify the row number to use as the column names and the start of data. In this case, we would like to skip the first row and use the 2nd row as headers:
+pd.read_csv('data/data_2.csv', header=1)
+3. Dealing with columns
+When your input dataset contains a large number of columns, and you want to load a subset of those columns into a DataFrame, then usecols will be very useful.
+Performance-wise, it is better because instead of loading an entire DataFrame into memory and then deleting the spare columns, we can select the columns we need while loading the dataset.
+Let’s use the same dataset data_2.csv and select the product and cost columns.
+pd.read_csv('data/data_2.csv',
+            header=1,
+            usecols=['product', 'cost'])
+
+We can also pass the column index to usecols:
+pd.read_csv('data/data_2.csv',
+            header=1,
+            usecols=[0, 1])
+4. Parsing date columns
+Date columns are represented as objects by default when loading data from a CSV file.
+df = pd.read_csv('data/data_3.csv')
+df.info()
+RangeIndex: 4 entries, 0 to 3
+Data columns (total 5 columns):
+ #   Column   Non-Null Count  Dtype
+---  ------   --------------  -----
+ 0   date     4 non-null      object
+ 1   product  4 non-null      object
+ 2   price    4 non-null      int64
+ 3   cost     4 non-null      int64
+ 4   profit   4 non-null      int64
+dtypes: int64(3), object(2)
+memory usage: 288.0+ bytes
+To read the date column correctly, we can use the argument parse_dates to specify a list of date columns.
+df = pd.read_csv('data/data_3.csv', parse_dates=['date'])
+df.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 4 entries, 0 to 3
+Data columns (total 5 columns):
+ #   Column   Non-Null Count  Dtype
+---  ------   --------------  -----
+ 0   date     4 non-null      datetime64[ns]
+ 1   product  4 non-null      object
+ 2   price    4 non-null      int64
+ 3   cost     4 non-null      int64
+ 4   profit   4 non-null      int64
+dtypes: datetime64[ns](1), int64(3), object(1)
+memory usage: 288.0+ bytes
+Sometime date is split up into multiple columns, for example, year, month, and day. To combine them into a datetime, we can pass a nested list to parse_dates.
+df = pd.read_csv('data/data_4.csv',
+                 parse_dates=[['year', 'month', 'day']])
+df.info()
+RangeIndex: 4 entries, 0 to 3
+Data columns (total 5 columns):
+ #   Column          Non-Null Count  Dtype
+---  ------          --------------  -----
+ 0   year_month_day  4 non-null      datetime64[ns]
+ 1   product         4 non-null      object
+ 2   price           4 non-null      int64
+ 3   cost            4 non-null      int64
+ 4   profit          4 non-null      int64
+dtypes: datetime64[ns](1), int64(3), object(1)
+memory usage: 288.0+ bytes
+To specify a custom column name instead of the auto-generated year_month_day, we can pass a dictionary instead.
+df = pd.read_csv('data/data_4.csv',
+                 parse_dates={ 'date': ['year', 'month', 'day'] })
+df.info()
+If your date column is in a different format, then you can customize a date parser and pass it to the argument date_parser:
+from datetime import datetime
+custom_date_parser = lambda x: datetime.strptime(x, "%Y %m %d %H:%M:%S")
+pd.read_csv('data/data_6.csv',
+             parse_dates=['date'],
+             date_parser=custom_date_parser)
+For more about parsing date columns, please check out this article
+4 tricks you should know to parse date columns with Pandas read_csv()
+Some of the most helpful Pandas tricks
+towardsdatascience.com
+
+5. Setting data type
+If you want to set the data type for the DataFrame columns, you can use the argument dtype , for example
+pd.read_csv('data/data_7.csv',
+                 dtype={
+                     'Name': str,
+                     'Grade': int
+                 })
+6. Finding and locating invalid values
+You might get the TypeError when setting data type using the argument dtype
+
+It is always useful to find and locate the invalid values when this error happens. Here is how you can find them:
+df = pd.read_csv('data/data_8.csv')
+is_error = pd.to_numeric(df['Grade'], errors='coerce').isna()
+df[is_error]
+
+7. Appending data to an existing CSV file
+You can specify a Python write mode in the Pandas to_csv() function. For appending data to an existing CSV file, we can use mode='a':
+new_record = pd.DataFrame([['New name', pd.to_datetime('today')]],
+                      columns=['Name', 'Date'])
+new_record.to_csv('data/existing_data.csv',
+              mode='a',
+              header=None,
+              index=False)
+8. Loading a huge CSV file with chunksize
+By default, Pandas read_csv() function will load the entire dataset into memory, and this could be a memory and performance issue when importing a huge CSV file.
+read_csv() has an argument called chunksize that allows you to retrieve the data in a same-sized chunk. This is especially useful when reading a huge dataset as part of your data science project.
+Let’s take a look at an example below:
+First, let’s make a huge dataset with 400,000 rows and save it to big_file.csv
+# Make up a huge dataset
+nums = 100_000
+for name in 'a b c d'.split():
+    df = pd.DataFrame({
+        'col_1': [1]*nums,
+        'col_2': np.random.randint(100, 2000, size=nums)
+    })
+    df['name'] = name
+    df.to_csv('data/big_file.csv',
+              mode='a',
+              index=False,
+              header= name=='a')
+
+Next, let’s specify a chucksize of 50,000 when loading data with read_csv()
+dfs = pd.read_csv('data/big_file.csv',
+                  chunksize=50_000,
+                  dtype={
+                      'col_1': int,
+                      'col_2': int,
+                      'name': str
+                  })
+Let’s perform some aggregations on each chunk and then concatenate the result into a single DataFrame.
+res_dfs = []
+for chunk in dfs:
+    res = chunk.groupby('name').col_2.agg(['count', 'sum'])
+    res_dfs.append(res)
+pd.concat(res_dfs).groupby(level=0).sum()
+
+Let’s validate the result against a solution without chunksize
+pd.read_csv('data/big_file.csv',
+              dtype={
+                  'col_1': int,
+                  'col_2': int,
+                  'name': str
+              }).groupby('name').col_2.agg(['count', 'sum'])
+And you should get the same output.
