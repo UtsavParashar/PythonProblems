@@ -3271,6 +3271,10 @@ print(re.findall(r'son\b', r'i am a person'))
 \d - returns a match where the string contains a digit.
 print(re.findall(r'\d', r'i am a person number 1 and 2'))
 
+\s - matches any whitespace character, this is equivalent to the class [ \t\n\r\f\v].
+
+\S - matches any non-whitespace character, this is equivalent to the class [^ \t\n\r\f\v].
+
 \D - returns a match where the string does not contain a digit.
 print(re.findall(r'\D+', r'i am a person number 1 and 2'))
 
@@ -3281,7 +3285,7 @@ print(re.findall(r'\w+', r'i am a person number 1 and 2 and *'))
 print(re.findall(r'\W+', r'i am a person number 1 and 2 and *'))
 
 Meta characters in regex:
-these are the characters with special meatings.
+these are the characters with special meanings.
 
 . -> matches any character except newline character.
 s="rohan and rohit published a paper"
