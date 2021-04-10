@@ -1,4 +1,4 @@
-ID,level,category
-Patient1,123000,x # really unpleasant
-Patient2,23000,y # wouldn't take his medicine
-Patient3,1234018,z # awesome
+ID|level|category
+Patient1|123,000|x
+Patient2|23,000|y
+Patient3|1,234,018|z
