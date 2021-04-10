@@ -3575,6 +3575,154 @@ df.to_csv('foo.csv')
 mixed_df = pd.read_csv('foo.csv')
 mixed_df['col1'].apply(type).value_counts()
 
+Specifying categorical dtype
+-----------------------------
+Categorical columns can be parsed directly by dtype=CategoricalDtype(categories, ordered).
+data = "col1,col2,col3\na,b,1\na,b,2\nc,d,3"
+pd.read_csv(StringIO(data)).dtypes
+pd.read_csv(StringIO(data), dtype="category").dtypes
+Individual columns can be parsed as a Categorical using a dict specification:
+pd.read_csv(StringIO(data), dtype={'col1':'category'}).dtypes
+
+Specifying dtype='category' will result in an unordered Categorical whose categories are the unique values observed in the data. For more control on the categories and order, create a CategoricalDtype ahead of time, and pass that for that column’s dtype.
+dtype = CategoricalDtype(['d', 'c', 'b', 'a'], ordered=True)
+pd.read_csv(StringIO(data), dtype={'col1':dtype}).dtypes
+
+When using dtype=CategoricalDtype, “unexpected” values outside of dtype.categories are treated as missing values.
+dtype = CategoricalDtype(["a", "b", "d"]) # No 'c'
+pd.read_csv(StringIO(data), dtype={'col1':dtype}).col1
+
+This matches the behavior of Categorical.set_categories().
+Note: With dtype='category', the resulting categories will always be parsed as strings (object dtype). If the
+categories are numeric they can be converted using the to_numeric() function, or as appropriate, another converter
+such as to_datetime().
+When dtype is a CategoricalDtype with homogeneous categories ( all numeric, all datetimes, etc.), the
+conversion is done automatically.
+df = pd.read_csv(StringIO(data), dtype="category")
+df.dtypes
+df.col3
+df["col3"].cat.categories = pd.to_numeric(df['col3'].cat.categories)
+df.col3
+
+Naming and using columns
+Handling column names
+============================
+A file may or may not have a header row. pandas assumes the first row should be used as the column names:
+data = "a,b,c\n1,2,3\n4,5,6\n7,8,9"
+print(data)
+pd.read_csv(StringIO(data))
+By specifying the names argument in conjunction with header you can indicate other names to use and whether or not to throw away the header row (if any):
+pd.read_csv(StringIO(data), names=["foo", "bar", "baz"], header=0)
+# Replace Header name with provided names
+pd.read_csv(StringIO(data), names=["foo", "bar", "baz"], header=0)
+# Add new column names and treat existing data as rows
+pd.read_csv(StringIO(data), names=["foo", "bar", "baz"], header=None)
+pd.read_csv(StringIO(data), names=["foo", "bar", "baz"])
+
+If the header is in a row other than the first, pass the row number to header. This will skip the preceding rows:
+data = "skip this skip it\na,b,c\n1,2,3\n4,5,6\n7,8,9"
+pd.read_csv(StringIO(data), header=1)
+Note: Default behavior is to infer the column names: if no names are passed the behavior is identical to header=0 and column names are inferred from the first non-blank line of the file, if column names are passed explicitly then the behavior is identical to header=None.
+
+Duplicate names parsing
+-----------------------
+If the file or header contains duplicate names, pandas will by default distinguish between them so as to prevent overwriting data:
+data = "a,b,a\n0,1,2\n3,4,5"
+pd.read_csv(StringIO(data))
+There is no more duplicate data because mangle_dupe_cols=True by default, which modifies a series of dupli- cate columns ‘X’, . . . , ‘X’ to become ‘X’, ‘X.1’, . . . , ‘X.N’. If mangle_dupe_cols=False, duplicate data can arise:
+To prevent users from encountering this problem with duplicate data, a ValueError exception is raised if mangle_dupe_cols != True:
+data = 'a,b,a\n0,1,2\n3,4,5'
+pd.read_csv(StringIO(data), mangle_dupe_cols=False)
+ValueError: Setting mangle_dupe_cols=False is not supported yet
+
+Filtering columns (usecols):
+----------------------------
+The usecols argument allows you to select any subset of the columns in a file, either using the column names, position numbers or a callable:
+data = "a,b,c,d\n1,2,3,foo\n4,5,6,bar\n7,8,9,baz"
+pd.read_csv(StringIO(data), usecols=['b', 'd'])
+pd.read_csv(StringIO(data), usecols=[0,2,3])
+pd.read_csv(StringIO(data), usecols=lambda x: x.upper() in ["A", "C"])
+
+The usecols argument can also be used to specify which columns not to use in the final result:
+pd.read_csv(StringIO(data), usecols=lambda x: x not in ["a", "c"])
+In this case, the callable is specifying that we exclude the “a” and “c” columns from the output.
+
+Comments and empty lines
+Ignoring line comments and empty lines
+----------------------------------------
+If the comment parameter is specified, then completely commented lines will be ignored. By default, completely blank lines will be ignored as well.
+data = "\na,b,c\n \n# commented line\n1,2,3\n\n4,5,6"
+pd.read_csv(StringIO(data), comment="#")
+If skip_blank_lines=False, then read_csv will not ignore blank lines:
+data = "a,b,c\n\n1,2,3\n\n\n4,5,6"
+pd.read_csv(StringIO(data), skip_blank_lines=False)
+
+Warning: The presence of ignored lines might create ambiguities involving line numbers;the parameter header uses row numbers (ignoring commented/empty lines), while skiprows uses line numbers (including commented/empty lines):
+data = "#comment\na,b,c\nA,B,C\n1,2,3"
+pd.read_csv(StringIO(data), comment="#", header=1)
+data = "A,B,C\n#comment\na,b,c\n1,2,3"
+pd.read_csv(StringIO(data), comment="#", skiprows=2)
+If both header and skiprows are specified, header will be relative to the end of skiprows. For example:
+data = (
+ "# empty\n"
+ "# second empty line\n"
+ "# third emptyline\n"
+ "X,Y,Z\n"
+ "1,2,3\n"
+ "A,B,C\n"
+ "1,2.,4.\n"
+ "5.,NaN,10.0\n"  )
+pd.read_csv(StringIO(data), comment="#", skiprows=4, header=1)
+
+Comments
+========
+Sometimes comments or meta data may be included in a file:
+file - temp.csv
+ID,level,category
+Patient1,123000,x # really unpleasant
+Patient2,23000,y # wouldn't take his medicine
+Patient3,1234018,z # awesome
+
+We can suppress the comments using the comment keyword:
+df = pd.read_csv('temp.csv', comment='#')
+df
+
+Dealing with Unicode data
+--------------------------
+The encoding argument should be used for encoded unicode data, which will result in byte strings being decoded to unicode in the result:
+from io import BytesIO
+data = b"word,length\n" b"Tr\xc3\xa4umen,7\n" b"Gr\xc3\xbc\xc3\x9fe,5"
+data = data.decode("utf8").encode("latin-1")
+df = pd.read_csv(BytesIO(data), encoding="latin-1")
+df['word'][1]
+Some formats which encode all characters as multiple bytes, like UTF-16, won’t parse correctly at all without specifying the encoding.
+
+Index columns and trailing delimiters
+--------------------------------------
+If a file has one more column of data than the number of column names, the first column will be used as the DataFrame’s row names i.e index:
+data = "a,b,c\n4,apple,bat,5.7\n8,orange,cow,10"
+pd.read_csv(StringIO(data))
+data = "index,a,b,c\n4,apple,bat,5.7\n8,orange,cow,10"
+pd.read_csv(StringIO(data), index_col=0)
+
+Ordinarily, you can achieve this behavior using the index_col option.
+There are some exception cases when a file has been prepared with delimiters at the end of each data line, confusing
+the parser. To explicitly disable the index column inference and discard the last column, pass index_col=False:
+data = "a,b,c\n4,apple,bat,\n8,orange,cow,"
+pd.read_csv(StringIO(data))
+pd.read_csv(StringIO(data), index_col=False)
+
+if column name also contains an extra comma
+data = "a,b,c,\n4,apple,bat,\n8,orange,cow,"
+pd.read_csv(StringIO(data), index_col=False, names=['a','b','c'], header=0)
+
+If a subset of data is being parsed using the usecols option, the index_col specification is based on that subset, not the original data.
+data = "a,b,c\n4,apple,bat,\n8,orange,cow,"
+pd.read_csv(StringIO(data), usecols=["b", "c"], index_col=False)
+
+
+Specifying categorical dtype
+----------------------------
 
 Attributes:
 .name
