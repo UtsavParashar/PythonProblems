@@ -4098,10 +4098,136 @@ pd.read_csv( "s3://ncei-wcsd-archive/data/processed/SH1305/18kHz/SaKe2013" "-D20
 fsspec also allows complex URLs, for accessing data in compressed archives, local caching of files, and more. To locally cache the above example, you would modify the call to
 where we specify that the “anon” parameter is meant for the “s3” part of the implementation, not to the caching implementation. Note that this caches to a temporary directory for the duration of the session only, but you can also specify a permanent store.
 
------------------------
+------------------------
 Writing out data
 Writing to CSV format
 ------------------------
+df = pd.DataFrame({
+    'a':np.arange(400000),
+    'b':np.arange(400000, 800000)
+})
+df.to_csv('temp.csv', sep='|', na_rep='Ramesh', index=False, chunksize=2)
+
+The Series and DataFrame objects have an instance method to_csv which allows storing the contents of the object as a comma-separated-values file. The function takes a number of arguments. Only the first is required.
+• path_or_buf: A string path to the file to write or a file object. If a file object it must be opened with newline=''
+• sep : Field delimiter for the output file (default “,”)
+• na_rep: A string representation of a missing value (default ‘’)
+• float_format: Format string for floating point numbers
+• columns: Columns to write (default None)
+• header: Whether to write out the column names (default True)
+• index: whether to write row (index) names (default True)
+• index_label: Column label(s) for index column(s) if desired. If None (default), and header and index are True, then the index names are used. (A sequence should be given if the DataFrame uses MultiIndex).
+• mode : Python write mode, default ‘w’
+• encoding: a string representing the encoding to use if the contents are non-ASCII, for Python versions prior
+to 3
+• line_terminator: Character sequence denoting line end (default os.linesep)
+• quoting: Set quoting rules as in csv module (default csv.QUOTE_MINIMAL). Note that if you have set a float_format then floats are converted to strings and csv.QUOTE_NONNUMERIC will treat them as non-numeric
+• quotechar: Character used to quote fields (default ‘”’)
+• doublequote: Control quoting of quotechar in fields (default True)
+• escapechar: Character used to escape sep and quotechar when appropriate (default None)
+• chunksize: Number of rows to write at a time
+• date_format: Format string for datetime objects
+
+Writing a formatted string
+--------------------------
+The DataFrame object has an instance method to_string which allows control over the string representation of the object. All arguments are optional:
+• buf default None, for example a StringIO object
+• columns default None, which columns to write
+• col_space default None, minimum width of each column.
+• na_rep default NaN, representation of NA value
+• formatters default None, a dictionary (by column) of functions each of which takes a single argument and returns a formatted string
+• float_format default None, a function which takes a single (float) argument and returns a formatted string; to be applied to floats in the DataFrame.
+• sparsify default True, set to False for a DataFrame with a hierarchical index to print every MultiIndex key at each row.
+• index_names default True, will print the names of the indices
+• index default True, will print the index (ie, row labels)
+• header default True, will print the column labels
+• justify default left, will print column headers left- or right-justified
+The Series object also has a to_string method, but with only the buf, na_rep, float_format arguments. There is also a length argument which, if set to True, will additionally output the length of the Series.
+
+=============================================
+2.4.2 JSON
+Read and write JSON format files and strings.
+=============================================
+Writing JSON
+A Series or DataFrame can be converted to a valid JSON string. Use to_json with optional parameters:
+• path_or_buf : the pathname or buffer to write the output This can be None in which case a JSON string is
+returned
+• orient : Series:
+– default is index
+– allowed values are {split, records, index} DataFrame:
+– default is columns
+– allowed values are {split, records, index, columns, values, table}
+
+The format of the JSON string
+split       dict like {index -> [index], columns -> [columns], data -> [values]}
+records     list like [{column -> value}, . . . , {column -> value}]
+index       dict like {index -> {column -> value}}
+columns     dict like {column -> {index -> value}}
+values      just the values array
+
+• date_format : string, type of date conversion, ‘epoch’ for timestamp, ‘iso’ for ISO8601.
+• double_precision : The number of decimal places to use when encoding floating point values, default 10.
+• force_ascii : force encoded string to be ASCII, default True.
+• date_unit : The time unit to encode to, governs timestamp and ISO8601 precision. One of ‘s’, ‘ms’, ‘us’ or ‘ns’ for seconds, milliseconds, microseconds and nanoseconds respectively. Default ‘ms’.
+• default_handler : The handler to call if an object cannot otherwise be converted to a suitable format for JSON. Takes a single argument, which is the object to convert, and returns a serializable object.
+• lines : If records orient, then will write each record per line as json.
+Note NaN’s, NaT’s and None will be converted to null and datetime objects will be converted based on the
+date_format and date_unit parameters.
+
+dfj = pd.DataFrame(np.random.choice(10, 6).reshape(3,2), columns=list("AB"))
+print(dfj)
+dfj.to_json()
+
+Orient options
+---------------
+There are a number of different options for the format of the resulting JSON file / string. Consider the following DataFrame and Series:
+dfjo = pd.DataFrame(
+    dict(A=range(1,4), B=range(4, 7), C=range(7, 10)),
+    columns=list("ABC"),
+    index=list("xyz")
+)
+dfjo
+
+sjo = pd.Series(dict(x=15, y=16, z=17), name='D')
+sjo
+
+Column oriented (the default for DataFrame) serializes the data as nested JSON objects with column labels acting as the primary index:
+# Not available for Series
+dfjo.to_json(orient='columns') # default
+
+Index oriented (the default for Series) similar to column oriented but the index labels are now primary:
+dfjo.to_json(orient="index")
+sjo.to_json(orient="index")
+
+Record oriented serializes the data to a JSON array of column -> value records, index labels are not included. This is useful for passing DataFrame data to plotting libraries, for example the JavaScript library d3.js:
+dfjo.to_json(orient="records")
+sjo.to_json(orient="records")
+
+Value oriented is a bare-bones option which serializes to nested JSON arrays of values only, column and index labels are not included:
+dfjo.to_json(orient="values")
+# Not available for Series
+
+Split oriented serializes to a JSON object containing separate entries for values, index and columns. Name is also included for Series:
+dfjo.to_json(orient="split")
+sjo.to_json(orient="split")
+
+Table oriented serializes to the JSON Table Schema, allowing for the preservation of metadata including but not limited to dtypes and index names.
+dfjo.to_json(orient="table")
+
+Note: Any orient option that encodes to a JSON object will not preserve the ordering of index and column la- bels during round-trip serialization. If you wish to preserve label ordering use the split option as it uses ordered containers.
+
+===============================
+2.5 Indexing and selecting data
+===============================
+The axis labeling information in pandas objects serves many purposes:
+• Identifies data (i.e. provides metadata) using known indicators, important for analysis, visualization, and inter- active console display.
+• Enables automatic and explicit data alignment.
+• Allows intuitive getting and setting of subsets of the data set.
+In this section, we will focus on the final point: namely, how to slice, dice, and generally get and set subsets of pandas objects. The primary focus will be on Series and DataFrame as they have received more development attention in this area.
+
+Note: The Python and NumPy indexing operators [] and attribute operator . provide quick and easy access to pandas data structures across a wide range of use cases. This makes interactive work intuitive, as there’s little new to learn if you already know how to deal with Python dictionaries and NumPy arrays. However, since the type of the data to be accessed isn’t known in advance, directly using standard operators has some optimization limits. For production code, we recommended that you take advantage of the optimized pandas data access methods exposed in this chapter.
+
+ Warning: Whether a copy or a reference is returned for a setting operation, may depend on the context. This is sometimes called chained assignment and should be avoided.
 
 
 
