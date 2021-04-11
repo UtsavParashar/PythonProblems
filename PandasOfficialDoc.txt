@@ -3967,12 +3967,141 @@ pd.read_fwf("temp.csv", header=None, index_col=0, dtype={2: "object"}).dtypes
 Indexes
 Files with an “implicit” index column
 ======================================
+Consider a file with one less entry in the header than the number of data column:
+A,B,C
+20090101,a,1,2
+20090102,b,3,4
+20090103,c,4,5
 
+df = pd.read_csv('temp.csv', parse_dates=True)
+df.index
 
+Reading an index with a MultiIndex
+Suppose you have data indexed by two columns:
+year,indiv,zit,xit
+1977,"A",1.2,.6
+1977,"B",1.5,.5
+1977,"C",1.7,.8
+1978,"A",.2,.06
+1978,"B",.7,.2
+1978,"C",.8,.3
+1978,"D",.9,.5
+1978,"E",1.4,.9
+1979,"C",.2,.15
+1979,"D",.14,.05
+1979,"E",.5,.15
+1979,"F",1.2,.5
+1979,"G",3.4,1.9
+1979,"H",5.4,2.7
+1979,"I",6.4,1.2
+The index_col argument to read_csv can take a list of column numbers to turn multiple columns into a MultiIndex for the index of the returned object:
+df = pd.read_csv('temp.csv', index_col=[0,1])
+df
+df.loc[1978]
 
+Reading columns with a MultiIndex
+----------------------------------
+By specifying list of row locations for the header argument, you can read in a MultiIndex for the columns.
+Specifying non-consecutive rows will skip the intervening rows.
+from pandas._testing import makeCustomDataframe as mkdf
+df = mkdf(5, 3, r_idx_nlevels=2, c_idx_nlevels=4)
+df
 
+C0,,C_l0_g0,C_l0_g1,C_l0_g2
+C1,,C_l1_g0,C_l1_g1,C_l1_g2
+C2,,C_l2_g0,C_l2_g1,C_l2_g2
+C3,,C_l3_g0,C_l3_g1,C_l3_g2
+R0,R1,,,
+R_l0_g0,R_l1_g0,R0C0,R0C1,R0C2
+R_l0_g1,R_l1_g1,R1C0,R1C1,R1C2
+R_l0_g2,R_l1_g2,R2C0,R2C1,R2C2
+R_l0_g3,R_l1_g3,R3C0,R3C1,R3C2
+R_l0_g4,R_l1_g4,R4C0,R4C1,R4C2
 
+read_csv is also able to interpret a more common format of multi-columns indices.
+,a,a,a,b,c,c
+,q,r,s,t,u,v
+one,1,2,3,4,5,6
+two,7,8,9,10,11,12
 
+pd.read_csv('temp.csv', index_col=0, header=[0, 1])
+Note: If an index_col is not specified (e.g. you don’t have an index, or wrote it with df.to_csv(..., index=False), then any names on the columns index will be lost.
+
+Automatically “sniffing” the delimiter
+---------------------------------------
+read_csv is capable of inferring delimited (not necessarily comma-separated) files, as pandas uses the csv. Sniffer class of the csv module. For this, you have to specify sep=None.
+:0:1:2:3
+0:0.4691122999071863:-0.2828633443286633:-1.5090585031735124:-1.1356323710171934
+1:1.2121120250208506:-0.17321464905330858:0.11920871129693428:-1.0442359662799567
+2:-0.8618489633477999:-2.1045692188948086:-0.4949292740687813:1.071803807037338
+3:0.7215551622443669:-0.7067711336300845:-1.0395749851146963:0.27185988554282986
+4:-0.42497232978883753:0.567020349793672:0.27623201927771873:-1.0874006912859915
+5:-0.6736897080883706:0.1136484096888855:-1.4784265524372235:0.5249876671147047
+6:0.4047052186802365:0.5770459859204836:-1.7150020161146375:-1.0392684835147725
+7:-0.3706468582364464:-1.1578922506419993:-1.344311812731667:0.8448851414248841
+8:1.0757697837155533:-0.10904997528022223:1.6435630703622064:-1.4693879595399115
+9:0.35702056413309086:-0.6746001037299882:-1.776903716971867:-0.9689138124473498
+
+pd.read_csv('temp.csv', sep=None, engine='python', index_col=0)
+
+Reading multiple files to create a single DataFrame:
+----------------------------------------------------
+It’s best to use concat() to combine multiple files.
+
+Iterating through files chunk by chunk
+---------------------------------------
+Suppose you wish to iterate through a (potentially very large) file lazily rather than reading the entire file into memory, such as the following:
+|0|1|2|3
+0|0.4691122999071863|-0.2828633443286633|-1.5090585031735124|-1.1356323710171934
+1|1.2121120250208506|-0.17321464905330858|0.11920871129693428|-1.0442359662799567
+2|-0.8618489633477999|-2.1045692188948086|-0.4949292740687813|1.071803807037338
+3|0.7215551622443669|-0.7067711336300845|-1.0395749851146963|0.27185988554282986
+4|-0.42497232978883753|0.567020349793672|0.27623201927771873|-1.0874006912859915
+5|-0.6736897080883706|0.1136484096888855|-1.4784265524372235|0.5249876671147047
+6|0.4047052186802365|0.5770459859204836|-1.7150020161146375|-1.0392684835147725
+7|-0.3706468582364464|-1.1578922506419993|-1.344311812731667|0.8448851414248841
+8|1.0757697837155533|-0.10904997528022223|1.6435630703622064|-1.4693879595399115
+9|0.35702056413309086|-0.6746001037299882|-1.776903716971867|-0.9689138124473498
+
+To read the file in one go:
+pd.read_csv('temp.csv', sep='|', index_col=0)
+
+By specifying a chunksize to read_csv, the return value will be an iterable object of type TextFileReader:
+with pd.read_csv('temp.csv', sep='|', iterator=True, index_col=0) as reader:
+    p = reader.get_chunk(5)
+print(p)
+
+Specifying the parser engine
+----------------------------
+Under the hood pandas uses a fast and efficient parser implemented in C as well as a Python implementation which is currently more feature-complete. Where possible pandas uses the C parser (specified as engine='c'), but may fall back to Python if C-unsupported options are specified. Currently, C-unsupported options include:
+• sep other than a single character (e.g. regex separators) • skipfooter
+• sep=None with delim_whitespace=False
+Specifying any of the above options will produce a ParserWarning unless the python engine is selected explicitly using engine='python'.
+
+Reading/writing remote files
+-----------------------------
+You can pass in a URL to read or write remote files to many of pandas’ IO functions - the following example shows reading a CSV file:
+df = pd.read_csv("https://download.bls.gov/pub/time.series/cu/cu.item", sep="\t")
+df.head()
+df.info()
+df.shape
+df.sample(5)
+
+All URLs which are not local files or HTTP(s) are handled by fsspec, if installed, and its various filesystem implementations (including Amazon S3, Google Cloud, SSH, FTP, webHDFS. . . ). Some of these implementations will require additional packages to be installed, for example S3 URLs require the s3fs library:
+df = pd.read_json("s3://pandas-test/adatafile.json")
+When dealing with remote storage systems, you might need extra configuration with environment variables or config files in special locations. For example, to access data in your S3 bucket, you will need to define credentials in one of the several ways listed in the S3Fs documentation. The same is true for several of the storage backends, and you
+should follow the links at fsimpl1 for implementations built into fsspec and fsimpl2 for those not included in the main fsspec distribution.
+You can also pass parameters directly to the backend driver. For example, if you do not have S3 credentials, you can still access public data by specifying an anonymous connection, such as
+New in version 1.2.0.
+pd.read_csv( "s3://ncei-wcsd-archive/data/processed/SH1305/18kHz/SaKe2013" "-D20130523-T080854_to_SaKe2013-D20130523-T085643.csv", storage_options={"anon": True},
+)
+fsspec also allows complex URLs, for accessing data in compressed archives, local caching of files, and more. To locally cache the above example, you would modify the call to
+where we specify that the “anon” parameter is meant for the “s3” part of the implementation, not to the caching implementation. Note that this caches to a temporary directory for the duration of the session only, but you can also specify a permanent store.
+
+-----------------------
+Writing out data
+Writing to CSV format
+------------------------
 
 
 
