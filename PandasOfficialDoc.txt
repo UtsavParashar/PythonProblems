@@ -3833,6 +3833,148 @@ The thousands keyword allows integers to be parsed correctly:
 df = pd.read_csv('temp.csv', sep='|', thousands=',')
 df.level.dtype # dtype('int64')
 
+NA Values:
+----------
+To control which values are parsed as missing values (which are signified by NaN), specify a string in na_values. If you specify a list of strings, then all values in it are considered to be missing values. If you specify a number (a float, like 5.0 or an integer like 5), the corresponding equivalent values will also imply a missing value (in this case effectively[5.0, 5]arerecognizedasNaN).
+To completely override the default values that are recognized as missing, specify keep_default_na=False.
+The default NaN recognized values are ['-1.#IND', '1.#QNAN', '1.#IND', '-1.#QNAN', '#N/ A N/A', '#N/A', 'N/A', 'n/a', 'NA', '<NA>', '#NA', 'NULL', 'null', 'NaN', '-NaN', 'nan', '-nan', ''].
+
+pd.read_csv("path_to_file.csv", na_values=[5])
+In the example above 5 and 5.0 will be recognized as NaN, in addition to the defaults. A string will first be interpreted as a numerical 5, then as a NaN.
+
+pd.read_csv("path_to_file.csv", keep_default_na=False, na_values=[""])
+Above, only an empty field will be recognized as NaN.
+
+pd.read_csv("path_to_file.csv", keep_default_na=False, na_values=["NA", "0"])
+Above, both NA and 0 as strings are NaN.
+
+pd.read_csv("path_to_file.csv", na_values=["Nope"])
+The default values, in addition to the string "Nope" are recognized as NaN.
+
+Test:
+s,val
+'a',10
+'b',5
+'c',5.0
+'d',20
+'e',
+'f',30
+'g',0
+'h',"NA"
+'i',"Nope"
+pd.read_csv('temp.csv', na_values=[5])
+pd.read_csv('temp.csv', keep_default_na=False, na_values=[""])
+pd.read_csv('temp.csv', keep_default_na=False, na_values=["NA", "0"])
+pd.read_csv('temp.csv', na_values=["Nope"])
+
+Infinity
+--------
+inf like values will be parsed as np.inf (positive infinity), and -inf as -np.inf (negative infinity). These will ignore the case of the value, meaning Inf, will also be parsed as np.inf.
+
+Returning Series
+-----------------
+Using the squeeze keyword, the parser will return output with a single column as a Series:
+level
+Patient1,123000
+Patient2,23000
+Patient3,1234018
+
+output = pd.read_csv('temp.csv', squeeze=True)
+type(output) # pandas.core.series.Series
+
+Boolean values
+--------------
+The common values True, False, TRUE, and FALSE are all recognized as boolean. Occasionally you might want to recognize other values as being boolean. To do this, use the true_values and false_values options as follows:
+data = "a,b,c\n1,Yes,2\n3,No,4"
+pd.read_csv(StringIO(data), true_values=['Yes'], false_values=['No', '0'])
+
+Handling “bad” lines
+---------------------
+Some files may have malformed lines with too few fields or too many. Lines with too few fields will have NA values filled in the trailing fields. Lines with too many fields will raise an error by default:
+data = "a,b,c\n1,2,3\n4,5,6,7\n8,9,10"
+pd.read_csv(StringIO(data))
+ParserError: Error tokenizing data. C error: Expected 3 fields in line 3, saw 4
+You can elect to skip bad lines:
+pd.read_csv(StringIO(data), error_bad_lines=False)
+You can also use the usecols parameter to eliminate extraneous column data that appear in some lines but not others:
+pd.read_csv(StringIO(data), usecols=[0,1,2])
+
+Dialect
+-------
+The dialect keyword gives greater flexibility in specifying the file format. By default it uses the Excel dialect but you can specify either the dialect name or a csv.Dialect instance.
+Suppose you had data with unenclosed quotes:
+By default, read_csv uses the Excel dialect and treats the double quote as the quote character, which causes it to fail when it finds a newline before it finds the closing double quote.
+We can get around this using dialect:
+label1,label2,label3
+index1,"a,c,e
+index2,b,d,f
+
+import csv
+dia = csv.excel()
+dia.quoting = csv.QUOTE_NONE
+pd.read_csv('temp.csv', dialect=dia)
+
+All of the dialect options can be specified separately by keyword arguments:
+data = "a,b,c~1,2,3~4,5,6"
+pd.read_csv(StringIO(data), lineterminator='~')
+
+Another common dialect option is skipinitialspace, to skip any whitespace after a delimiter:
+data = "a, b , c\n1, 2, 3\n4, 5, 6"
+pd.read_csv(StringIO(data), skipinitialspace=True)
+
+The parsers make every attempt to “do the right thing” and not be fragile. Type inference is a pretty big deal. If a column can be coerced to integer dtype without altering the contents, the parser will do so. Any non-numeric columns will come through as object dtype as with the rest of pandas objects.
+
+Quoting and Escape Characters
+------------------------------
+Quotes (and other escape characters) in embedded fields can be handled in any number of ways. One way is to use backslashes; to properly parse this data, you should pass the escapechar option:
+data = 'a,b\n"hello, \\"Bob\\", nice to see you",5'
+pd.read_csv(StringIO(data), escapechar='\\')
+
+Files with fixed width columns
+-------------------------------
+While read_csv() reads delimited data, the read_fwf() function works with data files that have known and fixed column widths. The function parameters to read_fwf are largely the same as read_csv with two extra parameters, and a different usage of the delimiter parameter:
+• colspecs: A list of pairs (tuples) giving the extents of the fixed-width fields of each line as half-open intervals (i.e., [from, to[ ). String value ‘infer’ can be used to instruct the parser to try detecting the column specifications from the first 100 rows of the data. Default behavior, if not specified, is to infer.
+• widths: A list of field widths which can be used instead of ‘colspecs’ if the intervals are contiguous.
+• delimiter: Characters to consider as filler characters in the fixed-width file. Can be used to specify the filler
+character of the fields if it is not spaces (e.g., ‘~’).
+
+Consider a typical fixed-width data file:
+id8141 360.242940 149.910199 11950.7
+id1594 444.953632 166.985655 11788.4
+id1849 364.136849 183.628767 11806.2
+id1230 413.836124 184.375703 11916.8
+id1948 502.953953 173.237159 12468.3
+
+In order to parse this file into a DataFrame, we simply need to supply the column specifications to the read_fwf function along with the file name:
+
+# Column specifications are a list of half-intervals
+colspecs = [(0, 6), (8, 20), (21, 33), (35, 43)]
+#pd.read_fwf('temp.csv', colspecs=colspecs, header=None, index_col=0)
+pd.read_fwf('temp.csv', header=None, index_col=0)
+
+Note how the parser automatically picks column names X.<column number> when header=None argument is spec- ified. Alternatively, you can supply just the column widths for contiguous columns:
+widths = [6, 14, 13, 10]
+df = pd.read_fwf("temp.csv", widths=widths, header=None)
+
+The parser will take care of extra white spaces around the columns so it’s ok to have extra separation between the columns in the file.
+By default, read_fwf will try to infer the file’s colspecs by using the first 100 rows of the file. It can do it only in cases when the columns are aligned and correctly separated by the provided delimiter (default delimiter is whitespace).
+pd.read_fwf('temp.csv', header=None, index_col=0)
+
+read_fwf supports the dtype parameter for specifying the types of parsed columns to be different from the inferred type.
+pd.read_fwf("temp.csv", header=None, index_col=0).dtypes
+pd.read_fwf("temp.csv", header=None, index_col=0, dtype={2: "object"}).dtypes
+
+Indexes
+Files with an “implicit” index column
+======================================
+
+
+
+
+
+
+
+
 
 
 Attributes:
