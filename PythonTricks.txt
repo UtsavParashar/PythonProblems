@@ -163,7 +163,7 @@ There could be 5 types of variables or methods with underscores:
 5. Single underscore - _
 
 1. Single leading underscore - It has a meaning by convention, it is a hint to the programmer that the variable is private i.e it is used for internal purpose only.
-The underscore prefix is meant as a hint to tell other programmers that a variable or method starting with a single underscore is intended for internal use. This convetion is defined in pep8 - https://pep8.org/
+The underscore prefix is meant as a hint to tell other programmers that a variable or method starting with a single underscore is intended for internal use. This convention is defined in pep8 - https://pep8.org/
 This convention is not enforced by python interpreter. Python does not have strong distinctions between private and public variables like Java does.
 class Test:
     def __init__(self)
@@ -291,7 +291,7 @@ f' strings :
 PEP 498 introduced a new string formatting mechanism known as Literal String Interpolation or more commonly as F-strings (because of the leading f character preceding the string literal). The idea behind f-strings is to make string interpolation simpler. 
 To create an f-string, prefix the string with the letter “ f ”. The string itself can be formatted in much the same way that you would with str.format(). F-strings provide a concise and convenient way to embed python expressions inside string literals for formatting. 
 
-It is better, more convinient and faster then format.
+It is better, more convenient and faster then format.
 Eg: name = 'Utsav'
 age = 31
 print('My name is {}, and my age is {}'.format(name, age))
@@ -308,7 +308,7 @@ solution:
 newl = '\n'
 print(f'newline, {newl}and we have a new line')
 
-Inline arithmatic can be done with formatted String Literal.
+Inline arithmetic can be done with formatted String Literal.
 a = 10
 b = 15
 print(f'Ten plus five is {a+b} and not {2*(a+b)}')
@@ -321,7 +321,7 @@ n = 'Utsav'
 t = Template('Hey, $name')
 t.substitute(name = n)
 
-Eg. When a malacious user can get your secret key is you are using formatted string
+Eg. When a malicious user can get your secret key if you are using formatted string
 SECRET = 'this_is_a_secret_key'
 class Error:
     def __init__(self):
@@ -339,7 +339,7 @@ Template(user_input).substitute(anyErrorObjRef = err)
 Hence user cannot get your secret string using Template string.
 
 Which String Formatting should you use?
-Template String for user input string else always Formated String literal(3.6+) else format string. 
+Template String for user input string else always Formatted String literal(3.6+) else format string.
   
 Functions:
 ==========
@@ -397,10 +397,10 @@ Eg:
 def outer(text):
     def inner():
         return text.upper() ## Lexical Scoping i.e outer function variable can be used inside inner function
-    return inner # Lexical Closure i.e inner function is returned from outer funtion
+    return inner # Lexical Closure i.e inner function is returned from outer function
 oi = outer('hello') 
 oi()
-In KDB : Lexical Closure is supported by lexical scoping is not supported.
+In KDB : Lexical Closure is supported but lexical scoping is not supported.
 q)o:{[t] i:{[t] :upper t}; :i}
 
 While all functions are objects in Python, the reverse isn’t true. Objects aren’t functions. But they can be made callable, which allows you to treat them like functions in many cases.
@@ -448,6 +448,8 @@ callable(Geek) # True
 geekObject = Geek()
 callable(geekObject) # False, because it does not have __call__ method
 
+Each class is callable and object of class which has __call__ defined is callable.
+
 In fact, any object which implements the special method __call__() is termed callable. So, in the most basic sense, a decorator is a callable that returns a callable.
 Basically, a decorator takes in a function, adds some functionality and returns it. 
 
@@ -466,7 +468,7 @@ False
 
 Lambda:
 -------
-Lambda are anonymous functions which are shorform of writing small anonymous functions.
+Lambda are anonymous functions which are shortform of writing small anonymous functions.
 normal function is defined using def keyword, lambda are defined using lambda keyword.
 They are very handy when we have to use function objects.
 
@@ -477,7 +479,7 @@ loft = [(3,'b'),(2,'d'),(1,'e'),(4,'a')]
 sorted(loft, key=lambda x:x[1]) # [(4, 'a'), (3, 'b'), (2, 'd'), (1, 'e')]
 
 loft = [(3,'b',30),(2,'d',20),(1,'e',10),(4,'c',40)]
-## To get sorted output based on first item 
+## To get sorted output based on second item i.e index 1
 print(sorted(loft, key=lambda x:x[1]))
 ## To get reverse of sorted output based on first item
 for r in reversed(sorted(loft, key=lambda x:x[1])):
@@ -497,7 +499,7 @@ If we want to provide an additional feature to an already existing function[s] t
 decorators are higher order funcs which takes another function as input and return that function with additional ability.
 Input and output for decorator are callable.
 
-Real world example - If your manager comes on Monday and asks you to modify all the 30 functions of a report with additional logging facility then you can write a decorator and annotate all those 30 funtions with the decorator name and you are done. Other wise you will have to modify all 30 functions separately.
+Real world example - If your manager comes on Monday and asks you to modify all the 30 functions of a report with additional logging facility then you can write a decorator and annotate all those 30 functions with the decorator name and you are done. Other wise you will have to modify all 30 functions separately.
 
 If you annotate the function with decorator then the functions loses its initial capability, in that case you will have to find hacks.
 Other option to use a decorator is to call the decorator with existing function and assign it to another function.
@@ -526,7 +528,7 @@ print(abuse()) # BASTARD
 
 Applying Multiple Decorators to a function:
 --------------------------------------------
-We can apply multiple decorators to a function in that case it will follow bottor up approach i.e the decorator placed at the bottom will be applied first and the decorator placed the top will be applied last.
+We can apply multiple decorators to a function in that case it will follow bottom up approach i.e the decorator placed at the bottom will be applied first and the decorator placed the top will be applied last.
 
 Eg: Apply strong and emphasis tags of html on the existing function value.
 def strong(func):
@@ -575,7 +577,7 @@ say('Ramesh', 'Hello Duniya')
 
 How to write debuggable Decorators:
 -----------------------------------
-Whenever we write a decorater for a function then the identity and attributes of the original function are lost. Hence it becomes very difficult to debug the code.
+Whenever we write a decorator for a function then the identity and attributes of the original function are lost. Hence it becomes very difficult to debug the code.
 
 def uppercase(func):
     def wrapper():
