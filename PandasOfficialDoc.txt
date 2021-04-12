@@ -4423,6 +4423,25 @@ A single indexer that is out of bounds will raise an IndexError. A list of index
 dfl.iloc[[4, 5, 6]] # IndexError: positional indexers are out-of-bounds
 dfl.iloc[:, 4] # IndexError: positional indexers are out-of-bounds
 
+2.5.7 Selection by callable
+----------------------------
+.loc, .iloc, and also [] indexing can accept a callable as indexer. The callable must be a function with one argument (the calling Series or DataFrame) that returns valid output for indexing.
+df1.loc[lambda df: df['A'] > 0, :]
+df1.loc[:, lambda df: ['A', 'B']]
+df1.iloc[:, lambda df: [0, 1]]
+df1[lambda df: df.columns[0]]
+
+You can use callable indexing in Series.
+df1['A'].loc[lambda s: s > 0]
+
+Using these methods / indexers, you can chain data selection operations without using a temporary variable.
+bb = pd.read_csv('data/baseball.csv', index_col='id')
+bb.groupby(['year', 'team']).sum().loc[lambda df: df['r'] > 100]
+
+
+
+
+
 
 
 
