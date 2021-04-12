@@ -4229,6 +4229,200 @@ Note: The Python and NumPy indexing operators [] and attribute operator . provid
 
  Warning: Whether a copy or a reference is returned for a setting operation, may depend on the context. This is sometimes called chained assignment and should be avoided.
 
+2.5.1 Different choices for indexing
+--------------------------------------
+Object selection has had a number of user-requested additions in order to support more explicit location based index- ing. pandas now supports three types of multi-axis indexing.
+• .loc is primarily label based, but may also be used with a boolean array. .loc will raise KeyError when the items are not found. Allowed inputs are:
+– A single label, e.g. 5 or 'a' (Note that 5 is interpreted as a label of the index. This use is not an integer position along the index.).
+– A list or array of labels ['a', 'b', 'c'].
+– A slice object with labels 'a':'f' (Note that contrary to usual Python slices, both the start and the stop
+are included, when present in the index! See Slicing with labels and Endpoints are inclusive.)
+– A boolean array (any NA values will be treated as False).
+– A callable function with one argument (the calling Series or DataFrame) and that returns valid output for indexing (one of the above).
+• .iloc is primarily integer position based (from 0 to length-1 of the axis), but may also be used with a boolean array. .iloc will raise IndexError if a requested indexer is out-of-bounds, except slice indexers which allow out-of-bounds indexing. (this conforms with Python/NumPy slice semantics). Allowed inputs are:
+– An integer e.g. 5.
+– A list or array of integers [4, 3, 0].
+– A slice object with ints 1:7.
+– A boolean array (any NA values will be treated as False).
+– A callable function with one argument (the calling Series or DataFrame) and that returns valid output for indexing (one of the above).
+• .loc, .iloc, and also [] indexing can accept a callable as indexer. See more at Selection By Callable.
+Getting values from an object with multi-axes selection uses the following notation (using .loc as an example, but the following applies to .iloc as well). Any of the axes accessors may be the null slice :. Axes left out of the specification are assumed to be:,e.g.p.loc['a']is equivalent to p.loc['a', :, :].
+Object Type         Indexers
+Series              s.loc[indexer]
+DataFrame           df.loc[row_indexer,column_indexer]
+
+2.5.2 Basics
+------------
+As mentioned when introducing the data structures in the last section, the primary function of indexing with [] (a.k.a. __getitem__ for those familiar with implementing class behavior in Python) is selecting out lower-dimensional slices. The following table shows return type values when indexing pandas objects with []:
+ObjectType             Selection                ReturnValueType
+Series                series[label]             scalar value
+DataFrame             frame[colname]            Series corresponding to colname
+
+Here we construct a simple time series data set to use for illustrating the indexing functionality:
+dates=pd.date_range('1/2/2021', periods=8)
+df = pd.DataFrame(np.random.randn(8, 4), columns=list("ABCD"),
+                 index=dates)
+df
+
+Note: None of the indexing functionality is timeseries specific unless specifically stated.
+Thus, as per above, we have the most basic indexing using []:
+s = df['A']
+s[dates[5]]
+
+You can pass a list of columns to [] to select columns in that order. If a column is not contained in the DataFrame, an exception will be raised. Multiple columns can also be set in this manner:
+df[['B', 'A']] = df[['A', 'B']]
+df
+You may find this useful for applying a transform (in-place) to a subset of the columns.
+Warning: pandas aligns all AXES when setting Series and DataFrame from .loc, and .iloc. This will not modify df because the column alignment is before value assignment.
+df.loc[:, ['B', 'A']] = df[['A', 'B']] ## This is not the correct way, no affect on the output
+df[['A', 'B']]
+
+The correct way to swap column values is by using raw values:
+df.loc[:, ['B', 'A']]= df[['A', 'B']].to_numpy()
+
+2.5.3 Attribute access
+-----------------------
+You may access an index on a Series or column on a DataFrame directly as an attribute:
+sa = pd.Series([1, 2, 3], index=list('abc'))
+sa.b
+s['2021-01-07']
+dfa = df.copy()
+dfa.A
+
+print(sa)
+sa.a = 5
+sa
+
+dfa.A = list(range(len(dfa.index))) # # ok if A already exists
+dfa
+
+dfa.E = list(range(len(dfa.index))) ## Error - UserWarning: Pandas doesn't allow columns to be created via a new attribute name
+dfa
+
+# use below form to create a new ˓→column
+dfa['E'] = list(range(len(dfa.index)))
+dfa
+
+Warning:
+• You can use this access only if the index element is a valid Python identifier, e.g. s.1 is not allowed.
+• The attribute will not be available if it conflicts with an existing method name, e.g. s.min is not allowed, but s['min'] is possible.
+• Similarly, the attribute will not be available if it conflicts with any of the following list: index, major_axis, minor_axis, items.
+• In any of these cases, standard indexing will still work, e.g. s['1'], s['min'], and s['index'] will access the corresponding element or column.
+
+If you are using the IPython environment, you may also use tab-completion to see these accessible attributes.
+You can also assign a dict to a row of a DataFrame:
+x = pd.DataFrame({'x': [1, 2, 3], 'y': [3, 4, 5]})
+x.iloc[1] = {'x':9, 'y':99}
+x
+
+You can use attribute access to modify an existing element of a Series or column of a DataFrame, but be careful; if you try to use attribute access to create a new column, it creates a new attribute rather than a new column.
+df = pd.DataFrame({'one': [1., 2., 3.]})
+df.two = [4, 5, 6] ## Error - UserWarning: Pandas doesn't allow columns to be created via a new attribute name
+df
+
+2.5.4 Slicing ranges
+----------------------
+The most robust and consistent way of slicing ranges along arbitrary axes is described in the Selection by Position section detailing the .iloc method. For now, we explain the semantics of slicing using the [] operator.
+With Series, the syntax works exactly as with an ndarray, returning a slice of the values and the corresponding labels:
+s[:5]
+s[::2]
+s[::-1]
+
+#Note that setting works as well:
+s2 = s.copy()
+s2[:5] = 0
+s2
+
+With DataFrame, slicing inside of [] slices the rows. This is provided largely as a convenience since it is such a common operation.
+df[:3]
+df[::-1]
+
+2.5.5 Selection by label
+------------------------
+ Warning: Whether a copy or a reference is returned for a setting operation, may depend on the context. This is sometimes called chained assignment and should be avoided.
+ Warning: .loc is strict when you present slicers that are not compatible (or convertible) with the index type. For example using integers in a DatetimeIndex. These will raise a TypeError.
+df1 = pd.DataFrame(np.random.randn(5, 4), columns=list('ABCD'), index=pd.date_range('20130101', periods=5))
+#df1.loc[2:4] #TypeError: cannot do slice indexing on DatetimeIndex with these indexers [2] of type int
+df1.iloc[2:4]
+String likes in slicing can be convertible to the type of the index and lead to natural slicing.
+df1.loc['2013-01-03': '2013-01-04']
+df1.loc[['2013-01-03', '2013-01-04']]
+
+pandas provides a suite of methods in order to have purely label based indexing. This is a strict inclusion based protocol. Every label asked for must be in the index, or a KeyError will be raised. When slicing, both the start bound AND the stop bound are included, if present in the index. Integers are valid labels, but they refer to the label and not the position.
+The .loc attribute is the primary access method. The following are valid inputs:
+• A single label, e.g. 5 or 'a' (Note that 5 is interpreted as a label of the index. This use is not an integer
+position along the index.).
+• A list or array of labels ['a', 'b', 'c'].
+• A slice object with labels 'a':'f' (Note that contrary to usual Python slices, both the start and the stop are included, when present in the index! See Slicing with labels.
+• A boolean array.
+• A callable,
+s1 = pd.Series(np.random.randn(6), index=list('abcdef'))
+s1.loc['c':]
+s1.loc['b']
+s1.loc['c':] = 0
+s1
+
+With a DataFrame:
+df1 = pd.DataFrame(np.random.randn(6, 4), index=list('abcdef'), columns=list('ABCD'))
+df1.loc[['a', 'b', 'd'], :]
+Accessing via label slices:
+df1.loc['d':, 'A':'C']
+
+For getting a cross section using a label (equivalent to df.xs('a')):
+df1.loc['a']
+
+For getting values with a boolean array:
+df1.loc['a'] > 0
+
+df1.loc[:, df1.loc['a'] > 0]
+
+NA values in a boolean array propagate as False:
+mask = pd.array([True, False, True, False, pd.NA, False], dtype="boolean")
+mask
+df1[mask]
+
+For getting a value explicitly:
+# this is also equivalent to ``df1.at['a','A']`
+df1.loc['a', 'A']
+
+Slicing with labels
+--------------------
+When using .loc with slices, if both the start and the stop labels are present in the index, then elements located between the two (including them) are returned:
+s = pd.Series(list('abcde'), index=[0, 3, 2, 5, 4])
+s.loc[3:5]
+
+If at least one of the two is absent, but the index is sorted, and can be compared against start and stop labels, then slicing will still work as expected, by selecting labels which rank between the two:
+s.sort_index()
+s.sort_index().loc[1:6]
+
+However, if at least one of the two is absent and the index is not sorted, an error will be raised (since doing otherwise would be computationally expensive, as well as potentially ambiguous for mixed type indexes). For instance, in the above example, s.loc[1:6] would raise KeyError.
+s = pd.Series(list('abcdef'), index=[0, 3, 2, 5, 4, 2])
+s.loc[3:5]
+Also, if the index has duplicate labels and either the start or the stop label is dupulicated, an error will be raised. For instance, in the above example, s.loc[2:5] would raise a KeyError.
+
+2.5.6 Selection by position
+----------------------------
+ Warning: Whether a copy or a reference is returned for a setting operation, may depend on the context. This is sometimes called chained assignment and should be avoided.
+pandas provides a suite of methods in order to get purely integer based indexing. The semantics follow closely Python and NumPy slicing. These are 0-based indexing. When slicing, the start bound is included, while the upper bound is excluded. Trying to use a non-integer, even a valid label will raise an IndexError.
+The .iloc attribute is the primary access method. The following are valid inputs: • An integer e.g. 5.
+• A list or array of integers [4, 3, 0].
+• A slice object with ints 1:7.
+• A boolean array.
+• A callable,
+
+# this is also equivalent to ``df1.iat[1,1]``
+df1.iloc[1, 1]
+For getting a cross section using an integer position (equiv to df.xs(1)):
+df1.iloc[1]
+
+Out of range slice indexes are handled gracefully just as in Python/NumPy.
+s.iloc[4:10]
+Note that using slices that go out of bounds can result in an empty axis (e.g. an empty DataFrame being returned).
+
+A single indexer that is out of bounds will raise an IndexError. A list of indexers where any element is out of bounds will raise an IndexError.
+dfl.iloc[[4, 5, 6]] # IndexError: positional indexers are out-of-bounds
+dfl.iloc[:, 4] # IndexError: positional indexers are out-of-bounds
+
 
 
 
