@@ -4632,9 +4632,114 @@ values = {'ids': ['a', 'b'], 'ids2': ['a', 'c'], 'vals': [1, 3]}
 mask = df.isin(values).all(axis=1)
 df[mask]
 
+2.5.15 The where() Method and Masking
+--------------------------------------
+Selecting values from a Series with a boolean vector generally returns a subset of the data. To guarantee that selection
+output has the same shape as the original data, you can use the where method in Series and DataFrame. To return only the selected rows:
+s = pd.Series(range(-3, 4))
+s[s>0]
+To return a Series of the same shape as the original:
+s.where(s>0)
 
+Selecting values from a DataFrame with a boolean criterion now also preserves input data shape. where is used under the hood as the implementation.The code below is equivalent to df.where(df < 0).
+dates=pd.date_range('1/2/2021', periods=8)
+df = pd.DataFrame(np.random.randn(8, 4), columns=list("ABCD"),
+                 index=dates)
+df[df<0]
 
+In addition, where takes an optional other argument for replacement of values where the condition is False, in the returned copy.
+df.where(df<0, -df)
 
+You may wish to set values based on some boolean criteria. This can be done intuitively like so:
+s2 = s.copy()
+s2[s2 < 0] = 0
+s2
+
+df2= df.copy()
+df2[df2<0] = 0
+df2
+
+By default, where returns a modified copy of the data. There is an optional parameter inplace so that the original data can be modified without creating a copy:
+df_orig = df.copy()
+df_orig.where(df_orig>0, 0., inplace=True)
+df_orig
+
+Note: The signature for DataFrame.where() differs from numpy.where(). Roughly df1.where(m, df2)isequivalenttonp.where(m, df1, df2)
+df.where(df < 0, -df) == np.where(df < 0, df, -df)
+
+which is faster?
+np.where is much faster then df.where.
+%timeit np.where(df < 0, df, -df) # 276 µs ± 27.7 µs per loop
+%timeit df.where(df < 0, -df) # 1.22 ms ± 113 µs per loop
+
+Alignment
+Furthermore, where aligns the input boolean condition (ndarray or DataFrame), such that partial selection with setting is possible. This is analogous to partial setting via .loc (but on the contents rather than the axis labels).
+df2 = df.copy()
+print(df2)
+df2[df2[1:4] > 0] = 3
+df2
+
+Where can also accept axis and level parameters to align the input when performing the where.
+df2 = DataFrame({
+    'a':np.arange(-3,3),
+    'b':np.arange(-2,4),
+    'c':np.arange(-1,5)
+})
+print(df2)
+df2.where(df2>0, df2['a'], axis='index')
+
+another example:
+df2 = DataFrame({
+    'a':np.arange(-3,3),
+    'b':np.arange(-2,4),
+    'c':np.arange(-1,5)
+})
+print(df2)
+print(df2.where(df2>0, df2['a'], axis=0))
+
+This is equivalent to (but faster than) the following.
+df2.apply(lambda x,y: x.where(x>0,y), y=df2['a'])
+
+how fast is df.where then apply?
+%timeit df2.where(df2>0, df2['a'], axis=0) # 939 µs ± 31.3 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+%timeit df2.apply(lambda x,y: x.where(x>0,y), y=df2['a']) # 2.99 ms ± 147 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+np.where is faster than both:
+%timeit np.where(df2>0, df2, df2[list(len(df2.columns)*'a')]) # 809 µs ± 29.6 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+where can accept a callable as condition and other arguments. The function must be with one argument (the calling Series or DataFrame) and that returns valid output as condition and other argument.
+df3 = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]})
+df3.where(lambda x:x>4, lambda x:x+10)
+df3.where(df3>4, lambda x:x+10)
+
+Mask
+-----
+mask() is the inverse boolean operation of where.
+print(s.where(s>0))
+s.mask(s>0)
+df3.mask(df3>4, lambda x:x+10)
+
+2.5.16 Setting with enlargement conditionally using numpy()
+------------------------------------------------------------
+An alternative to where() is to use numpy.where(). Combined with setting a new column, you can use it to
+enlarge a dataframe where the values are determined conditionally.
+Consider you have two choices to choose from in the following dataframe. And you want to set a new column color to ‘green’ when the second column has ‘Z’. You can do the following:
+df = pd.DataFrame({'col1': list('ABBC'), 'col2': list('ZZXY')})
+df['color'] = np.where(df['col2']=='Z', 'green', 'red')
+df
+
+If you have multiple conditions, you can use numpy.select() to achieve that. Say corresponding to three condi- tions there are three choice of colors, with a fourth color as a fallback, you can do the following.
+conditions = [
+    (df['col1']=='A') & (df['col2']=='Z'),
+    (df['col1']=='B') & (df['col2']=='Z'),
+    (df['col1']=='B')
+]
+choices = ['yellow', 'blue', 'blue']
+df['color'] = np.select(conditions, choices, default='black')
+df
+
+2.5.17 The query() Method
+--------------------------
 
 
 Attributes:
@@ -4656,6 +4761,9 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+df.mask() - exactly opposite of df.where
+np.where(condition, df, replacement) - apply condition on a df and replace it with values in replacement, faster than df.where
+df.where(condition, replacement, axis) - apply condition on a df and replace it with values in replacement
 sample(n, frac, weights, random_state) - get sample from a dataframe
 df.columns.get_indexers(['A', 'B']) - get multiple columns from a dataframe
 df.columns.get_loc('A') - get columns of a dataframe
