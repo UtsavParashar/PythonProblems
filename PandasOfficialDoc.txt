@@ -5156,6 +5156,189 @@ dfd.loc[0]['a'] = 1111
 
 RULE of Thumb - Whenever assigning a value to a slice of df, better make its copy and assign the value using loc.
 
+-------------Setting with copy warning,real python-------------------------
+https://realpython.com/pandas-settingwithcopywarning/
+
+Now that you have a DataFrame to work with, let’s try to get a SettingWithCopyWarning. You’ll take all values from column z that are less than fifty and replace them with zeros. You can start by creating a mask, or a filter with Pandas Boolean operators:
+
+data = {
+    "x": 2**np.arange(5),
+    "y": 3**np.arange(5),
+    "z": np.array([ 45, 98, 24, 11, 64, ])
+}
+index = [ "a", "b", "c", "d", "e"]
+df = pd.DataFrame(data=data, index=index)
+print(df)
+mask = df["z"]<50
+df[mask]
+
+mask is an instance of a Pandas Series with Boolean data and the indices from df
+If you try to change df by extracting rows a, c, and d using mask, you’ll get a SettingWithCopyWarning, and df will remain the same:
+df[mask]["z"] = 0
+df
+<ipython-input-208-83909dadc682>:10: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+As you can see, the assignment of zeros to the column z fails.
+Here’s what happens in the code sample above:
+df[mask] returns a completely new DataFrame (outlined in purple). This DataFrame holds a copy of the data from df that correspond to True values from mask (highlighted in green).
+df[mask]["z"] = 0 modifies the column z of the new DataFrame to zeros, leaving df untouched.
+
+Usually, you don’t want this! You want to modify df and not some intermediate data structure that isn’t referenced by any variable. That’s why Pandas issues a SettingWithCopyWarning and warns you about this possible mistake.
+
+In this case, the proper way to modify df is to apply one of the accessors .loc[], .iloc[], .at[], or .iat[]:
+df = pd.DataFrame(data=data, index=index)
+df.loc[mask, "z"] = 0
+df
+
+This approach enables you to provide two arguments, mask and "z", to the single method that assigns the values to the DataFrame.
+An alternative way to fix this issue is to change the evaluation order:
+df = pd.DataFrame(data=data, index=index)
+df["z"]
+df["z"][mask] = 0
+
+This works! You’ve modified df. Here’s what this process looks like:
+Here’s a breakdown of the image::
+
+df["z"] returns a Series object (outlined in purple) that points to the same data as the column z in df, not its copy.
+df["z"][mask] = 0 modifies this Series object by using chained assignment to set the masked values (highlighted in green) to zero.
+df is modified as well since the Series object df["z"] holds the same data as df.
+
+You’ve seen that df[mask] contains a copy of the data, whereas df["z"] points to the same data as df. The rules used by Pandas to determine whether or not you make a copy are very complex. Fortunately, there are some straightforward ways to assign values to DataFrames and avoid a SettingWithCopyWarning.
+Invoking accessors is usually considered better practice than chained assignment for these reasons:
+
+The intention to modify df is clearer to Pandas when you use a single method.
+The code is cleaner for readers.
+The accessors tend to have better performance, even though you won’t notice this in most cases.
+However, using accessors sometimes isn’t enough. They might also return copies, in which case you can get a SettingWithCopyWarning:
+
+df = pd.DataFrame(data=data, index=index)
+df.loc[mask]["z"] = 0
+In this example, as in the previous one, you use the accessor .loc[]. The assignment fails because df.loc[mask] returns a new DataFrame with a copy of the data from df. Then df.loc[mask]["z"] = 0 modifies the new DataFrame, not df.
+Generally, to avoid a SettingWithCopyWarning in Pandas, you should do the following:
+
+AVOID CHAINED ASSIGNMENTS that combine two or more indexing operations like df["z"][mask] = 0 and df.loc[mask]["z"] = 0.
+APPLY SINGLE ASSIGNMENTS with just one indexing operation like df.loc[mask, "z"] = 0. This might (or might not) involve the use of accessors, but they are certainly very useful and are often preferable.
+With this knowledge, you can successfully avoid the SettingWithCopyWarning and any unwanted behavior in most cases.
+
+Views and Copies in NumPy and Pandas
+------------------------------------
+Understanding views and copies is an important part of getting to know how NumPy and Pandas manipulate data. It can also help you avoid errors and performance bottlenecks. Sometimes data is copied from one part of memory to another, but in other cases two or more objects can share the same data, saving both time and memory.
+Let’s start by creating a NumPy array:
+arr = 2**np.arange(7)
+arr
+
+Now that you have arr, you can use it to create other arrays. Let’s first extract the second and fourth elements of arr (2 and 8) as a new array. There are several ways to do this:
+arr[1:4:2] # array([2, 8])
+arr[[1, 3]] # array([2, 8])
+
+it’s important to notice that both statements return array([2, 8]). However, they have different behavior under the surface:
+arr[1:4:2].base # array([ 1,  2,  4,  8, 16, 32, 64])
+arr[1:4:2].flags.owndata # False
+
+arr[[1, 3]].base
+arr[[1, 3]].flags.owndata # True
+
+This might seem odd at the first sight. The difference is in the fact that arr[1:4:2] returns a shallow copy, while arr[[1, 3]] returns a deep copy. Understanding this difference is essential not only for dealing with the SettingWithCopyWarning but also for manipulating big data with NumPy and Pandas
+
+Shallow copy -
+tarr = 2**np.arange(7)
+tta = tarr[1:4:2]
+print(tarr, id(tarr)) # [ 1  2  4  8 16 32 64] 4983419728
+print(tta, id(tta)) # [2 8] 4983404384
+tta[0] = 999
+print(tta, tarr) # [999   8] [  1 999   4   8  16  32  64]
+
+Deep copy -
+tarr = 2**np.arange(7)
+tdc = tarr[[1,3]]
+print(tarr, id(tarr))
+print(tdc, id(tdc))
+tdc[0] = 999
+print(tta, tarr)
+
+Views in NumPy
+--------------
+A shallow copy or view is a NumPy array that doesn’t have its own data. It looks at, or “views,” the data contained in the original array. You can create a view of an array with .view():
+view_of_arr = arr.view()
+view_of_arr.base # array([ 1,  2,  4,  8, 16, 32, 64])
+view_of_arr.base is arr # True
+print(id(arr), id(view_of_arr.base), id(view_of_arr)) # 4503673712 4503673712 4983405984
+
+You’ve obtained the array view_of_arr, which is a view, or shallow copy, of the original array arr. The attribute .base of view_of_arr is arr itself. In other words, view_of_arr doesn’t own any data—it uses the data that belongs to arr. You can also verify this with the attribute .flags:
+view_of_arr.flags.owndata # False
+
+Copies in NumPy
+---------------
+A deep copy of a NumPy array, sometimes called just a copy, is a separate NumPy array that has its own data. The data of a deep copy is obtained by copying the elements of the original array into the new array. The original and the copy are two separate instances. You can create a copy of an array with .copy():
+
+copy_of_arr = arr.copy()
+copy_of_arr
+copy_of_arr.base is None # True
+copy_of_arr.flags.owndata # True
+
+As you can see, copy_of_arr doesn’t have .base. To be more precise, the value of copy_of_arr.base is None. The attribute .flags.owndata is True. This means that copy_of_arr owns data:
+
+Differences Between Views and Copies
+There are two very important differences between views and copies:
+
+Views don’t need additional storage for data, but copies do.
+Modifying the original array affects its views, and vice versa. However, modifying the original array will not affect its copy.
+To illustrate the first difference between views and copies, let’s compare the sizes of arr, view_of_arr, and copy_of_arr. The attribute .nbytes returns the memory consumed by the elements of the array:
+arr.nbytes # 48
+>>> view_of_arr.nbytes # 48
+>>> copy_of_arr.nbytes # 48
+
+The amount of memory is the same for all arrays: 48 bytes. Each array looks at six integer elements of 8 bytes (64 bits) each. That’s 48 bytes in total.
+However, if you use sys.getsizeof() to get the memory amount directly attributed to each array, then you’ll see the difference:
+from sys import getsizeof
+>>> getsizeof(arr) # 144
+>>> getsizeof(view_of_arr) # 96
+>>> getsizeof(copy_of_arr) # 144
+
+arr and copy_of_arr hold 144 bytes each. As you’ve seen previously, 48 bytes out of the 144 total are for the data elements. The remaining 96 bytes are for other attributes. view_of_arr holds only those 96 bytes because it doesn’t have its own data elements.
+To illustrate the second difference between views and copies, you can modify any element of the original array:
+
+arr[1] = 64
+>>> arr # array([ 1,  64,   4,   8,  16,  32])
+>>> view_of_arr # array([ 1,  64,   4,   8,  16,  32])
+>>> copy_of_arr # array([ 1,  2,  4,  8, 16, 32])
+
+The view is modified because it looks at the elements of arr, and its .base is the original array. The copy is unchanged because it doesn’t share data with the original, so a change to the original doesn’t affect it at all
+
+Understanding Views and Copies in Pandas
+-----------------------------------------
+Pandas also makes a distinction between views and copies. You can create a view or copy of a DataFrame with .copy(). The parameter deep determines if you want a view (deep=False) or copy (deep=True). deep is True by default, so you can omit it to get a copy:
+df = pd.DataFrame(data=data, index=index)
+view_of_df = df.copy(deep=False)
+copy_of_df = df.copy()
+
+At first, the view and copy of df look the same. If you compare their NumPy representations, though, then you may notice this subtle difference:
+view_of_df.to_numpy().base is df.to_numpy().base # True
+copy_of_df.to_numpy().base is df.to_numpy().base # False
+
+Here, .to_numpy() returns the NumPy array that holds the data of the DataFrames. You can see that df and view_of_df have the same .base and share the same data. On the other hand, copy_of_df contains different data.
+You can verify this by modifying df:
+
+df["z"] = 0
+view_of_df
+copy_of_df
+You’ve assigned zeros to all elements of the column z in df. That causes a change in view_of_df, but copy_of_df remains unmodified.
+
+Rows and column labels also exhibit the same behavior:
+view_of_df.index is df.index # True
+view_of_df.columns is df.columns # True
+copy_of_df.index is df.index # True
+copy_of_df.columns is df.columns # True
+
+df and view_of_df share the same row and column labels, while copy_of_df has separate index instances. Keep in mind that you can’t modify particular elements of .index and .columns. They are immutable objects.
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------
 
 Attributes:
 pd.Index.name
