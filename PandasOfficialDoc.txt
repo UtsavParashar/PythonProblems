@@ -4934,6 +4934,73 @@ s.get('a')
 s.get('x', -1)
 s.get('x', default=-2)
 
+If you want to get a scaler at is the fastest:
+%timeit df2.at[3,'a'] # 4.76 µs ± 234 ns per loop
+%timeit df2.get('a').get(3) # 5.87 µs ± 56.7 ns per loop
+%timeit df2.loc[3,'a'] # 8.49 µs ± 264 ns per loop
+
+2.5.20 Looking up values by index/column labels
+------------------------------------------------
+Sometimes you want to extract a set of values given a sequence of row labels and column labels, this can be achieved by DataFrame.melt combined by filtering the corresponding rows with DataFrame.loc. For instance:
+df = pd.DataFrame({'col': ["A", "A", "B", "B"],
+                   'A': [80, 23, np.nan, 22],
+                   'B': [80, 55, 76, 67]})
+melt = df.melt('col')
+melt.loc[melt.col == melt.variable, 'value']
+melt = melt.get('value').get(melt.col == melt.variable) # get is faster, use it
+melt.reset_index(drop=True)
+
+2.5.21 Index objects
+---------------------
+The pandas Index class and its subclasses can be viewed as implementing an ordered multiset. Duplicates are allowed. However, if you try to convert an Index object with duplicate entries into a set, an exception will be raised.
+Index also provides the infrastructure necessary for lookups, data alignment, and reindexing. The easiest way to create an Index directly is to pass a list or other sequence to Index:
+index = pd.Index(['e', 'd', 'a', 'b'])
+'d' in index
+You can also pass a name to be stored in the index:
+index = pd.Index(['e', 'd', 'a', 'b'], name='something')
+index.name
+
+The name, if set, will be shown in the console display:
+index = pd.Index(np.arange(5), name='rows')
+columns = pd.Index(['A', 'B', 'C'], name='cols')
+df = pd.DataFrame(np.random.randn(5,3), index=index, columns=columns)
+df['A']
+df.iloc[0]
+
+Setting metadata
+-----------------
+Indexes are “mostly immutable”, but it is possible to set and change their name attribute. You can use the rename, set_names to set these attributes directly, and they default to returning a copy.
+ind = pd.Index([1, 2, 3])
+ind.name = 'ramesh'
+ind
+ind = ind.rename('suresh')
+ind.set_names(['chandu'], inplace=True)
+ind.name = 'Rupesh'
+ind
+
+set_names, set_levels, and set_codes also take an optional level argument
+index = pd.MultiIndex.from_product([range(3), ['one', 'two']], names=['first', 'second'])
+index.levels[0]
+index.set_levels(['a','b'], level=1)
+
+Set operations on Index objects
+--------------------------------
+The two main operations are union and intersection. Difference is provided via the .difference() method.
+a = pd.Index(['c', 'b', 'a'])
+b = pd.Index(['c', 'e', 'd'])
+a.difference(b)
+
+Also available is the symmetric_difference operation, which returns elements that appear in either idx1 or idx2, but not in both. This is equivalent to the Index created by idx1.difference(idx2).union(idx2. difference(idx1)), with duplicates dropped.
+x = pd.Index(['a','b','c'])
+y = pd.Index(['c','d','e'])
+x.symmetric_difference(y)
+
+Note: The resulting index from a set operation will be sorted in ascending order.
+
+When performing Index.union() between indexes with different dtypes, the indexes must be cast to a common dtype. Typically, though not always, this is object dtype. The exception is when performing a union between integer and float data. In this case, the integer values are converted to float
+idx1 = pd.Index([0, 1, 2])
+idx2 = pd.Index([0.5, 1.5])
+idx1.union(idx2)
 
 
 
