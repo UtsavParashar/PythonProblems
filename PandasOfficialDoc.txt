@@ -905,7 +905,7 @@ In the “Sex” column, replace values of “male” by “M” and values of �
 titanic['Sex_short'] = titanic.Sex.replace({'male':'M', 'female':'F'})
 titanic.head(2)
 
-Whereas replace() is not a string method, it provides a convenient way to use mappings or vocabularies to translate certainvalues.Itrequiresadictionarytodefinethemapping{from : to}.
+Whereas replace() is not a string method, it provides a convenient way to use mappings or vocabularies to translate certainvalues.It requires a dictionary to define the mapping{from : to}.
 
 Warning: There is also a replace() method available to replace a specific set of characters. However, when having a mapping of multiple values, this would become:
 titanic["Sex_short"] = titanic["Sex"].str.replace("female", "F")
@@ -4887,6 +4887,53 @@ Performance of query()
 DataFrame.query() using numexpr is slightly faster than Python for large frames.
 Note: You will only see the performance benefits of using the numexpr engine with DataFrame.query() if your frame has more than approximately 200,000 rows.
 
+2.5.18 Duplicate data
+---------------------
+If you want to identify and remove duplicate rows in a DataFrame, there are two methods that will help: duplicated and drop_duplicates. Each takes as an argument the columns to use to identify duplicated rows.
+• duplicated returns a boolean vector whose length is the number of rows, and which indicates whether a row is duplicated.
+• drop_duplicates removes duplicate rows.
+By default, the first observed row of a duplicate set is considered unique, but each method has a keep parameter to
+specify targets to be kept.
+• keep='first' (default): mark / drop duplicates except for the first occurrence. • keep='last': mark / drop duplicates except for the last occurrence.
+• keep=False: mark / drop all duplicates.
+df2 = pd.DataFrame({'a': ['one', 'one', 'two', 'two', 'two', 'three', 'four'],
+                   'b': ['x', 'y', 'x', 'y', 'x', 'x', 'x'],
+                   'c': np.random.randn(7)})
+print(df2)
+df2.duplicated('a')
+df2.duplicated('a', keep='last')
+df2.duplicated('a', keep=False)
+
+df2.drop_duplicates('a')
+df2.drop_duplicates('a', keep='last')
+df2.drop_duplicates('a', keep=False)
+
+Also, you can pass a list of columns to identify duplications.
+df2.duplicated(['a', 'b'])
+df2.drop_duplicates(['a', 'b'])
+
+To drop duplicates by index value, use Index.duplicated then perform slicing. The same set of options are available for the keep parameter.
+df3 = pd.DataFrame({'a': np.arange(6), 'b': np.random.randn(6)},
+                   index=['a', 'a', 'b', 'c', 'b', 'a'])
+print(df3)
+df3.index.duplicated()
+df3[~df3.index.duplicated()]
+df3[~df3.index.duplicated(keep='last')]
+df3[~df3.index.duplicated(keep=False)]
+
+df3.index.drop_duplicates()
+df3.index.drop_duplicates(keep='last')
+df3.index.drop_duplicates(keep=False)
+
+2.5.19 Dictionary-like get() method
+------------------------------------
+Each of Series or DataFrame have a get method which can return a default value.
+s = pd.Series([1, 2, 3], index=['a', 'b', 'c'])
+s = pd.Series([1, 2, 3], index=['a', 'b', 'c'])
+s.get('a')
+s.get('x', -1)
+s.get('x', default=-2)
+
 
 
 
@@ -4909,6 +4956,8 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+df.drop_duplicates(keep=first(default)|last|False) - return df with dropped duplicates.
+df.duplicated(keep=first(default)|last|False) - return boolean with the same length of df stating which elements are duplicated.
 np.select(condition, choices, default=) - can be used for more than one if condition
 np.where(condition,true,false) - can be used for if else conditions in the dataframe
 df.mask() - exactly opposite of df.where
