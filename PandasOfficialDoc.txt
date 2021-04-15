@@ -5334,11 +5334,370 @@ copy_of_df.columns is df.columns # True
 
 df and view_of_df share the same row and column labels, while copy_of_df has separate index instances. Keep in mind that you can’t modify particular elements of .index and .columns. They are immutable objects.
 
+Indices and Slices in NumPy and Pandas
+---------------------------------------
+Basic indexing and slicing in NumPy is similar to the indexing and slicing of lists and tuples. However, both NumPy and Pandas provide additional options to reference and assign values to the objects and their parts.
+
+NumPy arrays and Pandas objects (DataFrame and Series) implement special methods that enable referencing, assigning, and deleting values in a style similar to that of containers:
+
+.__getitem__() references values.
+.__setitem__() assigns values.
+.__delitem__() deletes values.
+
+When you’re referencing, assigning, or deleting data in Python container-like objects, you often call these methods:
+
+var = obj[key] is equivalent to var = obj.__getitem__(key).
+obj[key] = value is equivalent to obj.__setitem__(key, value).
+del obj[key] is equivalent to obj.__delitem__(key).
+The argument key represents the index, which can be an integer, slice, tuple, list, NumPy array, and so on.
+
+Indexing in NumPy: Copies and Views
+------------------------------------
+NumPy has a strict set of rules related to copies and views when indexing arrays. Whether you get views or copies of the original data depends on the approach you use to index your arrays: slicing, integer indexing, or Boolean indexing.
+
+One-Dimensional Arrays
+Slicing is a well-known operation in Python for getting particular data from arrays, lists, or tuples. When you slice a NumPy array, you get a view of the array:
+
+arr = 2**np.arange(7)
+a = arr[1:3]
+a.base # array([ 1,  2,  4,  8, 16, 32, 64])
+a.base is arr # True
+a.flags.owndata # False
+
+b = arr[1:4:2]
+b.base # array([ 1,  2,  4,  8, 16, 32, 64])
+b.base is arr # True
+b.flags.owndata # False
+
+You’ve created the original array arr and sliced it to get two smaller arrays, a and b. Both a and b use arr as their bases and neither has its own data. Instead, they look at the data of arr:
+
+Note: When you have a large original array and need only a small part of it, you can call .copy() after slicing and delete the variable that points to the original with a del statement. This way, you keep the copy and remove the original array from memory.
+
+Though slicing returns a view, there are other cases where creating one array from another actually makes a copy.
+Indexing an array with a list of integers returns a copy of the original array. The copy contains the elements from the original array whose indices are present in the list:
+c = arr[[1, 3]]
+c.base is arr # False
+c.base is None # True
+c.flags.owndata # True
+
+The resulting array c contains the elements from arr with the indices 1 and 3. These elements have the values 2 and 8. In this case, c is a copy of arr, its .base is None, and it has its own data:
+The elements of arr with the chosen indices 1 and 3 are copied into the new array c. After the copying is done, arr and c are independent.
+
+You can also index NumPy arrays with mask arrays or lists. Masks are Boolean arrays or lists of the same shape as the original. You’ll get a copy of the original array that contains only the elements that correspond to the True values of the mask:
+
+mask = [False, True, False, True, False, False, False]
+d = arr[mask]
+d.base is None # True
+d.flags.owndata # True
+
+Note: Instead of a list, you can use another NumPy array of integers, but not a tuple.
+
+To recap, here are the variables you’ve created so far that reference arr:
+# `arr` is the original array:
+arr = np.array([1, 2, 4, 8, 16, 32])
+
+# `a` and `b` are views created through slicing:
+a = arr[1:3]
+b = arr[1:4:2]
+
+# `c` and `d` are copies created through integer and Boolean indexing:
+c = arr[[1, 3]]
+d = arr[[False, True, False, True, False, False]]
+
+Keep in mind that these examples show how you can reference data in an array. Referencing data returns views when slicing arrays and copies when using index and mask arrays. Assignments, on the other hand, always modify the original data of the array.
+
+Now that you have all these arrays, let’s see what happens when you alter the original:
+>>> arr[1] = 64
+>>> arr
+array([  1, 64,   4,   8,  16,  32])
+>>> a
+array([64,   4])
+>>> b
+array([64,   8])
+>>> c
+array([2, 8])
+>>> d
+array([2, 8])
+
+You’ve changed the second value of arr from 2 to 64. The value 2 was also present in the derived arrays a, b, c, and d. However, only the views a and b are modified:
+The views a and b look at the data of arr, including its second element. That’s why you see the change. The copies c and d remain unchanged because they don’t have common data with arr. They are independent of arr.
+
+Chained Indexing in NumPy
+-------------------------
+Does this behavior with a and b look at all similar to the earlier Pandas examples? It might, because the concept of chained indexing applies in NumPy, too:
+>>> arr = np.array([1, 2, 4, 8, 16, 32])
+>>> arr[1:4:2][0] = 64
+>>> arr
+array([ 1, 64,  4,  8, 16, 32])
+
+>>> arr = np.array([1, 2, 4, 8, 16, 32])
+>>> arr[[1, 3]][0] = 64
+>>> arr
+array([ 1,  2,  4,  8, 16, 32])
+
+This example illustrates the difference between copies and views when using chained indexing in NumPy.
+In the first case, arr[1:4:2] returns a view that references the data of arr and contains the elements 2 and 8. The statement arr[1:4:2][0] = 64 modifies the first of these elements to 64. The change is visible in both arr and the view returned by arr[1:4:2].
+In the second case, arr[[1, 3]] returns a copy that also contains the elements 2 and 8. But these aren’t the same elements as in arr. They’re new ones. arr[[1, 3]][0] = 64 modifies the copy returned by arr[[1, 3]] and leaves arr unchanged.
+This is essentially the same behavior that produces a SettingWithCopyWarning in Pandas, but that warning doesn’t exist in NumPy.
 
 
+Multidimensional Arrays
+------------------------
+Referencing multidimensional arrays follows the same principles:
+Slicing arrays returns views.
+Using index and mask arrays returns copies.
+Combining index and mask arrays with slicing is also possible. In such cases, you get copies.
+Here are a few examples:
+arr = 2**np.arange(12).reshape(3,-1)
+a = arr[:, 1:3]
+a
+a.base
+a.base is arr # True
 
+b = arr[:, 1:4:2]  # Take columns 1 and 3
+b.base
+b.base is arr # True
 
+c = arr[:, [1, 3]]  # Take columns 1 and 3
+c.base
+c.base is arr # False
+
+d = arr[:, [False, True, False, True]]  # Take columns 1 and 3
+d.base
+d.base is arr # False
+
+In this example, you start from the two-dimensional array arr. You apply slices for rows. Using the colon syntax (:), which is equivalent to slice(None), means that you want to take all rows.
+When you work with the slices 1:3 and 1:4:2 for columns, the views a and b are returned. However, when you apply the list [1, 3] and mask [False, True, False, True], you get the copies c and d.
+The .base of both a and b is arr itself. Both c and d have their own bases unrelated to arr.
+As with one-dimensional arrays, when you modify the original, the views change because they see the same data, but the copies remain the same:
+
+arr[0, 1] = 100
+a
+b
+c
+d
+
+You changed the value 2 in arr to 100 and altered the corresponding elements from the views a and b. The copies c and d can’t be modified this way.
+
+Indexing in Pandas: Copies and Views
+-------------------------------------
+You’ve learned how you can use different indexing options in NumPy to refer to either actual data (a view, or shallow copy) or newly copied data (deep copy, or just copy). NumPy has a set of strict rules about this.
+
+Pandas heavily relies on NumPy arrays but offers additional functionality and flexibility. Because of that, the rules for returning views and copies are more complex and less straightforward. They depend on the layout of data, data types, and other details. In fact, Pandas often doesn’t guarantee whether a view or copy will be referenced.
+
+Note: Indexing in Pandas is a very wide topic. It’s essential for using Pandas data structures properly. You can use a variety of techniques:
+
+Dictionary-like notation
+Attribute-like (dot) notation
+The accessors .loc[], .iloc[], .at[], and .iat
+
+In this section, you’ll see two examples of how Pandas behaves similarly to NumPy. First, you can see that accessing the first three rows of df with a slice returns a view:
+data = {
+    "x": 2**np.arange(5),
+    "y": 3**np.arange(5),
+    "z": np.array([ 45, 98, 24, 11, 64, ])
+}
+index = [ "a", "b", "c", "d", "e"]
+df = pd.DataFrame(data=data, index=index)
+df["a":"c"].to_numpy().base
+df["a":"c"].to_numpy().base is df.to_numpy().base # True
+
+This view looks at the same data as df.
+On the other hand, accessing the first two columns of df with a list of labels returns a copy:
+df = pd.DataFrame(data=data, index=index)
+df[["x", "y"]].to_numpy().base
+df[["x", "y"]].to_numpy().base is df.to_numpy().base # False
+
+The copy has a different .base than df.
+In the next section, you’ll find more details related to indexing DataFrames and returning views and copies. You’ll see some cases where the behavior of Pandas becomes more complex and differs from NumPy.
+
+Use of Views and Copies in Pandas
+---------------------------------
+As you’ve already learned, Pandas can issue a SettingWithCopyWarning when you try to modify the copy of data instead of the original. This often follows chained indexing.
+In this section, you’ll see some specific cases that produce a SettingWithCopyWarning. You’ll identify the causes and learn how to avoid them by properly using views, copies, and accessors.
+
+Chained Indexing and SettingWithCopyWarning
+-------------------------------------------
+You’ve already seen how the SettingWithCopyWarning works with chained indexing in the first example. Let’s elaborate on that a bit.
+You’ve created the DataFrame and the mask Series object that corresponds to df["z"] < 50:
+df = pd.DataFrame(data=data, index=index)
+mask = df['z'] < 50
+
+You already know that the assignment df[mask]["z"] = 0 fails. In this case, you get a SettingWithCopyWarning:
+df[mask]["z"] = 0
+SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+The assignment fails because df[mask] returns a copy. To be more precise, the assignment is made on the copy, and df isn’t affected.
+You’ve also seen that in Pandas, evaluation order matters. In some cases, you can switch the order of operations to make the code work:
+df["z"][mask] = 0
+
+df["z"][mask] = 0 succeeds and you get the modified df without a SettingWithCopyWarning.
+Using the accessors is recommended, but you can run into trouble with them as well:
+>>> df = pd.DataFrame(data=data, index=index)
+>>> df.loc[mask]["z"] = 0
+
+In this case, df.loc[mask] returns a copy, the assignment fails, and Pandas correctly issues the warning.
+In some cases, Pandas fails to detect the problem and the assignment on the copy passes without a SettingWithCopyWarning:
+df = pd.DataFrame(data=data, index=index)
+df.loc[["a", "c", "e"]]["z"] = 0  # Assignment fails, no warning
+df
+
+Here, you don’t receive a SettingWithCopyWarning and df isn’t changed because df.loc[["a", "c", "e"]] uses a list of indices and returns a copy, not a view.
+There are some cases in which the code works, but Pandas issues the warning anyway:
+df = pd.DataFrame(data=data, index=index)
+df[:3]["z"] = 0  # Assignment succeeds, with warning
+df = pd.DataFrame(data=data, index=index)
+df.loc["a":"c"]["z"] = 0  # Assignment succeeds, with warning
+
+In these two cases, you select the first three rows with slices and get views. The assignments succeed both on the views and on df. But you still receive a SettingWithCopyWarning.
+The recommended way of performing such operations is to avoid chained indexing. Accessors can be of great help with that:
+>>> df = pd.DataFrame(data=data, index=index)
+>>> df.loc[mask, "z"] = 0
+>>> df
+
+This approach uses one method call, without chained indexing, and both the code and your intentions are clearer. As a bonus, this is a slightly more efficient way to assign data.
+
+Impact of Data Types on Views, Copies, and the SettingWithCopyWarning
+----------------------------------------------------------------------
+In Pandas, the difference between creating views and creating copies also depends on the data types used. When deciding if it’s going to return a view or copy, Pandas handles DataFrames that have a single data type differently from ones with multiple types.
+Let’s focus on the data types in this example:
+df = pd.DataFrame(data=data, index=index)
+df.dtypes
+
+You’ve created the DataFrame with all integer columns. The fact that all three columns have the same data types is important here! In this case, you can select rows with a slice and get a view:
+df["b":"d"]["z"] = 0
+
+This mirrors the behavior that you’ve seen in the article so far. df["b":"d"] returns a view and allows you to modify the original data. That’s why the assignment df["b":"d"]["z"] = 0 succeeds. Notice that in this case you get a SettingWithCopyWarning regardless of the successful change to df.
+
+If your DataFrame contains columns of different types, then you might get a copy instead of a view, in which case the same assignment will fail:
+df = pd.DataFrame(data=data, index=index).astype(dtype={"z": float})
+df.dtypes
+
+df["b":"d"]["z"] = 0
+df
+
+In this case, you used .astype() to create a DataFrame that has two integer columns and one floating-point column. Contrary to the previous example, df["b":"d"] now returns a copy, so the assignment df["b":"d"]["z"] = 0 fails and df remains unchanged.
+When in doubt, avoid the confusion and use the .loc[], .iloc[], .at[], and .iat[] access methods throughout your code!
+
+Hierarchical Indexing and SettingWithCopyWarning
+-------------------------------------------------
+Hierarchical indexing, or MultiIndex, is a Pandas feature that enables you to organize your row or column indices on multiple levels according to a hierarchy. It’s a powerful feature that increases the flexibility of Pandas and enables working with data in more than two dimensions.
+
+Hierarchical indices are created using tuples as row or column labels:
+
+df = pd.DataFrame(
+    data = {("powers", "x"): 2**np.arange(5),
+          ("powers", "y"): 3**np.arange(5),
+          ("random", "z"): np.array([45, 98, 24, 11, 64])},
+    index = [ "a", "b", "c", "d", "e", ]
+    )
+df
+Now you have the DataFrame df with two-level column indices:
+
+The first level contains the labels powers and random.
+The second level has the labels x and y, which belong to powers, and z, which belongs to random.
+The expression df["powers"] will return a DataFrame containing all columns below powers, which are the columns x and y. If you wanted to get just the column x, then you could pass both powers and x. The proper way to do this is with the expression df["powers", "x"]:
+
+df["powers"]
+df["powers", "x"]
+df["powers", "x"] = 0
+df
+
+That’s one way to get and set columns in the case of multilevel column indices. You can also use accessors with multi-indexed DataFrames to get or modify the data:
+df.loc[["a", "b"], "powers"]
+
+The example above uses .loc[] to return a DataFrame with the rows a and b and the columns x and y, which are below powers. You can get a particular column (or row) similarly:
+df.loc[["a", "b"], ("powers", "x")]
+
+In this example, you specify that you want the intersection of the rows a and b with the column x, which is below powers. To get a single column, you pass the tuple of indices ("powers", "x") and get a Series object as the result.
+You can use this approach to modify the elements of DataFrames with hierarchical indices:
+df.loc[["a", "b"], ("powers", "x")] = 0
+
+In the examples above, you avoid chained indexing both with accessors (df.loc[["a", "b"], ("powers", "x")]) and without them (df["powers", "x"]).
+
+As you saw earlier, chained indexing can lead to a SettingWithCopyWarning:
+df["powers"]["x"] = 0 # SettingWithCopyWarning:
+
+Here, df["powers"] returns a DataFrame with the columns x and y. This is just a view that points to the data from df, so the assignment is successful and df is modified. But Pandas still issues a SettingWithCopyWarning.
+If you repeat the same code, but with different data types in the columns of df, then you’ll get a different behavior:
+
+df = pd.DataFrame(
+    data = {("powers", "x"): 2**np.arange(5),
+          ("powers", "y"): 3**np.arange(5),
+          ("random", "z"): np.array([45, 98, 24, 11, 64], dtype=float)},
+    index = [ "a", "b", "c", "d", "e", ]
+    )
+df["powers"]["x"] = 0
+df
+
+This time, df has more than one data type, so df["powers"] returns a copy, df["powers"]["x"] = 0 makes a change on this copy, and df remains unchanged, giving you a SettingWithCopyWarning.
+
+The recommended way to modify df is to avoid chained assignment. You’ve learned that accessors can be very convenient, but they aren’t always needed:
+
+df["powers", "x"] = 0
+df.loc[:, ("powers", "x")] = 0
+
+In both cases, you get the modified DataFrame df without a SettingWithCopyWarning.
+
+Change the Default SettingWithCopyWarning Behavior
+The SettingWithCopyWarning is a warning, not an error. Your code will still execute when it’s issued, even though it may not work as intended.
+
+To change this behavior, you can modify the Pandas mode.chained_assignment option with pandas.set_option(). You can use the following settings:
+
+pd.set_option("mode.chained_assignment", "raise") raises a SettingWithCopyException.
+pd.set_option("mode.chained_assignment", "warn") issues a SettingWithCopyWarning. This is the default behavior.
+pd.set_option("mode.chained_assignment", None) suppresses both the warning and the error.
+For example, this code will raise a SettingWithCopyException instead of issuing a SettingWithCopyWarning:
+
+df = pd.DataFrame(
+    data = {("powers", "x"): 2**np.arange(5),
+          ("powers", "y"): 3**np.arange(5),
+          ("random", "z"): np.array([45, 98, 24, 11, 64], dtype=float)},
+    index = [ "a", "b", "c", "d", "e", ]
+    )
+pd.set_option("mode.chained_assignment", "raise")
+df["powers"]["x"] = 0 # SettingWithCopyError
+
+In addition to modifying the default behavior, you can use get_option() to retrieve the current setting related to mode.chained_assignment:
+pd.get_option("mode.chained_assignment") # "raise"
+
+You get "raise" in this case because you changed the behavior with set_option(). Normally, pd.get_option("mode.chained_assignment") returns "warn".
+
+Although you can suppress it, keep in mind that the SettingWithCopyWarning can be very useful in notifying you about improper code.
+
+Conclusion
+In this article, you learned what views and copies are in NumPy and Pandas and what the differences are in their behavior. You also saw what a SettingWithCopyWarning is and how to avoid the subtle errors it points to.
+
+In particular, you’ve learned the following:
+
+*Indexing-based assignments in NumPy and Pandas can return either views or copies.
+*Both views and copies can be useful, but they have different behaviors.
+*Special care must be taken to avoid setting unwanted values on copies.
+*Accessors in Pandas are very useful objects for properly assigning and referencing data.
+
+Understanding views and copies is an important requirement for using NumPy and Pandas properly, especially when you’re working with big data. Now that you have a solid grasp on these concepts, you’re ready to dive deeper into the exciting world of data science!
+
+### Learnings:
+* Slice returns views and list returns copy
+* It is good to use accessor .loc to assign a value to partial df
+* SettingWithCopy warning may raise but then also assignment will be done if a view is returned.
+* Sometimes without using chained assignment and loc accessor you can get desired result - df["power","x"] = 0
+* you can use .base and .flags.owndata to understand the underlying data structure.
+* you can set the option to raise, warn, None using set_option method.
+* you can get the option of "mode.chained_assignment" using get_option method.
+* Internally it all boils down to __getitem__ and __setitem__ method.
 --------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
 Attributes:
 pd.Index.name
@@ -5359,6 +5718,8 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+df.get_option() - get current option for SettingsWithCopyWarning.
+df.set_option("mode.chained_assignment", "raise"|"warn";"None") - set option for SettingsWithCopyWarning.
 union() - set union, all values from both indexes
 symmetrical_difference() - uncommon values from both index
 difference() - set difference between two index
