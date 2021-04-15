@@ -5690,13 +5690,102 @@ Understanding views and copies is an important requirement for using NumPy and P
 * Internally it all boils down to __getitem__ and __setitem__ method.
 --------------------------------------------------------------------------------------------------------
 
+2.6.1 Hierarchical indexing (MultiIndex)
+========================================
+Hierarchical / Multi-level indexing is very exciting as it opens the door to some quite sophisticated data analysis and manipulation, especially for working with higher dimensional data. In essence, it enables you to store and manipulate data with an arbitrary number of dimensions in lower dimensional data structures like Series (1d) and DataFrame (2d).
+In this section, we will show what exactly we mean by “hierarchical” indexing and how it integrates with all of the pandas indexing functionality described above and in prior sections. Later, when discussing group by and pivoting and reshaping data, we’ll show non-trivial applications to illustrate how it aids in structuring data for analysis.
+
+Changed in version 0.24.0: MultiIndex.labels has been renamed to MultiIndex.codes and
+MultiIndex.set_labels to MultiIndex.set_codes.
+
+Creating a MultiIndex (hierarchical index) object:
+--------------------------------------------------
+The MultiIndex object is the hierarchical analogue of the standard Index object which typically stores the axis labels in pandas objects. You can think of MultiIndex as an array of tuples where each tuple is unique. A MultiIndex can be created from a list of arrays (using MultiIndex.from_arrays()), an array of tuples (using MultiIndex.from_tuples()), a crossed set of iterables (using MultiIndex.from_product()), or a DataFrame (using MultiIndex.from_frame()). The Index constructor will attempt to return a MultiIndex when it is passed a list of tuples. The following examples demonstrate different ways to initialize MultiIndexes.
+
+arrays = [["bar", "bar", "baz", "baz", "foo", "foo", "qux", "qux",],
+          ["one", "two", "one", "two", "one", "two", "one", "two",],]
+tuples = list(zip(*arrays))
+index = pd.MultiIndex.from_tuples(tuples, names=["first", "second"])
+s = pd.Series(np.random.randn(8), index=index)
+s
+
+When you want every pairing of the elements in two iterables, it can be easier to use the MultiIndex. from_product() method:
+iterables = [[ "bar", "baz", "foo", "qux", ], ['one', 'two,']]
+index = pd.MultiIndex.from_product(iterables)
+index
+
+You can also construct a MultiIndex from a DataFrame directly, using the method MultiIndex. from_frame(). This is a complementary method to MultiIndex.to_frame().
+df = pd.DataFrame(
+    [["bar", "one"], ["bar", "two"], ["foo", "one"], ["foo", "two"]],
+    columns=["first", "second"],
+)
+df
+pd.MultiIndex.from_frame(df)
+
+As a convenience, you can pass a list of arrays directly into Series or DataFrame to construct a MultiIndex automatically:
+arrays = [ np.array(["bar", "bar", "baz", "baz", "foo", "foo", "qux", "qux"]),
+          np.array(["one", "two", "one", "two", "one", "two", "one", "two"]), ]
+s = pd.Series(np.random.randn(8), index=arrays)
+s
+
+df = pd.DataFrame(np.random.randn(8, 4), index=arrays)
+df
+
+All of the MultiIndex constructors accept a names argument which stores string names for the levels themselves. If no names are provided, None will be assigned:
+df.index.names # FrozenList([None, None])
+
+This index can back any axis of a pandas object, and the number of levels of the index is up to you:
+df = pd.DataFrame(np.random.randn(3, 8), index=["A", "B", "C"],
+                  columns=index)
+df
+
+pd.DataFrame(np.random.randn(6, 6), index=index[:6], columns=index[:6])
+We’ve “sparsified” the higher levels of the indexes to make the console output a bit easier on the eyes. Note that how the index is displayed can be controlled using the multi_sparse option in pandas.set_options():
+with pd.option_context("display.multi_sparse", False):
+    df
+
+It’s worth keeping in mind that there’s nothing preventing you from using tuples as atomic labels on an axis:
+pd.Series(np.random.randn(8), index=tuples)
+The reason that the MultiIndex matters is that it can allow you to do grouping, selection, and reshaping operations as we will describe below and in subsequent areas of the documentation. As you will see in later sections, you can find yourself working with hierarchically-indexed data without creating a MultiIndex explicitly yourself. However, when loading data from a file, you may wish to generate your own MultiIndex when preparing the data set.
 
 
+Basic indexing on axis with MultiIndex
+---------------------------------------
+One of the important features of hierarchical indexing is that you can select data by a “partial” label identifying a subgroup in the data. Partial selection “drops” levels of the hierarchical index in the result in a completely analogous way to selecting a column in a regular DataFrame:
+df["bar","one"]
 
+Same could be achieved though chained indexing but never use it? df["bar"]["one"]
+Chained Indexing is slow and prone to SettingWithCopy warning and could result in ambiguous results.
+%timeit df["bar","one"] # 101 µs ± 6.02 µs per loop (mean ± std. dev. of 7 runs, 10000
+%timeit df["bar"]["one"] # 312 µs ± 8.42 µs per loop (mean ± std. dev. of 7 runs, 1000
 
+Defined levels
+---------------
+The MultiIndex keeps all the defined levels of an index, even if they are not actually used. When slicing an index, you may notice this. For example:
+df.columns.levels # original MultiIndex
+# FrozenList([['bar', 'baz', 'foo', 'qux'], ['one', 'two']])
+df[["foo","qux"]].columns.levels # sliced
+# FrozenList([['bar', 'baz', 'foo', 'qux'], ['one', 'two']])
 
+This is done to avoid a recomputation of the levels in order to make slicing highly performant. If you want to see only the used levels, you can use the get_level_values() method.
+df[["foo", "qux"]].columns.to_numpy()
+# for a specific level
+df[["foo", "qux"]].columns.get_level_values(0)
 
+To reconstruct the MultiIndex with only the used levels, the remove_unused_levels() method may be used.
+new_mi = df[["foo", "qux"]].columns.remove_unused_levels()
+new_mi
 
+Data alignment and using reindex
+--------------------------------
+Operations between differently-indexed objects having MultiIndex on the axes will work as you expect; data
+alignment will work the same as an Index of tuples:
+s + s[:-2]
+s + s[::2]
+
+The reindex() method of Series/DataFrames can be called with another MultiIndex, or even a list or array of tuples:
+s.reindex(index[:3])
+s.reindex([("foo", "two"), ("bar", "one"), ("qux", "one"), ("baz", "one")])
 
 
 Attributes:
@@ -5718,6 +5807,8 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+
+pd.MultiIndex.from_arrays(), from_tuples(), from_product(), from_frame() - create a Multiindex from any of the sequences.
 df.get_option() - get current option for SettingsWithCopyWarning.
 df.set_option("mode.chained_assignment", "raise"|"warn";"None") - set option for SettingsWithCopyWarning.
 union() - set union, all values from both indexes
