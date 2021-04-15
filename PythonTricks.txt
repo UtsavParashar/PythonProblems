@@ -638,7 +638,7 @@ Likewise, kwargs will collect extra keyword arguments as a dictionary because th
 
 Forwarding Optional or keyword arguments:
 -----------------------------------------
-It's possible to pass optinal and keyword parameters i.e * and ** from one function to another.
+It's possible to pass optional and keyword parameters i.e * and ** from one function to another.
 This also gives you an opportunity to modify the arguments before you pass them along.
 
 def bar(required, *args, **kwargs):
@@ -662,16 +662,16 @@ class Car:
     def __init__(self, color, milage):
         self.color = color
         self.milage = milage
-class AlwaysWhiteCar:
+class AlwaysWhiteCar(Car):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.color = 'White'
         
 AlwaysWhiteCar('Green', 12).color  
 
-The AlwaysBlueCar constructor simply passes on all arguments to its parent class and then overrides an internal attribute. This means if the parent class constructor changes, there’s a good chance that AlwaysBlueCar would still function as intended.
+The AlwaysWhiteCar constructor simply passes on all arguments to its parent class and then overrides an internal attribute. This means if the parent class constructor changes, there’s a good chance that AlwaysBlueCar would still function as intended.
 
-The downside here is that the AlwaysBlueCar constructor now has a rather unhelpful signature—we don’t know what arguments it expects without looking up the parent class.
+The downside here is that the AlwaysWhiteCar constructor now has a rather unhelpful signature—we don’t know what arguments it expects without looking up the parent class.
 
 Typically you wouldn’t use this technique with your own class hierarchies. The more likely scenario would be that you’ll want to modify or override behavior in some external class which you don’t control.
 
@@ -751,7 +751,7 @@ def unpack(a,b,c):
 unpack(1,0,1)
 
 What if we need to pass a tuple(1,0,1) or a list [1,0,1] or a generator of three elements to the function.
-In that case function argument unpack variable * comes in handy, it will unpack the sequence to seperate elements and pass them to the function.
+In that case function argument unpack variable * comes in handy, it will unpack the sequence to separate elements and pass them to the function.
 It is similar to the unlist operation in kdb which can be performed using raze in kdb.
 
 Eg: print((1,2,3)) ## (1, 2, 3)
@@ -786,8 +786,8 @@ This is a core Python feature but your code might communicate its intent more cl
 
 Difference in being identical and equal:
 =========================================
-1 is True ## False - reference comparision - kdb equivalent 1 ~ 1.0 / 0b
-1 == True ## True  - Content comparision - kdb equivalent 1 = 1.0 / 1b
+1 is True ## False - reference comparison - kdb equivalent 1 ~ 1.0 / 0b
+1 == True ## True  - Content comparison - kdb equivalent 1 = 1.0 / 1b
 
 a = [1,2,3]
 b = a
@@ -807,7 +807,7 @@ print(repr(datetime.datetime.now())) # datetime.datetime(2021, 2, 21, 10, 1, 57,
 difference can be seen in the output of str() and repr()
 repr() is a representation which has all the information about the object.
 
-Internally for a class __repr__ method can be overriden to get the desired representation of the class object.
+Internally for a class __repr__ method can be overridden to get the desired representation of the class object.
 
 Every class needs a __repr__:
 -----------------------------
