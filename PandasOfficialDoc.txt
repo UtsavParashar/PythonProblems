@@ -6115,7 +6115,7 @@ df.loc[2:4, :]
 # 0 is not in the index
 df.loc[0:4, :]
 
-Endpoints are inclusive
+Endpoints are inclusive -- [Only with labels like df.index.loc["b":"d"] --> b and d are inclusive]
 ------------------------
 Compared with standard Python sequence slicing in which the slice endpoint is not inclusive, label-based slicing in pandas is inclusive. The primary reason for this is that it is often not possible to easily determine the “successor” or next element after a particular label in an index. For example, consider the following Series:
 s = pd.Series(np.random.randn(6), index=list("abcdef"))
@@ -6145,7 +6145,11 @@ This is because the (re)indexing operations above silently inserts NaNs and the 
 ==========================================
 2.7 Merge, join, concatenate and compare
 ==========================================
+pandas provides various facilities for easily combining together Series or DataFrame with various kinds of set logic for the indexes and relational algebra functionality in the case of join / merge-type operations.
+In addition, pandas also provides utilities to compare two Series or DataFrame and summarize their differences.
 
+2.7.1 Concatenating objects
+----------------------------
 
 
 

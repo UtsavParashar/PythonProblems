@@ -951,7 +951,7 @@ try:
 except BaseValidationError as err:
     print('Error - ', err)
     
-In conclusion, defining custom exception classes makes it easier for your users to adopt an it’s easier to ask for forgiveness than permission (EAFP) coding style that’s considered more Pythonic.
+In conclusion, defining custom exception classes makes it easier for your users to adopt and it’s easier to ask for forgiveness than permission (EAFP) coding style that’s considered more Pythonic.
 
 Key Takeaways
 
@@ -1150,7 +1150,7 @@ Now we have a class created, named as Car and has two instance variables color a
 
 The class name is used in the docstring and the __repr__ implementation that namedtuple automatically generates for us.
 
-If you assign someother name before equals then there will be two references which will be pointing to same class object.
+If you assign some other name before equals then there will be two references which will be pointing to same class object.
 from collections import namedtuple
 MatCar = namedtuple('Car', 'color milage')
 
