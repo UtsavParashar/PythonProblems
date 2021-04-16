@@ -5787,6 +5787,133 @@ The reindex() method of Series/DataFrames can be called with another MultiIndex,
 s.reindex(index[:3])
 s.reindex([("foo", "two"), ("bar", "one"), ("qux", "one"), ("baz", "one")])
 
+2.6.2 Advanced indexing with hierarchical index
+------------------------------------------------
+Syntactically integrating MultiIndex in advanced indexing with .loc is a bit challenging, but we’ve made every effort to do so. In general, MultiIndex keys take the form of tuples. For example, the following works as you would expect:
+df = df.T
+df.loc[('bar','two')]
+
+Note that df.loc['bar', 'two'] would also work in this example, but this shorthand notation can lead to ambiguity in general.
+If you also want to index a specific column with .loc, you must use a tuple like this:
+df.loc[('bar','two'), "A"]
+
+You don’t have to specify all levels of the MultiIndex by passing only the first elements of the tuple. For example, you can use “partial” indexing to get all elements with bar in the first level as follows:
+df.loc['bar']
+
+This is a shortcut for the slightly more verbose notation df.loc[('bar',),] (equivalent to df.loc['bar',] in this example).
+“Partial” slicing also works quite nicely.
+df.loc["baz":"foo"]
+
+You can slice with a ‘range’ of values, by providing a slice of tuples.
+df.loc[("baz", "two"):("qux", "one")]
+df.loc[("baz", "two"):"foo"]
+
+Passing a list of labels or tuples works similar to reindexing:
+df.loc[[("bar", "two"), ("qux", "one")]]
+
+Note: It is important to note that tuples and lists are not treated identically in pandas when it comes to indexing. Whereas a tuple is interpreted as one multi-level key, a list is used to specify several keys. Or in other words, tuples go horizontally (traversing levels), lists go vertically (scanning levels).
+Importantly, a list of tuples indexes several complete MultiIndex keys, whereas a tuple of lists refer to several values within a level:
+s = pd.Series([1, 2, 3, 4, 5, 6],
+              index=pd.MultiIndex.from_product([["A", "B"], ["c", "d", "e"]]),)
+s.loc[[('A','c'), ('B','d')]] # list of tuples
+s.loc[(["A", "B"], ["c","d"])] # tuple of lists
+
+You can slice a MultiIndex by providing multiple indexers.
+You can provide any of the selectors as if you are indexing by label, see Selection by Label, including slices, lists of
+labels, labels, and boolean indexers.
+You can use slice(None) to select all the contents of that level. You do not need to specify all the deeper levels,
+they will be implied as slice(None).
+As usual, both sides of the slicers are included as this is label indexing.
+Warning: You should specify all axes in the .loc specifier, meaning the indexer for the index and for the columns. There are some ambiguous cases where the passed indexer could be mis-interpreted as indexing both axes, rather than into say the MultiIndex for the rows.
+You should do this:
+df.loc[(slice("A1", "A3"), ...), :] # noqa: E999
+
+You should not do this:
+df.loc[(slice("A1", "A3"), ...)] # noqa: E999
+
+Swapping levels with swaplevel
+-------------------------------
+The swaplevel() method can switch the order of two levels:
+df.swaplevel(0,1,axis=0)
+
+Reordering levels with reorder_levels
+df.reorder_levels([1,0], axis=0)
+
+Renaming names of an Index or MultiIndex
+The rename() method is used to rename the labels of a MultiIndex, and is typically used to rename the columns of a DataFrame. The columns argument of rename allows a dictionary to be specified that includes only the columns you wish to rename.
+df.rename(columns={'A':'Ramesh', 'B':'Suresh'})
+
+This method can also be used to rename specific labels of the main index of the DataFrame.
+df.rename(index={'bar':'far', 'one':'seven'})
+The rename_axis() method is used to rename the name of a Index or MultiIndex. In particular, the names of the levels of a MultiIndex can be specified, which is useful if reset_index() is later used to move the values from the MultiIndex to a column.
+df.rename_axis(index=["abc", "def"])
+
+Note that the columns of a DataFrame are an index, so that using rename_axis with the columns argument will change the name of that index.
+df.rename_axis(columns="Cols").columns
+
+Both rename and rename_axis support specifying a dictionary, Series or a mapping function to map la- bels/names to new values.
+When working with an Index object directly, rather than via a DataFrame, Index.set_names() can be used to change the names.
+mi = pd.MultiIndex.from_product([[1, 2], ["a", "b"]], names=["x", "y"])
+mi.names
+mi2 = mi.rename("new name", level=0)
+mi2
+
+You cannot set the names of the MultiIndex via a level.
+mi.levels[0].name = "name via level"
+Use Index.set_names() instead.
+
+2.6.3 Sorting a MultiIndex
+---------------------------
+For MultiIndex-ed objects to be indexed and sliced effectively, they need to be sorted. As with any index, you can use sort_index().
+df.sort_index(level=1)
+You may also pass a level name to sort_index if the MultiIndex levels are named.
+s.sort_index(level="L1")
+
+On higher dimensional objects, you can sort any of the other axes by level if they have a MultiIndex:
+df.T.sort_index(level=1, axis=1)
+
+Indexing will work even if the data are not sorted, but will be rather inefficient (and show a PerformanceWarning). It will also return a copy of the data rather than a view:
+dfm = pd.DataFrame(
+    {"jim": [0, 0, 1, 1], "joe": ["x", "x", "z", "y"], "jolie": np.random.rand(4)}
+)
+dfm = dfm.set_index(["jim", "joe"])
+dfm.loc[(1, 'z')]
+
+Furthermore, if you try to index something that is not fully lexsorted, this can raise:
+The is_lexsorted() method on a MultiIndex shows if the index is sorted, and the lexsort_depth prop- erty returns the sort depth:
+dfm.index.is_lexsorted()
+dfm.index.lexsort_depth
+
+dfm = dfm.sort_index()
+dfm.index.is_lexsorted()
+dfm.index.lexsort_depth
+
+And now selection works as expected.
+dfm.loc[(0, "y"):(1, "z")]
+
+2.6.4 Take methods
+-------------------
+Similar to NumPy ndarrays, pandas Index, Series, and DataFrame also provides the take() method that retrieves elements along a given axis at the given indices. The given indices must be either a list or an ndarray of integer index positions. take will also accept negative integers as relative positions to the end of the object.
+
+index = pd.Index(np.random.randint(0, 1000, 10))
+print(index)
+positions = [0, 9, 3]
+print(index[positions])
+index.take(positions)
+
+For DataFrames, the given indices should be a 1d list or ndarray that specifies row or column positions.
+frm = pd.DataFrame(np.random.randn(5, 3))
+frm.take([1,4,3])
+frm.take([0,2], axis=1)
+
+which one is faster, take() or loc?
+take is faster -
+%timeit frm.loc[[1,4,3]] # 251 µs ± 22.3 µs per loop (mean ± std. dev. of 7 runs, 1000
+%timeit frm.take([1,4,3]) # 116 µs ± 1.32 µs per loop (mean ± std. dev. of 7 runs, 10000
+
+
+
+
 
 Attributes:
 pd.Index.name
