@@ -5911,6 +5911,76 @@ take is faster -
 %timeit frm.loc[[1,4,3]] # 251 µs ± 22.3 µs per loop (mean ± std. dev. of 7 runs, 1000
 %timeit frm.take([1,4,3]) # 116 µs ± 1.32 µs per loop (mean ± std. dev. of 7 runs, 10000
 
+It is important to note that the take method on pandas objects are not intended to work on boolean indices and may return unexpected results.
+arr = np.random.randn(10)
+arr
+arr.take([False, False, True, True])
+arr[[0, 1]]
+ser = pd.Series(np.random.randn(10))
+ser
+ser.take([False, False, True, True])
+ser.iloc[[0, 1]]
+
+Finally, as a small note on performance, because the take method handles a narrower range of inputs, it can offer performance that is a good deal faster than fancy indexing.
+arr = np.random.randn(10000, 5)
+indexer = np.arange(10000)
+random.shuffle(indexer)
+
+%timeit arr[indexer]
+%timeit arr.take(indexer, axis=0)
+
+2.6.5 Index types
+-----------------
+CategoricalIndex
+CategoricalIndex is a type of index that is useful for supporting indexing with duplicates. This is a container around a Categorical and allows efficient indexing and storage of an index with a large number of duplicated elements.
+from pandas.api.types import CategoricalDtype
+
+df = pd.DataFrame({"A": np.arange(6), "B": list("aabbca")})
+df["B"] = df["B"].astype(CategoricalDtype(list("cab")))
+df.dtypes
+df.B.cat.categories
+
+Setting the index will create a CategoricalIndex.
+df2 = df.set_index("B")
+df2.index
+
+Indexing with __getitem__/.iloc/.loc works similarly to an Index with duplicates. The indexers must be in the category or the operation will raise a KeyError.
+df2.loc["a"]
+#df2.loc["x"] # KeyError
+
+The CategoricalIndex is preserved after indexing:
+df2.loc["a"].index
+
+Sorting the index will sort by the order of the categories (recall that we created the index with CategoricalDtype(list('cab')), so the sorted order is cab).
+df2.sort_index()
+
+Groupby operations on the index will preserve the index nature as well.
+df2.groupby('B').sum()
+df2.groupby(level='B').sum()
+df2.groupby(level=0).sum()
+df2.groupby(level=0).sum().index
+
+Reindexing operations will return a resulting index based on the type of the passed indexer. Passing a list will return a plain-old Index; indexing with a Categorical will return a CategoricalIndex, indexed according to the categories of the passed Categorical dtype. This allows one to arbitrarily index these even with values not in the categories, similarly to how you can reindex any pandas index.
+df3 = pd.DataFrame(
+    {"A": np.arange(3), "B": pd.Series(list("abc")).astype("category")}
+)
+df3.set_index('B', inplace=True)
+df3.reindex(["b", "e"])
+df3.reindex(["b", "e"]).index
+df3.reindex(pd.Categorical(["b", "e"], categories=list("abe")))
+df3.reindex(pd.Categorical(["a", "e"], categories=list("abe"))).index
+
+Warning: Reshaping and Comparison operations on a Categorical Index must have the same categories or a TypeError will be raised.
+In [165]: df4 = pd.DataFrame({"A": np.arange(2), "B": list("ba")}) In [166]: df4["B"] = df4["B"].astype(CategoricalDtype(list("ab"))) In [167]: df4 = df4.set_index("B")
+In [168]: df4.index
+Out[168]: CategoricalIndex(['b', 'a'], categories=['a', 'b'], ordered=False, name='B
+˓→', dtype='category')
+In [169]: df5 = pd.DataFrame({"A": np.arange(2), "B": list("bc")}) In [170]: df5["B"] = df5["B"].astype(CategoricalDtype(list("bc"))) In [171]: df5 = df5.set_index("B")
+In [172]: df5.index
+Out[172]: CategoricalIndex(['b', 'c'], categories=['b', 'c'], ordered=False, name='B
+˓→', dtype='category')
+In [1]: pd.concat([df4, df5])
+TypeError: categories must match existing categories when appending
 
 
 
@@ -5934,7 +6004,10 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
-
+take() - fetch rows and columns from a df, much faster than loc
+is_lexsorted - check if the multi index dataframe has lex sorted index
+df.reorder_level - similar to the swap level to reorder levels in df
+df.swap_level() - Change the row and column index of dataframe
 pd.MultiIndex.from_arrays(), from_tuples(), from_product(), from_frame() - create a Multiindex from any of the sequences.
 df.get_option() - get current option for SettingsWithCopyWarning.
 df.set_option("mode.chained_assignment", "raise"|"warn";"None") - set option for SettingsWithCopyWarning.
