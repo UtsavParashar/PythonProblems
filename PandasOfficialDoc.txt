@@ -5982,6 +5982,176 @@ Out[172]: CategoricalIndex(['b', 'c'], categories=['b', 'c'], ordered=False, nam
 In [1]: pd.concat([df4, df5])
 TypeError: categories must match existing categories when appending
 
+Int64Index and RangeIndex
+-------------------------
+Int64Index is a fundamental basic index in pandas. This is an immutable array implementing an ordered, sliceable set.
+RangeIndex is a sub-class of Int64Index that provides the default index for all NDFrame objects. RangeIndex is an optimized version of Int64Index that can represent a monotonic ordered set. These are analogous to Python range types.
+
+Float64Index
+-------------
+By default a Float64Index will be automatically created when passing floating, or mixed-integer-floating values in index creation. This enables a pure label-based slicing paradigm that makes [],ix,loc for scalar indexing and slicing work exactly the same.
+indexf = pd.Index([1.5, 2, 3, 4.5, 5])
+sf = pd.Series(range(5), index=indexf)
+sf
+
+Scalar selection for [],.loc will always be label based. An integer will match an equal float index (e.g. 3 is equivalent to 3.0).
+sf[3]
+sf[3.0]
+sf.loc[3]
+sf.loc[3.0]
+
+The only positional indexing is via iloc.
+sf.iloc[3]
+
+A scalar index that is not found will raise a KeyError. Slicing is primarily on the values of the index when using [],ix,loc, and always positional when using iloc. The exception is when the slice is boolean, in which case it will always be positional.
+sf[2:4]
+sf.loc[2:4]
+sf.iloc[2:4]
+
+In float indexes, slicing using floats is allowed.
+sf[2.1:4.6]
+sf.loc[2.1:4.6]
+
+In non-float indexes, slicing using floats will raise a TypeError.
+pd.Series(range(5))[3.5]
+TypeError: the label [3.5] is not a proper indexer for this index type (Int64Index)
+
+pd.Series(range(5))[3.5:4.5]
+TypeError: the slice start [3.5] is not a proper indexer for this index type
+
+Here is a typical use-case for using this type of indexing. Imagine that you have a somewhat irregular timedelta-like indexing scheme, but the data is recorded as floats. This could, for example, be millisecond offsets.
+df1 = pd.DataFrame(np.random.randn(5, 2), index=np.arange(5) * 250.0,
+                   columns=list("AB"))
+df2 = pd.DataFrame(np.random.randn(6, 2), index=np.arange(4, 10) * 250.1,
+                   columns=list("AB"),)
+pd.concat([df1, df2])
+
+Selection operations then will always work on a value basis, for all selection operators.
+dfir[1.0:1000.5]
+dfir.loc[1.0:1000.5, "B"]
+
+You could retrieve the first 1 second (1000 ms) of data as such:
+dfir[0:1000]
+
+If you need integer based selection, you should use iloc:
+dfir.iloc[0:5]
+
+IntervalIndex
+-------------
+IntervalIndex together with its own dtype, IntervalDtype as well as the Interval scalar type, allow first-class support in pandas for interval notation.
+The IntervalIndex allows some unique indexing and is also used as a return type for the categories in cut() and qcut().
+Indexing with an IntervalIndex
+An IntervalIndex can be used in Series and in DataFrame as the index.
+df = pd.DataFrame({"A": [1, 2, 3, 4]}, index=pd.IntervalIndex.from_breaks([0, 1, 2, 3, 4]))
+Label based indexing via .loc along the edges of an interval works as you would expect, selecting that particular interval.
+df.loc[2]
+df.loc[[2, 3]]
+If you select a label contained within an interval, this will also select the interval.
+df.loc[2.5]
+df.loc[2.0000000001]
+df.loc[[2.5, 3.5]]
+Selecting using an Interval will only return exact matches (starting from pandas 0.25.0).
+df.loc[pd.Interval(1, 2)]
+Trying to select an Interval that is not exactly contained in the IntervalIndex will raise a KeyError.
+df.loc[pd.Interval(0.5, 2.5)]
+
+Selecting all Intervals that overlap a given Interval can be performed using the overlaps() method to create a boolean indexer.
+idxr = df.index.overlaps(pd.Interval(0.5, 2.5))
+df[idxr]
+
+Binning data with cut and qcut
+cut() and qcut() both return a Categorical object, and the bins they create are stored as an IntervalIndex
+in its .categories attribute.
+c = pd.cut(range(4), bins=2)
+c.categories
+
+cut() also accepts an IntervalIndex for its bins argument, which enables a useful pandas idiom. First, We call cut() with some data and bins set to a fixed number, to generate the bins. Then, we pass the values of . categories as the bins argument in subsequent calls to cut(), supplying new data which will be binned into the same bins.
+pd.cut([0, 3, 5, 1], bins=c.categories)
+
+Any value which falls outside all bins will be assigned a NaN value.
+
+Generating ranges of intervals
+If we need intervals on a regular frequency, we can use the interval_range() function to create an IntervalIndex using various combinations of start, end, and periods. The default frequency for interval_range is a 1 for numeric intervals, and calendar day for datetime-like intervals:
+pd.interval_range(start=0, end=5)
+pd.interval_range(start=pd.Timestamp("2017-01-01"), periods=4)
+pd.interval_range(end=pd.Timedelta("3 days"), periods=3)
+
+The freq parameter can used to specify non-default frequencies, and can utilize a variety of frequency aliases with datetime-like intervals:
+pd.interval_range(start=0, periods=5, freq=1.5)
+pd.interval_range(start=pd.Timestamp("2017-01-01"), periods=4, freq="W")
+pd.interval_range(start=pd.Timedelta("0 days"), periods=3, freq="9H")
+Additionally, the closed parameter can be used to specify which side(s) the intervals are closed on. Intervals are closed on the right side by default.
+pd.interval_range(start=0, end=4, closed="both")
+pd.interval_range(start=0, end=4, closed="neither")
+Specifying start, end, and periods will generate a range of evenly spaced intervals from start to end inclu- sively, with periods number of elements in the resulting IntervalIndex:
+pd.interval_range(start=0, end=6, periods=4)
+pd.interval_range(pd.Timestamp("2018-01-01"), pd.Timestamp("2018-02-28"), periods=3)
+
+2.6.6 Miscellaneous indexing FAQ
+---------------------------------
+Integer indexing
+Label-based indexing with integer axis labels is a thorny topic. It has been discussed heavily on mailing lists and among various members of the scientific Python community. In pandas, our general viewpoint is that labels matter more than integer locations. Therefore, with an integer axis index only label-based indexing is possible with the standard tools like .loc. The following code will generate exceptions:
+s = pd.Series(range(5))
+s[-1]
+
+df = pd.DataFrame(np.random.randn(5, 4))
+df.loc[-2:] # No change then original df
+
+This deliberate decision was made to prevent ambiguities and subtle bugs (many users reported finding bugs when the API change was made to stop “falling back” on position-based indexing).
+
+If the index of a Series or DataFrame is monotonically increasing or decreasing, then the bounds of a label-based slice can be outside the range of the index, much like slice indexing a normal Python list. Monotonicity of an index can be tested with the is_monotonic_increasing() and is_monotonic_decreasing() attributes.
+df = pd.DataFrame(index=[2, 3, 3, 4, 5], columns=["data"],data=list(range(5)))
+df.index.is_monotonic_increasing
+# no rows 0 or 1, but still returns rows 2, 3 (both of them), and 4:
+df.loc[0:4, :]
+# slice is are outside the index, so empty DataFrame is returned
+df.loc[13:15, :]
+
+On the other hand, if the index is not monotonic, then both slice bounds must be unique members of the index.
+df = pd.DataFrame(index=[2, 3, 1, 4, 3, 5], columns=["data"],data=list(range(6)))
+df.index.is_monotonic_increasing
+# OK because 2 and 4 are in the index
+df.loc[2:4, :]
+# 0 is not in the index
+df.loc[0:4, :]
+
+Endpoints are inclusive
+------------------------
+Compared with standard Python sequence slicing in which the slice endpoint is not inclusive, label-based slicing in pandas is inclusive. The primary reason for this is that it is often not possible to easily determine the “successor” or next element after a particular label in an index. For example, consider the following Series:
+s = pd.Series(np.random.randn(6), index=list("abcdef"))
+
+Suppose we wished to slice from c to e, using integers this would be accomplished as such:
+s[2:5]
+
+However, if you only had c and e, determining the next element in the index can be somewhat complicated. For example, the following does not work:
+s.loc['c':'e' + 1] # Error
+A very common use case is to limit a time series to start and end at two specific dates. To enable this, we made the
+design choice to make label-based slicing include both endpoints:
+s.loc["c":"e"]
+
+This is most definitely a “practicality beats purity” sort of thing, but it is something to watch out for if you expect label-based slicing to behave exactly in the way that standard Python integer slicing works.
+
+Indexing potentially changes underlying Series dtype
+----------------------------------------------------
+The different indexing operation can potentially change the dtype of a Series.
+series1 = pd.Series([1, 2, 3])
+print(series1)
+series1.reindex([0,4])
+
+series2 = pd.Series([True])
+res = series2.reindex_like(series1)
+This is because the (re)indexing operations above silently inserts NaNs and the dtype changes accordingly. This can cause some issues when using numpy ufuncs such as numpy.logical_and.
+
+==========================================
+2.7 Merge, join, concatenate and compare
+==========================================
+
+
+
+
+
+
+
 
 
 
@@ -6458,3 +6628,159 @@ scipy *
 * These packages actually use combinations of different approaches in their __init__.py files. I include them here because to users, they are generally used à la carte (e.g., import matplotlib.pyplot as plt or import scipy.stats.kde).
 Conclusion
 The three scenarios I outlined are certainly not the only possible structures for a Python package, but I hope they cover most of the cases that anyone reading learning this from a blog might be considering. In conclusion, I’ll return to a point I made earlier: a good module structure for the developer may or may not be a good module structure for the user. Whatever your decision, don’t forget to put yourself in the user’s shoes even, or especially, because that user is most likely to be you.
+
+
+-----------How to group data by time intervals in Python Pandas?----------------------------
+How to group data by time intervals in Python Pandas?
+One-liners to combine Time-Series data into different intervals like based on each hour, week, or a month.
+Ankit Goel
+Ankit Goel
+
+Sep 12, 2020·7 min read
+
+
+
+Photo by Aron Visuals on Unsplash
+If you have ever dealt with Time-Series data analysis, you would have come across these problems for sure —
+Combining data into certain intervals like based on each day, a week, or a month.
+Aggregating data in the time interval like if you are dealing with price data then problems like total amount added in an hour, or a day.
+Finding patterns for other features in the dataset based on a time interval.
+In this article, you will learn about how you can solve these problems with just one-line of code using only 2 different Pandas API’s i.e. resample() and Grouper().
+As we know, the best way to learn something is to start applying it. So, I am going to use a sample time-series dataset provided by World Bank Open data and is related to the crowd-sourced price data collected from 15 countries. For more details about the data, refer Crowdsourced Price Data Collection Pilot. For this exercise, we are going to use data collected for Argentina.
+📚 Resources: Google Colab Implementation | Github Repository | Dataset 📚
+Dataset Details
+This data is collected by different contributors who participated in the survey conducted by the World Bank in the year 2015. The basic idea of the survey was to collect prices for different goods and services in different countries. We are going to use only a few columns from the dataset for the demo purposes —
+
+Sample Snippet of the Dataset by Author.
+Combining data based on different Time Intervals.
+Pandas provides an API named as resample() which can be used to resample the data into different intervals. Let’s see a few examples of how we can use this —
+Total Amount added each hour.
+Let’s say we need to find how much amount was added by a contributor in an hour, we can simply do so using —
+# data re-sampled based on an hour
+data.resample('H', on='created_at').price.sum()
+# output
+created_at
+2015-12-14 18:00:00     5449.90
+2015-12-14 19:00:00       15.98
+2015-12-14 20:00:00       66.98
+2015-12-14 21:00:00        0.00
+2015-12-14 22:00:00        0.00
+Here is what we are doing here —
+First, we resampled the data into an hour ‘H’ frequency for our date column i.e. created_at. We can use different frequencies, I will go through a few of them in this article. Check out Pandas Time Frequencies for a complete list of frequencies. You can even go up to nanoseconds.
+After this, we selected the ‘price’ from the resampled data. Later we will see how we can aggregate on multiple fields i.e. total amount, quantity, and the unique number of items in a single command.
+Computed the sum for all the prices. This will give us the total amount added in that hour.
+By default, the time interval starts from the starting of the hour i.e. the 0th minute like 18:00, 19:00, and so on. We can change that to start from different minutes of the hour using offset attribute like —
+# Starting at 15 minutes 10 seconds for each hour
+data.resample('H', on='created_at', offset='15Min10s').price.sum()
+# Output
+created_at
+2015-12-14 17:15:10     5370.00
+2015-12-14 18:15:10       79.90
+2015-12-14 19:15:10       64.56
+2015-12-14 20:15:10       18.40
+2015-12-14 21:15:10        0.00
+Please note, you need to have Pandas version > 1.10 for the above command to work.
+Total Amount added each week.
+In this example, we will see how we can resample the data based on each week.
+# data re-sampled based on an each week, just change the frequency
+data.resample('W', on='created_at').price.sum()
+# output
+created_at
+2015-12-20    4.305638e+04
+2015-12-27    6.733851e+04
+2016-01-03    4.443459e+04
+2016-01-10    1.822236e+04
+2016-01-17    1.908385e+05
+By default, the week starts from Sunday, we can change that to start from different days i.e. let’s say if we would like to combine based on the week starting on Monday, we can do so using —
+# data re-sampled based on an each week, week starting Monday
+data.resample('W-MON', on='created_at').price.sum()
+# output
+created_at
+2015-12-14    5.532860e+03
+2015-12-21    3.850762e+04
+2015-12-28    6.686329e+04
+2016-01-04    5.392410e+04
+2016-01-11    1.260869e+04
+Total Amount added each month.
+This is similar to what we have done in the examples before.
+# data re-sampled based on each month
+data.resample('M', on='created_at').price.sum()
+# Output
+created_at
+2015-12-31    1.538769e+05
+2016-01-31    4.297143e+05
+2016-02-29    9.352684e+05
+2016-03-31    7.425185e+06
+2016-04-30    1.384351e+07
+One observation to note here is that the output labels for each month are based on the last day of the month, we can use the ‘MS’ frequency to start it from 1st day of the month i.e. instead of 2015–12–31 it would be 2015–12–01 —
+# month frequency from start of the month
+data.resample('MS', on='created_at').price.sum()
+created_at
+2015-12-01    1.538769e+05
+2016-01-01    4.297143e+05
+2016-02-01    9.352684e+05
+2016-03-01    7.425185e+06
+2016-04-01    1.384351e+07
+Multiple Aggregation on sampled data.
+Often we need to apply different aggregations on different columns like in our example we might need to find —
+Unique items that were added in each hour.
+The total quantity that was added in each hour.
+The total amount that was added in each hour.
+We can do so in a one-line by using agg() on the resampled data. Let’s see how we can do it —
+# aggregating multiple fields for each hour
+data.resample('H', on='created_at').agg({'price':'sum', 'quantity':'sum','item_code':'nunique'})
+
+Aggregated data based on each hour by Author.
+Grouping data based on different Time intervals
+In the above examples, we re-sampled the data and applied aggregations on it. What if we would like to group data by other fields in addition to time-interval? Pandas provide an API known as grouper() which can help us to do that.
+In this section, we will see how we can group data on different fields and analyze them for different intervals.
+Amount added for each store type in each month.
+Let’s say we need to analyze data based on store type for each month, we can do so using —
+# Grouping data based on month and store type
+data.groupby([pd.Grouper(key='created_at', freq='M'), 'store_type']).price.sum().head(15)
+# Output
+created_at  store_type
+2015-12-31  other                          34300.00
+            public_semi_public_service       833.90
+            small_medium_shop               2484.23
+            specialized_shop              107086.00
+2016-01-31  market                           473.75
+            other                         314741.00
+            private_service_provider         325.00
+            public_semi_public_service       276.79
+            small_medium_shop              31042.79
+            specialized_shop               29648.44
+2016-02-29  market                          1974.04
+            other                         527950.00
+            private_service_provider        1620.00
+            public_semi_public_service      1028.52
+            small_medium_shop             224653.83
+Let’s understand how I did it —
+First, we passed the Grouper object as part of the groupby statement which groups the data based on month i.e. ‘M’ frequency. This is similar to resample(), so whatever we discussed above applies here as well.
+We added store_type to the groupby so that for each month we can see different store types.
+For each group, we selected the price, calculated the sum, and selected the top 15 rows.
+Total Amount added based on item_name in each month.
+As we did in the last example, we can do a similar thing for item_name as well.
+# Grouping data based on each month and item_name
+data.groupby([pd.Grouper(key='created_at', freq='M'), 'item_name']).price.sum()
+# Output
+created_at  item_name
+2015-12-31  Bar soap, solid, SB                                33.17
+            Beer, domestic brand, single bottle, WKB           29.79
+            Black tea, BL                                      12.00
+            Black tea, in bags, WKB                            60.99
+            Bread, white, sliced, WKB                          85.45
+                                                              ...
+2016-08-31  Wheat flour, not self-rising, BL                  150.38
+            White sugar, WKB                                  266.47
+            Women's haircut, basic hairdresser               7730.00
+            Wrist-watch, men's, CITIZEN Eco-Drive BM6060    52205.00
+            Yoghurt, plain, WKB                               150.96
+Multiple Aggregation for store_type in each month.
+We can apply aggregation on multiple fields similarly the way we did using resample(). The only thing which is different here is that the data would be grouped by store_type as well and also, we can do NamedAggregation (assign a name to each aggregation) on groupby object which doesn’t work for re-sample.
+# grouping data and named aggregation on item_code, quantity, and price
+data.groupby([pd.Grouper(key='created_at', freq='M'), 'store_type']).agg(unique_items=('item_code', 'nunique'),
+         total_quantity=('quantity','sum'),
+         total_amount=('price','sum'))
+
+--------------------------------------------------------
