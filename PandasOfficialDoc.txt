@@ -6150,10 +6150,137 @@ In addition, pandas also provides utilities to compare two Series or DataFrame a
 
 2.7.1 Concatenating objects
 ----------------------------
+The concat() function (in the main pandas namespace) does all of the heavy lifting of performing concatenation operations along an axis while performing optional set logic (union or intersection) of the indexes (if any) on the other axes. Note that I say “if any” because there is only a single possible axis of concatenation for Series.
+Before diving into all of the details of concat and what it can do, here is a simple example:
+df1 = pd.DataFrame({
+    "A": ["A0", "A1", "A2", "A3"],
+    "B": ["B0", "B1", "B2", "B3"],
+    "C": ["C0", "C1", "C2", "C3"],
+    "D": ["D0", "D1", "D2", "D3"],
+}, index=[0, 1, 2, 3],)
 
+df2 = pd.DataFrame({
+    "A": ["A4", "A5", "A6", "A7"],
+    "B": ["B4", "B5", "B6", "B7"],
+    "C": ["C4", "C5", "C6", "C7"],
+    "D": ["D4", "D5", "D6", "D7"],
+}, index=[4, 5, 6, 7],)
 
+df3 = pd.DataFrame({
+    "A": ["A8", "A9", "A10", "A11"],
+    "B": ["B8", "B9", "B10", "B11"],
+    "C": ["C8", "C9", "C10", "C11"],
+    "D": ["D8", "D9", "D10", "D11"],
+}, index=[8,9,10,11,])
 
+frames = [ df1, df2, df3, ]
+result = pd.concat(frames)
 
+Like its sibling function on ndarrays, numpy.concatenate, pandas.concat takes a list or dict of homogeneously-typed objects and concatenates them with some configurable handling of “what to do with the other axes”:
+
+pd.concat(
+    objs,
+    axis=0,
+    join="outer", ignore_index=False, keys=None,
+    levels=None, names=None, verify_integrity=False, copy=True,
+)
+
+• objs : a sequence or mapping of Series or DataFrame objects. If a dict is passed, the sorted keys will be used as the keys argument, unless it is passed, in which case the values will be selected (see below). Any None objects will be dropped silently unless they are all None in which case a ValueError will be raised.
+• axis : {0, 1, . . . }, default 0. The axis to concatenate along.
+• join : {‘inner’, ‘outer’}, default ‘outer’. How to handle indexes on other axis(es). Outer for union and inner
+for intersection.
+• ignore_index : boolean, default False. If True, do not use the index values on the concatenation axis. The resulting axis will be labeled 0, . . . , n - 1. This is useful if you are concatenating objects where the concatenation axis does not have meaningful indexing information. Note the index values on the other axes are still respected in the join.
+• keys : sequence, default None. Construct hierarchical index using the passed keys as the outermost level. If multiple levels passed, should contain tuples.
+• levels : list of sequences, default None. Specific levels (unique values) to use for constructing a MultiIndex. Otherwise they will be inferred from the keys.
+• names : list, default None. Names for the levels in the resulting hierarchical index.
+• verify_integrity : boolean, default False. Check whether the new concatenated axis contains duplicates.
+This can be very expensive relative to the actual data concatenation.
+• copy : boolean, default True. If False, do not copy data unnecessarily.
+Without a little bit of context many of these arguments don’t make much sense. Let’s revisit the above example. Suppose we wanted to associate specific keys with each of the pieces of the chopped up DataFrame. We can do this using the keys argument:
+
+result = pd.concat(frames, keys=['x', 'y', 'z',])
+
+As you can see, the resulting object’s index has a hierarchical index. This means that we can now select out each chunk by key:
+
+result.loc["y"]
+Note: It is worth noting that concat() (and therefore append()) makes a full copy of the data,and that constantly reusing this function can create a significant performance hit. If you need to use the operation over several datasets, use a list comprehension.
+
+ frames = [ process_your_file(f) for f in files ]
+ result = pd.concat(frames)
+
+Note: When concatenating DataFrames with named axes,pandas will attempt to preserve these index/column names whenever possible. In the case where all inputs share a common name, this name will be assigned to the result. When the input names do not all agree, the result will be unnamed. The same is true for MultiIndex, but the logic is applied separately on a level-by-level basis.
+
+Set logic on the other axes
+---------------------------
+When gluing together multiple DataFrames, you have a choice of how to handle the other axes (other than the one being concatenated). This can be done in the following two ways:
+• Take the union of them all, join='outer'. This is the default option as it results in zero information loss.
+• Take the intersection, join='inner'.
+Here is an example of each of these methods. First, the default join='outer' behavior:
+df4 = pd.DataFrame({
+    "B": ["B2", "B3", "B6", "B7"],
+    "D": ["D2", "D3", "D6", "D7"],
+    "F": ["F2", "F3", "F6", "F7"],
+}, index=[2, 3, 6, 7],)
+
+pd.concat([df1, df4])
+pd.concat([df1, df4], axis=1)
+pd.concat([df1, df4], axis=1, join='inner')
+
+Lastly, suppose we just wanted to reuse the exact index from the original DataFrame:
+pd.concat([df1, df4], axis=1).reindex(df1.index)
+
+Similarly, we could index before the concatenation:
+pd.concat([df1, df4.reindex(df1.index)], axis=1)
+
+Concatenating using append
+---------------------------
+A useful shortcut to concat() are the append() instance methods on Series and DataFrame. These methods
+actually predated concat. They concatenate along axis=0, namely the index:
+df1.append(df2)
+
+In the case of DataFrame, the indexes must be disjoint but the columns do not need to be:
+result = df1.append(df4, sort=False)
+
+append may take multiple objects to concatenate:
+result = df1.append([df2, df3])
+
+NOTE: Unlike the append() method, which appends to the original list and returns None, append() here does not modify df1 and returns its copy with df2 appended.
+
+Which one is faster?
+append is slightly faster then concat.
+%timeit df1.append(df4) # 1.77 ms ± 125 µs per loop
+%timeit pd.concat([df1, df4]) # 1.88 ms ± 180 µs per loop
+
+Ignoring indexes on the concatenation axis
+-------------------------------------------
+For DataFrame objects which don’t have a meaningful index, you may wish to append them and ignore the fact that they may have overlapping indexes. To do this, use the ignore_index argument:
+pd.concat([df1, df4], ignore_index=True, sort=False)
+
+This is also a valid argument to DataFrame.append():
+result = df1.append(df4, ignore_index=True, sort=False)
+
+Concatenating with mixed ndims
+-------------------------------
+You can concatenate a mix of Series and DataFrame objects. The Series will be transformed to DataFrame with the column name as the name of the Series.
+s1 = pd.Series(["X0", "X1", "X2", "X3"], name="X")
+pd.concat([df1, s1], axis=1)
+
+Note: Since we’re concatenating a Series to a DataFrame, we could have achieved the same result with DataFrame.assign(). To concatenate an arbitrary number of pandas objects (DataFrame or Series), use concat.
+
+which one is faster?
+assign is much faster than concat.
+%timeit df1.assign(X=s1) # 455 µs ± 33.7 µs per loop
+%timeit pd.concat([df1, s1], axis=1) # 808 µs ± 50.7 µs per loop
+
+If unnamed Series are passed they will be numbered consecutively.
+s2 = pd.Series(["_0", "_1", "_2", "_3"])
+result = pd.concat([df1, s2, s2, s2], axis=1)
+
+Passing ignore_index=True will drop all name references
+result = pd.concat([df1, s1], axis=1, ignore_index=True)
+
+More concatenating with group keys
+-----------------------------------
 
 
 
