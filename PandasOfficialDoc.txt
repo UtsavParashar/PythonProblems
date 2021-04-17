@@ -6486,6 +6486,7 @@ Note: The category dtypes must be exactly the same, meaning the same categories 
 NOTE: MERGING ON CATEGORY DTYPES THAT ARE THE SAME CAN BE QUITE PERFORMANT COMPARED TO OBJECT DTYPE MERGING.
 
 Joining on index
+==================
 DataFrame.join() is a convenient method for combining the columns of two potentially differently-indexed DataFrames into a single result DataFrame. Here is a very basic example:
 left = pd.DataFrame(
     {"A": ["A0", "A1", "A2"], "B": ["B0", "B1", "B2"]},
@@ -6621,6 +6622,63 @@ result = pd.merge(left.reset_index(), right.reset_index(), on=["key"], ).set_ind
 Merging on a combination of columns and index levels
 -----------------------------------------------------
 Strings passed as the on, left_on, and right_on parameters may refer to either column names or index level names. This enables merging DataFrame instances on a combination of index levels and columns without resetting indexes.
+left_index = pd.Index(["K0", "K0", "K1", "K2"], name="key1")
+
+left = pd.DataFrame({
+    "A": ["A0", "A1", "A2", "A3"],
+    "B": ["B0", "B1", "B2", "B3"],
+    "key2": ["K0", "K1", "K0", "K1"],},
+    index=left_index)
+
+right_index = pd.Index(["K0", "K1", "K2", "K2"], name="key1")
+right = pd.DataFrame({
+    "C": ["C0", "C1", "C2", "C3"],
+    "D": ["D0", "D1", "D2", "D3"],
+    "key2": ["K0", "K0", "K0", "K1"],},
+    index=right_index)
+
+left.merge(right, on=['key1', 'key2'])
+
+Note: When DataFrames are merged on a string that matches an index level in both frames, the index level is preserved as an index level in the resulting DataFrame.
+
+Note: When DataFrames are merged using only some of the levels of a MultiIndex, the extra levels will be dropped from the resulting merge. In order to preserve those levels, use reset_index on those level names to move those levels to columns prior to doing the merge.
+
+Note: If a string matches both a column name and an index level name,then a warning is issued and the column takes precedence. This will result in an ambiguity error in a future version.
+
+Overlapping value columns
+---------------------------
+The merge suffixes argument takes a tuple of list of strings to append to overlapping column names in the input DataFrames to disambiguate the result columns:
+left = pd.DataFrame({"k": ["K0", "K1", "K2"], "v": [1, 2, 3]})
+right = pd.DataFrame({"k": ["K0", "K0", "K3"], "v": [4, 5, 6]})
+pd.merge(left, right, on="k", suffixes=('_l', '_r'))
+
+DataFrame.join() has lsuffix and rsuffix arguments which behave similarly.
+left.set_index('k').join(right.set_index('k'), lsuffix="_l", rsuffix="_r", how='inner')
+
+Joining multiple DataFrames
+----------------------------
+A list or tuple of DataFrames can also be passed to join() to join them together on their indexes.
+left = left.set_index('k')
+right = right.set_index('k')
+right2 = pd.DataFrame({"v": [7, 8, 9]}, index=["K1", "K1", "K2"])
+left.join([right, right2])
+
+Merging together values within Series or DataFrame columns
+-----------------------------------------------------------
+Another fairly common situation is to have two like-indexed (or similarly indexed) Series or DataFrame objects and wanting to “patch” values in one object from values for matching indices in the other. Here is an example:
+df1 = pd.DataFrame(
+    [[np.nan, 3.0, 5.0], [-4.6, np.nan, np.nan], [np.nan, 7.0, np.nan]]
+)
+df2 = pd.DataFrame([[-42.6, np.nan, -8.2], [-5.0, 1.6, 4]], index=[1, 2])
+df1.combine_first(df2)
+
+Note that this method only takes values from the right DataFrame if they are missing in the left DataFrame. A related method, update(), alters non-NA values in place:
+df1.update(df2)
+
+2.7.3 Timeseries friendly merging
+----------------------------------
+
+
 
 
 
@@ -6696,7 +6754,8 @@ idxmin(), idxmax() - get the index of the min and max value in the series or dat
 describe([percentiles=[], include=[]) - summary desc stats, you can modify the percentiles as per your needs.
 nunique - provide the count of the unique elements in a series/df excluding np.nan
 combine - combine two dataframes based on a provided function
-combine_first() - get the non- NAN values from both df while merging
+combine_first() - get the non-NAN values from both df while merging with same column names
+df1.update(df2) - same as combine_first with a difference that this updates df1 with result in place.
 gt(),lt(),ne() - greater than, less than, not equal
 divmod() - provide the quotient and remainder in the form of a tuple
 equals() - compare NDFrames at once, == will return boolean values per element
