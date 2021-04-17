@@ -6677,8 +6677,82 @@ df1.update(df2)
 
 2.7.3 Timeseries friendly merging
 ----------------------------------
+Merging ordered data
+--------------------
+A merge_ordered() function allows combining time series and other ordered data. In particular it has an optional fill_method keyword to fill/interpolate missing data:
+left = pd.DataFrame({
+    "k": ["K0", "K1", "K1", "K2"], "lv": [1, 2, 3, 4],
+     "s": ["a", "b", "c", "d"]
+})
+right = pd.DataFrame({"k": ["K1", "K2", "K4"], "rv": [1, 2, 3]})
 
+pd.merge_ordered(left, right, fill_method='ffill', left_by='s')
 
+Merging asof
+-------------
+A merge_asof() is similar to an ordered left-join except that we match on nearest key rather than equal keys. For each row in the left DataFrame, we select the last row in the right DataFrame whose on key is less than the left’s key. Both DataFrames must be sorted by the key.
+Optionally an asof merge can perform a group-wise merge. This matches the by key equally, in addition to the nearest match on the on key.
+For example; we might have trades and quotes and we want to asof merge them.
+trades = pd.DataFrame({
+    "time": pd.to_datetime([
+        "20160525 13:30:00.023",
+        "20160525 13:30:00.038",
+        "20160525 13:30:00.048",
+        "20160525 13:30:00.048",
+        "20160525 13:30:00.048",
+    ]),
+    "ticker": ["MSFT", "MSFT", "GOOG", "GOOG", "AAPL"],
+    "price": [51.95, 51.95, 720.77, 720.92, 98.00],
+    "quantity": [75, 155, 100, 100, 100],
+}, columns=["time", "ticker", "price", "quantity"],)
+
+quotes = pd.DataFrame({
+    "time": pd.to_datetime([
+        "20160525 13:30:00.023",
+        "20160525 13:30:00.023",
+        "20160525 13:30:00.030",
+        "20160525 13:30:00.041",
+        "20160525 13:30:00.048",
+        "20160525 13:30:00.049",
+        "20160525 13:30:00.072",
+        "20160525 13:30:00.075",
+    ]),
+    "ticker": ["GOOG", "MSFT", "MSFT", "MSFT", "GOOG", "AAPL", "GOOG","MSFT"],
+    "bid": [720.50, 51.95, 51.97, 51.99, 720.50, 97.99, 720.50, 52.01],
+    "ask": [720.93, 51.96, 51.98, 52.00, 720.93, 98.01, 720.88, 52.03],
+}, columns=["time", "ticker", "bid", "ask"],)
+
+pd.merge_asof(trades, quotes, on="time", by="ticker")
+
+We only asof within 2ms between the quote time and the trade time.
+pd.merge_asof(trades, quotes, on="time",
+              by="ticker", tolerance=pd.Timedelta("2ms"))
+
+We only asof within 10ms between the quote time and the trade time and we exclude exact matches on time. Note that though we exclude the exact matches (of the quotes), prior quotes do propagate to that point in time.
+pd.merge_asof(trades, quotes, on='time', by="ticker",
+             tolerance=pd.Timedelta('10ms'),
+             allow_exact_matches=False)
+
+2.7.4 Comparing objects
+=======================
+The compare()(DataFrame) and compare()(Series) methods allow you to compare two DataFrame or Series, respectively, and summarize their differences.
+For example, you might want to compare two DataFrame and stack their differences side by side.
+df = pd.DataFrame({
+    "col1": ["a", "a", "b", "b", "a"],
+    "col2": [1.0, 2.0, 3.0, np.nan, 5.0],
+    "col3": [1.0, 2.0, 3.0, 4.0, 5.0],
+})
+df2 = df.copy()
+df2.loc[0, "col1"] = "c"
+df2.loc[2, "col3"] = 4.0
+df.compare(df2)
+
+By default, if two corresponding values are equal, they will be shown as NaN. Furthermore, if all values in an entire row / column, the row / column will be omitted from the result. The remaining differences will be aligned on columns.
+If you wish, you may choose to stack the differences on rows.
+df.compare(df2, align_axis=0)
+
+If you wish to keep all original rows and columns, set keep_shape argument to True.
+df.compare(df2, keep_shape=True)
 
 
 
@@ -6701,6 +6775,13 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+df.compare(df2, align_axis=0, keep_shape=True) - compare two dfs and get only the difference.
+pd.merge_asof(trades, quotes, on='time', by='ticker', tolerance="pd.TimeDelta('5ms')", allow_exact_matches=False) - merge timeseries dfs on previous time match on the left df.
+pd.merge_ordered - same as merge but on ordered data like timeseries, default outer.
+pd.join(df1, df2) - join on indexes, rest same as merge, default - left.
+pd.merge(df1, df2, on=, how=, left_on, suffixes, sort) - merge two dfs on inner, outer, left, right join. default inner.
+df1.append(df2) - append row of one df to another, short for concat on axis=0.
+pd.concat([df1,df2], on, how)- concatenate two dataframes
 take() - fetch rows and columns from a df, much faster than loc
 is_lexsorted - check if the multi index dataframe has lex sorted index
 df.reorder_level - similar to the swap level to reorder levels in df
