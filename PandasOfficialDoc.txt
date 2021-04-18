@@ -6144,6 +6144,10 @@ This is because the (re)indexing operations above silently inserts NaNs and the 
 
 ==========================================
 2.7 Merge, join, concatenate and compare
+concat(), append()
+merge(), join(), combine_first(), combine(), update()
+merge_ordered(), merge_asof()
+compare()
 ==========================================
 pandas provides various facilities for easily combining together Series or DataFrame with various kinds of set logic for the indexes and relational algebra functionality in the case of join / merge-type operations.
 In addition, pandas also provides utilities to compare two Series or DataFrame and summarize their differences.
@@ -6754,6 +6758,103 @@ df.compare(df2, align_axis=0)
 If you wish to keep all original rows and columns, set keep_shape argument to True.
 df.compare(df2, keep_shape=True)
 
+2.8 Reshaping and pivot tables
+===============================
+2.8.1 Reshaping by pivoting DataFrame objects
+----------------------------------------------
+Data is often stored in so-called “stacked” or “record” format:
+import pandas._testing as tm
+def unpivot(frame):
+    N, K = frame.shape
+    data = {
+        "value":frame.to_numpy().ravel("F"),
+        "variable":np.asarray(frame.columns).repeat(N),
+        "date":np.tile(np.asarray(frame.index), K)
+    }
+    return pd.DataFrame(data, columns=['date', 'variable', 'value'])
+
+df = unpivot(tm.makeTimeDataFrame(3))
+
+------------------------------------------------
+Difference between repeat and tile
+a = np.array([0, 1, 2])
+print(np.repeat(a, 3)) # [0 0 0 1 1 1 2 2 2]
+print(np.tile(a,3)) # [0 1 2 0 1 2 0 1 2]
+------------------------------------------------
+
+To select out everything for variable A we could do:
+df[df["variable"] == "A"]
+
+But suppose we wish to do time series operations with the variables. A better representation would be where the columns are the unique variables and an index of dates identifies individual observations. To reshape the data into this form, we use the DataFrame.pivot() method (also implemented as a top level function pivot()):
+
+df.pivot(index='date', columns='variable', values='value')
+
+If the values argument is omitted, and the input DataFrame has more than one column of values which are not used as column or index inputs to pivot, then the resulting “pivoted” DataFrame will have hierarchical columns whose topmost level indicates the respective value column:
+
+pivoted = df.pivot(index='date', columns='variable')
+
+You can then select subsets from the pivoted DataFrame:
+pivoted = df.pivot(index='date', columns='variable')
+pivoted['value2']
+
+Note that this returns a view on the underlying data in the case where the data are homogeneously-typed.
+Note: pivot() will error with a ValueError: Index contains duplicate entries, cannot reshape if the index/column pair is not unique. In this case, consider using pivot_table() which is a generalization of pivot that can handle duplicate values for one index/column pair.
+
+2.8.2 Reshaping by stacking and unstacking
+-------------------------------------------
+width to height
+-----------------
+Closely related to the pivot() method are the related stack() and unstack() methods available on Series and DataFrame. These methods are designed to work together with MultiIndex objects (see the section on hierarchical indexing). Here are essentially what these methods do:
+• stack: “pivot” a level of the (possibly hierarchical) column labels, returning a DataFrame with an index with a new inner-most level of row labels.
+• unstack: (inverse operation of stack) “pivot” a level of the (possibly hierarchical) row index to the column axis, producing a reshaped DataFrame with a new inner-most level of column labels.
+
+The clearest way to explain is by example. Let’s take a prior example data set from the hierarchical indexing section:
+tuples = list(zip(*[
+    [ "bar", "bar", "baz", "baz", "foo", "foo", "qux", "qux", ],
+    [ "one", "two", "one", "two", "one", "two", "one", "two", ],
+]))
+
+index = pd.MultiIndex.from_tuples(tuples, names=["first", "second"])
+
+df = pd.DataFrame(np.random.randn(8, 2), index=index, columns=["A", "B"])
+df2 = df[:4]
+df2
+
+The stack function “compresses” a level in the DataFrame’s columns to produce either: • A Series, in the case of a simple column Index.
+• A DataFrame, in the case of a MultiIndex in the columns.
+If the columns have a MultiIndex, you can choose which level to stack. The stacked level becomes the new lowest level in a MultiIndex on the columns:
+stacked = df2.stack()
+stacked
+
+With a “stacked” DataFrame or Series (having a MultiIndex as the index), the inverse operation of stack is unstack, which by default unstacks the last level:
+stacked.unstack()
+same can be achieved through pivot_table()
+%timeit stacked.reset_index().rename(columns={"level_2":"col1", 0:"col2"}).pivot_table(index=['first', 'second'], columns='col1', values='col2')
+unstack is definitely faster than pivot_table in this case.
+
+stacked.unstack(1)
+stacked.unstack(0)
+
+If the indexes have names, you can use the level names instead of specifying the level numbers:
+stacked.unstack("second")
+Notice that the stack and unstack methods implicitly sort the index levels involved. Hence a call to stack and then unstack, or vice versa, will result in a sorted copy of the original DataFrame or Series:
+index = pd.MultiIndex.from_product([[2, 1], ["a", "b"]])
+df = pd.DataFrame(np.random.randn(4), index=index, columns=["A"])
+print(df)
+all(df.unstack().stack() == df.sort_index())
+
+Multiple levels
+You may also stack or unstack more than one level at a time by passing a list of levels, in which case the end result is as if each level in the list were processed individually.
+columns = pd.MultiIndex.from_tuples([
+    ("A", "cat", "long"), ("B", "cat", "long"),
+    ("A", "dog", "short"), ("B", "dog", "short"),
+], names=["exp", "animal", "hair_length"],)
+df = pd.DataFrame(np.random.randn(4, 4), columns=columns)
+df.stack(level=["animal", "hair_length"])
+
+The list of levels can contain either level names or level numbers (but not a mixture of the two).
+# df.stack(level=['animal', 'hair_length']) # from above is equivalent to:
+df.stack(level=[1,2])
 
 
 Attributes:
