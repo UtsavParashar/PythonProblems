@@ -6856,6 +6856,75 @@ The list of levels can contain either level names or level numbers (but not a mi
 # df.stack(level=['animal', 'hair_length']) # from above is equivalent to:
 df.stack(level=[1,2])
 
+Missing data
+-------------
+These functions are intelligent about handling missing data and do not expect each subgroup within the hierarchical index to have the same set of labels. They also can handle the index being unsorted (but you can make it sorted by calling sort_index, of course). Here is a more complex example:
+columns = pd.MultiIndex.from_tuples(
+    [("A", "cat"), ("B", "dog"), ("B", "cat"),("A", "dog"),],
+    names=['exp', "animals"]
+)
+index = pd.MultiIndex.from_product([("bar", "baz", "foo", "qux"), ("one", "two")],
+                                   names=["first", "second"])
+df = pd.DataFrame(np.random.randn(8, 4), index=index, columns=columns)
+df2 = df.iloc[[0, 1, 2, 4, 5, 7]]
+
+As mentioned above, stack can be called with a level argument to select which level in the columns to stack:
+df2.stack('exp')
+df.stack('animals')
+
+Unstacking can result in missing values if subgroups do not have the same set of labels. By default, missing values will be replaced with the default fill value for that data type, NaN for float, NaT for datetimelike, etc. For integer types, by default data will converted to float and missing values will be set to NaN.
+
+df3 = df.iloc[[0, 1, 4, 7], [1, 2]]
+df3.unstack()
+
+Alternatively, unstack takes an optional fill_value argument, for specifying the value of missing data.
+df3.unstack(fill_value=0.)
+
+With a MultiIndex
+------------------
+Unstacking when the columns are a MultiIndex is also careful about doing the right thing:
+df[:3].unstack(1)
+df[:3].unstack(0)
+
+2.8.3 Reshaping by melt
+========================
+The top-level melt() function and the corresponding DataFrame.melt() are useful to massage a DataFrame into a format where one or more columns are identifier variables, while all other columns, considered measured variables, are “unpivoted” to the row axis, leaving just two non-identifier columns, “variable” and “value”. The names of those columns can be customized by supplying the var_name and value_name parameters.
+cheese = pd.DataFrame({
+    "first": ["John", "Mary"],
+    "last": ["Doe", "Bo"],
+    "height": [5.5, 6.0],
+    "weight": [130, 150],
+})
+print(cheese)
+cheese.melt(id_vars=['first', 'last'], var_name='quantity')
+
+When transforming a DataFrame using melt(), the index will be ignored. The original index values can be kept around by setting the ignore_index parameter to False (default is True). This will however duplicate them.
+index = pd.MultiIndex.from_tuples([("person", "A"), ("person", "B")])
+cheese = pd.DataFrame({
+    "first": ["John", "Mary"],
+    "last": ["Doe", "Bo"],
+    "height": [5.5, 6.0],
+    "weight": [130, 150],
+}, index=index)
+
+cheese.melt(id_vars=["first", "last"], ignore_index=False)
+
+Another way to transform is to use the wide_to_long() panel data convenience function. It is less flexible than melt(), but more user-friendly.
+dft = pd.DataFrame({
+    "A1970": {0: "a", 1: "b", 2: "c"},
+    "A1980": {0: "d", 1: "e", 2: "f"},
+    "B1970": {0: 2.5, 1: 1.2, 2: 0.7},
+    "B1980": {0: 3.2, 1: 1.3, 2: 0.1},
+    "X": dict(zip(range(3), np.random.randn(3))),
+})
+
+dft["id"] = dft.index
+pd.wide_to_long(dft, ["A", "B"], i="id", j="year")
+
+2.8.4 Combining with stats and GroupBy
+--------------------------------------
+
+
 
 Attributes:
 pd.Index.name
@@ -6876,6 +6945,10 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+melt() -
+unstack() - opposite of stack() i.e height to width on multiindex df
+stack() - opposite to pivot i.e width to height on multiindex df
+pivot(index, columns, values) - move from height to width form
 df.compare(df2, align_axis=0, keep_shape=True) - compare two dfs and get only the difference.
 pd.merge_asof(trades, quotes, on='time', by='ticker', tolerance="pd.TimeDelta('5ms')", allow_exact_matches=False) - merge timeseries dfs on previous time match on the left df.
 pd.merge_ordered - same as merge but on ordered data like timeseries, default outer.
