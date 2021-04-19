@@ -1462,6 +1462,31 @@ tf_quant_finance.experimental.instruments.InterestRateMarket(
     swap_rate=None, volatility_curve=None
 )
 
+Another Simple example which makes sense:
+since college name will be same for all students hence getCollegeName is class method
+since each student has his own instance hence getStidentsNameMarks is instace
+since static method does a static method i.e convert marks to grades
+
+class College:
+    name = 'IIT'
+
+    @classmethod
+    def getCollegeName(cls):
+        return College.name
+
+    def __init__(self, studentsName, studentMarks):
+        self.studentsName = studentsName
+        self.studentMarks = studentMarks
+    def getStudentsNameMarks(self):
+        grades = self.convertMarksToGrades(self.studentMarks)
+        return (self.getCollegeName(), self.studentsName, self.studentMarks, grades)
+
+    @staticmethod
+    def convertMarksToGrades():
+        if studentMarks < 40:
+            return 'Fail'
+        else:
+            return "pass"
 
 Key Takeaways from instance, class and static methods
 ======================================================

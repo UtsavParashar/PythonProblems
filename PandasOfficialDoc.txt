@@ -7328,6 +7328,8 @@ Including a flags argument when calling replace with a compiled regular expressi
 s3.str.replace(regex_pat, 'XX-XX ', flags=re.IGNORECASE)
 ValueError: case and flags cannot be set when pat is a compiled regex
 
+2.9.4 Concatenation
+--------------------
 
 
 
