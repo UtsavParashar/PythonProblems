@@ -7121,6 +7121,61 @@ df.columns = cols
 df = df.join(pd.DataFrame(np.random.rand(n, 2).round(2)).add_prefix("val"))
 df
 
+Pivoting with single aggregations
+----------------------------------
+Suppose we wanted to pivot df such that the col values are columns, row values are the index, and the mean of val0 are the values? In particular, the resulting DataFrame should look like:
+df.pivot_table(columns='col', index='row', values='val0', aggfunc=np.mean)
+
+Note that we can also replace the missing values by using the fill_value parameter.
+df.pivot_table(columns='col', index='row', values='val0', fill_value=0)
+
+Also note that we can pass in other aggregation functions as well. For example, we can also pass in sum.
+df.pivot_table(columns='col', index='row', values='val0',fill_value=0, aggfunc=np.sum)
+
+Another aggregation we can do is calculate the frequency in which the columns and rows occur together a.k.a. “cross tabulation”. To do this, we can pass size to the aggfunc parameter.
+df.pivot_table(columns='col', index='row', values='val0',fill_value=0, aggfunc='size')
+
+Pivoting with multiple aggregations
+------------------------------------
+We can also perform multiple aggregations. For example, to perform both a sum and mean, we can pass in a list to the aggfunc argument.
+df.pivot_table(columns='col', index='row', values='val0', aggfunc=[np.sum, np.mean])
+
+Note to aggregate over multiple value columns, we can pass in a list to the values parameter.
+df.pivot_table(columns='col', index='row', values=['val0', 'val1'],)
+
+Note to subdivide over multiple columns we can pass in a list to the columns parameter.
+df.pivot_table(columns=['item','col'], index='row', values=['val0', 'val1'],)
+
+2.8.11 Exploding a list-like column
+------------------------------------
+Sometimes the values in a column are list-like.
+keys = ["panda1", "panda2", "panda3"]
+values = [["eats", "shoots"], ["shoots", "leaves"], ["eats", "leaves"]]
+df = pd.DataFrame({"keys": keys, "values": values})
+df
+
+We can ‘explode’ the values column, transforming each list-like to a separate row, by using explode(). This will replicate the index values from the original row:
+df["values"].explode()
+
+You can also explode the column in the DataFrame.
+df.explode("values")
+
+Series.explode() will replace empty lists with np.nan and preserve scalar entries. The dtype of the resulting Series is always object.
+s = pd.Series([[1, 2, 3], "foo", [], ["a", "b"]])
+s.explode().reset_index(drop=True)
+
+Here is a typical usecase. You have comma separated strings in a column and want to expand this.
+df = pd.DataFrame([{"var1": "a,b,c", "var2": 1},
+                   {"var1": "d,e,f", "var2": 2}])
+df
+
+Creating a long form DataFrame is now straightforward using explode and chained operations
+df = pd.DataFrame([{"var1": "a,b,c", "var2": 1},
+                   {"var1": "d,e,f", "var2": 2}])
+df.assign(var1=df.var1.str.split(',')).explode('var1')
+
+
+
 
 
 
