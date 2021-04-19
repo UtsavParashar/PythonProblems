@@ -7050,8 +7050,76 @@ df[["data1"]].join(dummies)
 
 This function is often used along with discretization functions like cut:
 
+values = np.random.randn(10)
+bins = [0, 0.2, 0.4, 0.6, 0.8, 1]
+print(values)
+pd.cut(values, bins)
+pd.get_dummies(pd.cut(values, bins))
 
+get_dummies() also accepts a DataFrame. By default all categorical variables (categorical in the statistical
+sense, those with object or categorical dtype) are encoded as dummy variables.
 
+df = pd.DataFrame({"A": ["a", "b", "a"], "B": ["c", "c", "b"],
+                   "C": [1, 2,3]})
+pd.get_dummies(df)
+
+All non-object columns are included untouched in the output. You can control the columns that are encoded with the columns keyword.
+pd.get_dummies(df, columns=["A"])
+
+Notice that the B column is still included in the output, it just hasn’t been encoded. You can drop B before calling get_dummies if you don’t want to include it in the output.
+
+As with the Series version, you can pass values for the prefix and prefix_sep. By default the column name is used as the prefix, and ‘_’ as the prefix separator. You can specify prefix and prefix_sep in 3 ways:
+• string: Use the same value for prefix or prefix_sep for each column to be encoded.
+• list: Must be the same length as the number of columns being encoded.
+• dict: Mapping column name to prefix.
+
+simple = pd.get_dummies(df, prefix="new_prefix")
+from_list = pd.get_dummies(df, prefix=["from_A", "from_B"])
+from_dict = pd.get_dummies(df, prefix={"B": "from_B", "A": "from_A"})
+
+Sometimes it will be useful to only keep k-1 levels of a categorical variable to avoid collinearity when feeding the result to statistical models. You can switch to this mode by turn on drop_first.
+s = pd.Series(list("abcaa"))
+pd.get_dummies(s)
+pd.get_dummies(s, drop_first=True)
+
+When a column contains only one level, it will be omitted in the result.
+df = pd.DataFrame({"A": list("aaaaa"), "B": list("ababc")})
+pd.get_dummies(df)
+pd.get_dummies(df, drop_first=True)
+
+By default new columns will have np.uint8 dtype. To choose another dtype, use the dtype argument:
+df = pd.DataFrame({"A": list("abc"), "B": [1.1, 2.2, 3.3]})
+pd.get_dummies(df, dtype=bool).dtypes
+
+2.8.9 Factorizing values
+-------------------------
+To encode 1-d values as an enumerated type use factorize():
+It returns array of index of unique value(labels) and unique values.
+x = pd.Series(["A", "A", np.nan, "B", 3.14, np.inf])
+print(x)
+pd.factorize(x)
+
+Note that factorize is similar to numpy.unique, but differs in its handling of NaN:
+print(np.unique([1,3,1,2,5,np.nan,np.inf, np.nan]))
+print(pd.factorize([1,3,1,2,5,np.nan, np.inf, np.nan]))
+
+Note: The following numpy.unique will fail under Python3 with a TypeError because of an ordering bug.
+x = pd.Series(['A', 'A', np.nan, 'B', 3.14, np.inf])
+pd.factorize(x, sort=True)
+np.unique(x, return_inverse=True)[::-1] # TypeError: '<' not supported between instances of 'float' and 'str'
+
+Note: If you just want to handle one column as a categorical variable (like R’s factor),you can used f["cat_col"] = pd.Categorical(df["col"]) or df["cat_col"] = df["col"].astype("category").
+
+2.8.10 Examples
+---------------
+In this section, we will review frequently asked questions and examples. The column names and relevant column values are named to correspond with how this DataFrame will be pivoted in the answers below.
+np.random.seed([3, 1415])
+n = 20
+cols = np.array(["key", "row", "item", "col"])
+df = cols + pd.DataFrame((np.random.randint(5, size=(n, 4)) // [2, 1, 2, 1]).astype(str))
+df.columns = cols
+df = df.join(pd.DataFrame(np.random.rand(n, 2).round(2)).add_prefix("val"))
+df
 
 
 
@@ -7077,6 +7145,7 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+factorize() - similar to np.unique to get the unique values and their index from a series/df.col
 get_dummies(columnName) - Similar to symbol in kdb, it replaces the categorical values with their index.
 pd.cut(data, bins) - provide the bins for present data, look for example if not clear.
 crosstab(idex, col, values, aggfunc, margin, normalize) - Compute a simple cross tabulation of two (or more) factors. By default computes a frequency table of the factors unless an array of values and an aggregation function are passed.
