@@ -1234,7 +1234,7 @@ However, if you use them with care, namedtuples can undoubtedly make your Python
 
 
 Google Quants Finance Example - https://github.com/google/tf-quant-finance/blob/13336f99bd1cab56f783f38d320dddf3da00e7cc/tf_quant_finance/experimental/instruments/rates_common.py 
-InterestRateMarket = collections.namedtuple(
+    InterestRateMarket = collections.namedtuple(
     'InterestRateMarket',
     [
         # Instance of class RateCurve. The curve used for computing the forward
