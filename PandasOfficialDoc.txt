@@ -7174,8 +7174,159 @@ df = pd.DataFrame([{"var1": "a,b,c", "var2": 1},
                    {"var1": "d,e,f", "var2": 2}])
 df.assign(var1=df.var1.str.split(',')).explode('var1')
 
+===========================
+2.9 Working with text data
+===========================
+New in version 1.0.0.
+There are two ways to store text data in pandas:
+1. object -dtype NumPy array.
+2. StringDtype extension type.
+We recommend using StringDtype to store text data.
+Prior to pandas 1.0, object dtype was the only option. This was unfortunate for many reasons:
+1. You can accidentally store a mixture of strings and non-strings in an object dtype array. It’s better to have a dedicated dtype.
+2. object dtype breaks dtype-specific operations like DataFrame.select_dtypes(). There isn’t a clear way to select just text while excluding non-text but still object-dtype columns.
+3. When reading code, the contents of an object dtype array is less clear than 'string'.
+Currently, the performance of object dtype arrays of strings and arrays.StringArray are about the same. We expect future enhancements to significantly increase the performance and lower the memory overhead of StringArray .
 
+ Warning: StringArray is currently considered experimental. The implementation and parts of the API may change without warning.
 
+ For backwards-compatibility, object dtype remains the default type we infer a list of strings to
+ pd.Series(["a", "b", "c"]) # object
+ To explicitly request string dtype, specify the dtype
+ pd.Series(["a", "b", "c"], dtype="string")
+pd.Series(["a", "b", "c"], dtype=pd.StringDtype())
+
+Or astype after the Series or DataFrame is created
+s = pd.Series(["a", "b", "c"])
+s.astype("string")
+
+You can also use StringDtype/"string" as the dtype on non-string data and it will be converted to string dtype:
+s = pd.Series(["a", 2, np.nan], dtype="string")
+type(s[1]) # str
+
+or convert from existing pandas data:
+s1 = pd.Series([1, 2, np.nan], dtype="Int64")
+s2 = s1.astype("string")
+
+Behavior differences
+---------------------
+These are places where the behavior of StringDtype objects differ from object dtype
+1. For StringDtype, string accessor methods that return numeric output will always return a nullable integer dtype, rather than either int or float dtype, depending on the presence of NA values. Methods returning boolean output will return a nullable boolean dtype.
+s = pd.Series(["a", None, "b","a"], dtype="string")
+s.str.count("a") # Int64
+s.dropna().str.count("a") # Int64
+
+Both outputs are Int64 dtype. Compare that with object-dtype
+s = pd.Series(["a", None, "b","a"], dtype="object")
+s.str.count("a") # float64
+s.dropna().str.count("a") # Int64
+
+When NA values are present, the output dtype is float64. Similarly for methods returning boolean values.
+s = pd.Series(["a", None, "b","a"], dtype="string")
+s.str.isdigit() # boolean
+s.dropna().str.match("a") # boolean
+
+With object dtype.
+s = pd.Series(["a", None, "b","a"], dtype="object")
+s.str.isdigit() # object
+# s.dropna().str.match("a") # bool
+
+2. Some string methods, like Series.str.decode() are not available on StringArray because StringArray only holds strings, not bytes.
+3. In comparison operations, arrays.StringArray and Series backed by a StringArray will return an object with BooleanDtype, rather than a bool dtype object. Missing values in a StringArray will propagate in comparison operations, rather than always comparing unequal like numpy.nan.
+Everything else that follows in the rest of this document applies equally to string and object dtype.
+
+2.9.2 String methods
+---------------------
+Series and Index are equipped with a set of string processing methods that make it easy to operate on each element of the array. Perhaps most importantly, these methods exclude missing/NA values automatically. These are accessed via the str attribute and generally have names matching the equivalent (scalar) built-in string methods:
+s = pd.Series(["A", "B", "C", "Aaba", "Baca", np.nan, "CABA", "dog", "cat"],
+              dtype='string')
+s.str.lower()
+s.str.upper()
+s.str.len()
+
+idx = pd.Index([" jack", "jill ", " jesse ", "frank"])
+idx.str.strip()
+idx.str.lstrip()
+idx.str.rstrip()
+
+The string methods on Index are especially useful for cleaning up or transforming DataFrame columns. For instance, you may have columns with leading or trailing whitespace:
+df = pd.DataFrame(np.random.randn(3, 2),
+                  columns=[" Column A ", " Column B "],
+                  index=range(3))
+df
+
+df = pd.DataFrame(np.random.randn(3, 2),
+                  columns=[" Column A ", " Column B "],
+                  index=range(3))
+df.columns.str.strip()
+df.columns.str.lower()
+
+These string methods can then be used to clean up the columns as needed. Here we are removing leading and trailing whitespaces, lower casing all names, and replacing any remaining whitespaces with underscores:
+df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
+Note: If you have a Series where lots of elements are repeated (i.e. the number of unique elements in the Series is a lot smaller than the length of the Series), it can be faster to convert the original Series to one of type category and then use .str.<method> or .dt.<property> on that. The performance difference comes from the fact that, for Series of type category, the string operations are done on the .categories and not on each element of the Series.
+Please note that a Series of type category with string .categories has some limitations in comparison to Series of type string(e.g.you can’t add strings to each other:s + " " + s won’t work if s is a Series of type category). Also, .str methods which operate on elements of type list are not available on such a Series.
+
+Generally speaking, the .str accessor is intended to work only on strings. With very few exceptions, other uses are not supported, and may be disabled at a later point.
+
+2.9.3 Splitting and replacing strings
+-------------------------------------
+Methods like split return a Series of lists:
+s2 = pd.Series(["a_b_c", "c_d_e", np.nan, "f_g_h"], dtype="string")
+s2.str.split("_")
+Elements in the split lists can be accessed using get or [] notation:
+s2.str.split("_").str.get(1)
+s2.str.split("_").str[1]
+
+It is easy to expand this to return a DataFrame using expand.
+s2.str.split("_", expand=True)
+
+When original Series has StringDtype, the output columns will all be StringDtype as well. It is also possible to limit the number of splits:
+s2.str.split("_", expand=True, n=1)
+
+rsplit is similar to split except it works in the reverse direction, i.e., from the end of the string to the beginning of the string:
+s2.str.rsplit("_", expand=True, n=1)
+
+replace optionally uses regular expressions:
+s3 = pd.Series(["base", "A", "B", "C", "Aaba", "Baca", "", np.nan, "CABA", "dog", "cat"],
+               dtype='string')
+print(s3)
+s3.str.replace("^.a|dog", "XX-XX", case=False, regex=True)
+
+Warning: Some caution must be taken when dealing with regular expressions! The current behavior is to treat single character patterns as literal strings, even when regex is set to True. This behavior is deprecated and will be removed in a future version so that the regex keyword is always respected.
+
+If you want literal replacement of a string (equivalent to str.replace()), you can set the optional regex param-
+eter to False, rather than escaping each character. In this case both pat and repl must be strings:
+
+dollars = pd.Series(["12", "-$10", "$10,000"], dtype="string")
+# These lines are equivalent
+dollars.str.replace(r"-\$", "-", regex=True)
+dollars.str.replace("-$", "-", regex=False)
+
+The replace method can also take a callable as replacement. It is called on every pat using re.sub(). The callable should expect one positional argument (a regex object) and return a string.
+
+# Reverse every lowercase alphabetic word
+pat = r"[a-z]+"
+def repl(m):
+    return m.group(0)[::-1]
+pd.Series(["foo 123", "bar baz", np.nan], dtype="string").str.replace(
+    pat, repl, regex=True)
+
+# Using regex groups
+pat = r"(?P<one>\w+) (?P<two>\w+) (?P<three>\w+)"
+def repl(m):
+    return m.group("two").swapcase()
+
+pd.Series(["Foo Bar Baz", np.nan], dtype="string").str.replace(pat, repl, regex=True)
+
+The replace method also accepts a compiled regular expression object from re.compile() as a pattern. All flags should be included in the compiled regular expression object.
+import re
+regex_pat = re.compile(r"^.a|dog", flags=re.IGNORECASE)
+s3.str.replace(regex_pat, "XX-XX ", regex=True)
+
+Including a flags argument when calling replace with a compiled regular expression object will raise a ValueError.
+s3.str.replace(regex_pat, 'XX-XX ', flags=re.IGNORECASE)
+ValueError: case and flags cannot be set when pat is a compiled regex
 
 
 
