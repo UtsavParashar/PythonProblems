@@ -7295,8 +7295,7 @@ s3.str.replace("^.a|dog", "XX-XX", case=False, regex=True)
 
 Warning: Some caution must be taken when dealing with regular expressions! The current behavior is to treat single character patterns as literal strings, even when regex is set to True. This behavior is deprecated and will be removed in a future version so that the regex keyword is always respected.
 
-If you want literal replacement of a string (equivalent to str.replace()), you can set the optional regex param-
-eter to False, rather than escaping each character. In this case both pat and repl must be strings:
+If you want literal replacement of a string (equivalent to str.replace()), you can set the optional regex parameter to False, rather than escaping each character. In this case both pat and repl must be strings:
 
 dollars = pd.Series(["12", "-$10", "$10,000"], dtype="string")
 # These lines are equivalent
@@ -7330,6 +7329,81 @@ ValueError: case and flags cannot be set when pat is a compiled regex
 
 2.9.4 Concatenation
 --------------------
+There are several ways to concatenate a Series or Index, either with itself or others, all based on cat(), resp. Index.str.cat.
+
+Concatenating a single Series into a string
+The content of a Series (or Index) can be concatenated:
+s = pd.Series(['a','b','c','d'], dtype='string')
+s.str.cat(sep=',')
+
+If not specified, the keyword sep for the separator defaults to the empty string, sep='':
+s.str.cat() # 'abcd'
+
+By default, missing values are ignored. Using na_rep, they can be given a representation:
+t = pd.Series(["a", "b", np.nan, "d"], dtype="string")
+t.str.cat(sep=',', na_rep='-')
+t.str.cat(sep=',', na_rep='Ramesh')
+
+Concatenating a Series and something list-like into a Series
+The first argument to cat() can be a list-like object, provided that it matches the length of the calling Series (or Index).
+s.str.cat(['A', 'B', 'C', 'D'])
+
+Missing values on either side will result in missing values in the result as well, unless na_rep is specified:
+s.str.cat(t)
+s.str.cat(t, na_rep='Suresh')
+
+Concatenating a Series and something array-like into a Series
+The parameter others can also be two-dimensional. In this case, the number or rows must match the lengths of the calling Series (or Index).
+d = pd.concat([t, s], axis=1)
+s.str.cat(d, na_rep='-')
+
+Concatenating a Series and an indexed object into a Series, with alignment
+For concatenation with a Series or DataFrame, it is possible to align the indexes before concatenation by setting the join-keyword.
+u = pd.Series(["b", "d", "a", "c"], index=[1, 3, 0, 2], dtype="string")
+s.str.cat(u)
+s.str.cat(u, join='left')
+
+Warning: If the join keyword is not passed,the method cat() will currently fallback to the behavior before version 0.23.0 (i.e. no alignment), but a FutureWarning will be raised if any of the involved indexes differ, since this default will change to join='left' in a future version.
+
+The usual options are available for join (one of 'left', 'outer', 'inner', 'right'). In particular, alignment also means that the different lengths do not need to coincide anymore.
+v = pd.Series(["z", "a", "b", "d", "e"], index=[-1, 0, 1, 3, 4], dtype="string")
+s.str.cat(v, na_rep="-")
+s.str.cat(v, join='left', na_rep="-")
+s.str.cat(v, join='outer', na_rep="-")
+s.str.cat(v, join='inner', na_rep="-")
+s.str.cat(v, join='right', na_rep="-")
+
+The same alignment can be used when others is a DataFrame:
+f = d.loc[[3, 2, 1, 0], :]
+s.str.cat(f, join='left', na_rep='-')
+
+Concatenating a Series and many objects into a Series
+Several array-like items (specifically: Series, Index, and 1-dimensional variants of np.ndarray) can be com- bined in a list-like container (including iterators, dict-views, etc.).
+s.str.cat([u, u.to_numpy()], join="left")
+
+All elements without an index (e.g. np.ndarray) within the passed list-like must match in length to the calling Series (or Index), but Series and Index may have arbitrary length (as long as alignment is not disabled with join=None):
+s.str.cat([v, u, u.to_numpy()], join="outer", na_rep="-")
+
+If using join='right' on a list-like of others that contains different indexes, the union of these indexes will be used as the basis for the final concatenation:
+u.loc[[3]]
+v.loc[[-1, 0]]
+s.str.cat([u.loc[[3]], v.loc[[-1, 0]]], join="right", na_rep="-")
+
+2.9.5 Indexing with .str
+You can use [] notation to directly index by position locations. If you index past the end of the string, the result will be a NaN.
+s = pd.Series(["A", "B", "C", "Aaba", "Baca", np.nan, "CABA", "dog", "cat"],
+              dtype='string')
+s.str[0]
+s.str[1]
+
+2.9.6 Extracting substrings
+----------------------------
+Extract first match in each subject (extract)
+Warning: Before version 0.23, argument expand of the extract method defaulted to False. When expand=False, expand returns a Series, Index, or DataFrame, depending on the subject and regu- lar expression pattern. When expand=True, it always returns a DataFrame, which is more consistent and less confusing from the perspective of a user. expand=True has been the default since version 0.23.0.
+
+The extract method accepts a regular expression with at least one capture group.
+Extracting a regular expression with more than one group returns a DataFrame with one column per group.
+
 
 
 
@@ -7353,6 +7427,8 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+.str.cat(sep=, na_rep=) - concatenate a series with other series or series like objects of string type.
+.str.lower, upper, len, replace(with regex), split - string methods
 factorize() - similar to np.unique to get the unique values and their index from a series/df.col
 get_dummies(columnName) - Similar to symbol in kdb, it replaces the categorical values with their index.
 pd.cut(data, bins) - provide the bins for present data, look for example if not clear.
