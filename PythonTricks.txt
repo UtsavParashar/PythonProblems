@@ -1519,7 +1519,7 @@ dict - Your Go To Dictionary
 Dictionaries are also often called maps, hashmaps, lookup tables, or associative arrays. They allow for the efficient lookup, insertion, and deletion of any object associated with a given key.
 
 Dictionary can be defined in two ways:
-1. curly brances expression # d = {'a':2, 'b':4, 'c':8}
+1. curly branches expression # d = {'a':2, 'b':4, 'c':8}
 2. dictionary comprehension # {i:i*i for i in np.arange(1,5)}
 
 PyCon 2017 - https://www.youtube.com/watch?v=npw4s1QTmPg - Raymond Hettinger Modern Python Dictionaries
@@ -1563,7 +1563,7 @@ Dictionaries are highly optimized and underlie many parts of the language, for e
 Python dictionaries are based on a well-tested and finely tuned hash table implementation that provides the performance characteristics you’d expect: O(1) time complexity for lookup, insert, update, and delete operations in the average case.
 
 OrderedDict:
-Insertion order of dict keys are preserved in ordered dict which is also avaiable in dict from 3.6
+Insertion order of dict keys are preserved in ordered dict which is also available in dict from 3.6
 It is present in collections module.
 import collections 
 d = collections.OrderedDict(one=1, two=2, three=3)
@@ -1648,7 +1648,7 @@ Array Data Structure:
 ---------------------
 How do arrays work, and what are they used for?
 Arrays consist of fixed-size data records that allow each element to be efficiently located based on its index.
-Because arrays store information in adjoining blocks of memory, they’re considered contiguous data structures (as opposed to linked datas structure like linked lists, for example.)
+Because arrays store information in adjoining blocks of memory, they’re considered contiguous data structures (as opposed to linked data structure like linked lists, for example.)
 
 LIST – Mutable Dynamic Arrays
 -----------------------------

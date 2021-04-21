@@ -187,13 +187,13 @@ for match in iterator:
 
 -------------------------------Learning Till now:------------------------------------------------
 Meta Characters -->  . ^ $ * + ? { } [ ] \ | ( )
-. -> any number of chars
+. -> any number of chars except \n, re.DOTALL is another option which includes \n as well
 ^ -> except
 $ ->
 * -> 0 to infinite matches
 + -> 1 to infinite matches
 ? -> 0 or 1 match
-{} -> {m,n} -- There must be atleast m repetitions and atmost m repetitions
+{} -> {m,n} -- There must be atleast m repetitions and atmost n repetitions
 [] -> char class, can have values inside it like [a-zA-Z], meta chars are not active inside char class mean + will be char + and not meta char inside char class
 \  -> escape character
 |  ->
@@ -211,7 +211,7 @@ Regex in python:
 1. compile a string object to get a pattern object.
 2. Apply regex methods on pattern object.
 
-why is raw string required and regular string not enough?
+why is raw string required to be passed to compile method like re.compile(r'+\d\) and regular string not enough?
 Because of backslash plague, to search for a string having backslash '\string' it has to be converted to '\\string' to be passed to compile method to get a Pattern object and '\\\\string' to be passed as a string so it is better to pass it as a raw string r'\string' this will let interpreter know that backslash is a string char.
 This is helpful for predefined char classes as well.
 
@@ -234,3 +234,171 @@ span() - returns a tuple with start and end index of the matched string.
 
 Module-Level Functions
 -----------------------
+You don’t have to create a pattern object and call its methods; the re module also provides top-level functions called match(), search(), findall(), sub(), and so forth. These functions take the same arguments as the corresponding pattern method with the RE string added as the first argument, and still return either None or a match object instance.
+
+print(re.match(r'From\s+', 'Fromage amk')) # None
+print(re.match(r'From\s+', 'From 7 till 10')) # <re.Match object; span=(0, 5), match='From '>
+
+Under the hood, these functions simply create a pattern object for you and call the appropriate method on it. They also store the compiled object in a cache, so future calls using the same RE won’t need to parse the pattern again and again.
+
+Should you use these module-level functions, or should you get the pattern and call its methods yourself? If you’re accessing a regex within a loop, pre-compiling it will save a few function calls. Outside of loops, there’s not much difference thanks to the internal cache.
+
+Compilation Flags
+Compilation flags let you modify some aspects of how regular expressions work. Flags are available in the re module under two names, a long name such as IGNORECASE and a short, one-letter form such as I. (If you’re familiar with Perl’s pattern modifiers, the one-letter forms use the same letters; the short form of re.VERBOSE is re.X, for example.) Multiple flags can be specified by bitwise OR-ing them; re.I | re.M sets both the I and M flags, for example.
+
+Here’s a table of the available flags, followed by a more detailed explanation of each one.
+
+Flag                                        Meaning
+ASCII, A    Makes several escapes like \w, \b, \s and \d match only on ASCII characters with the respective property.
+DOTALL, S                               Make . match any character, including newlines.
+IGNORECASE, I                           Do case-insensitive matches.
+LOCALE, L                               Do a locale-aware match.
+MULTILINE, M                            Multi-line matching, affecting ^ and $.
+VERBOSE, X (for ‘extended’)             Enable verbose REs, which can be organized more cleanly and understandably.
+
+I IGNORECASE --> Perform case-insensitive matching; character class and literal strings will match letters by ignoring case. For example, [A-Z] will match lowercase letters, too.
+L LOCALE  --> Make \w, \W, \b, \B and case-insensitive matching dependent on the current locale instead of the Unicode database.
+M MULTILINE --> (^ and $ haven’t been explained yet; they’ll be introduced in section More Metacharacters.)
+Usually ^ matches only at the beginning of the string, and $ matches only at the end of the string and immediately before the newline (if any) at the end of the string.
+S DOTALL --> Makes the '.' special character match any character at all, including a newline; without this flag, '.' will match anything except a newline.
+A ASCII --> Make \w, \W, \b, \B, \s and \S perform ASCII-only matching instead of full Unicode matching. This is only meaningful for Unicode patterns, and is ignored for byte patterns.
+X VERBOSE --> This flag allows you to write regular expressions that are more readable by granting you more flexibility in how you can format them.
+For example, here’s a RE that uses re.VERBOSE; see how much easier it is to read?
+charref = re.compile(r"""
+ &[#]                # Start of a numeric entity reference
+ (
+     0[0-7]+         # Octal form
+   | [0-9]+          # Decimal form
+   | x[0-9a-fA-F]+   # Hexadecimal form
+ )
+ ;                   # Trailing semicolon
+""", re.VERBOSE)
+
+Without the verbose setting, the RE would look like this:
+
+charref = re.compile("&#(0[0-7]+"
+                     "|[0-9]+"
+                     "|x[0-9a-fA-F]+);")
+
+In the above example, Python’s automatic concatenation of string literals has been used to break up the RE into smaller pieces, but it’s still more difficult to understand than the version using re.VERBOSE.
+
+More Pattern Power
+So far we’ve only covered a part of the features of regular expressions. In this section, we’ll cover some new metacharacters, and how to use groups to retrieve portions of the text that was matched.
+
+More Metacharacters
+There are some metacharacters that we haven’t covered yet. Most of them will be covered in this section.
+
+| --> Alternation, or the “or” operator. If A and B are regular expressions, A|B will match any string that matches either A or B. | has very low precedence in order to make it work reasonably when you’re alternating multi-character strings. Crow|Servo will match either 'Crow' or 'Servo', not 'Cro', a 'w' or an 'S', and 'ervo'.
+To match a literal '|', use \|, or enclose it inside a character class, as in [|].
+
+^ --> Matches at the beginning of lines. Unless the MULTILINE flag has been set, this will only match at the beginning of the string. In MULTILINE mode, this also matches immediately after each newline within the string.
+For example, if you wish to match the word From only at the beginning of a line, the RE to use is ^From.
+
+print(re.search(r'^From', 'From here to eternity')) # <re.Match object; span=(0, 4), match='From'>
+print(re.search(r'^From', 'Reciting From Memory')) # None
+
+To match a literal '^', use \^.
+
+$ --> Matches at the end of a line, which is defined as either the end of the string, or any location followed by a newline character.
+>>> print(re.search('}$', '{block}'))   # <re.Match object; span=(6, 7), match='}'>
+>>> print(re.search('}$', '{block} '))  # None
+>>> print(re.search('}$', '{block}\n')) # <re.Match object; span=(6, 7), match='}'>
+To match a literal '$', use \$ or enclose it inside a character class, as in [$].
+
+\A --> Matches only at the start of the string. When not in MULTILINE mode, \A and ^ are effectively the same. In MULTILINE mode, they’re different: \A still matches only at the beginning of the string, but ^ may match at any location inside the string that follows a newline character.
+
+\Z --> Matches only at the end of the string.
+
+\b --> Word boundary. This is a zero-width assertion that matches only at the beginning or end of a word. A word is defined as a sequence of alphanumeric characters, so the end of a word is indicated by whitespace or a non-alphanumeric character.
+The following example matches class only when it’s a complete word; it won’t match when it’s contained inside another word.
+p = re.compile(r'\bclass\b')
+print(p.search('This is my class')) # <re.Match object; span=(11, 16), match='class'>
+print(p.search('THis is declassified')) # None
+print(p.search('One subclass at a time')) # None
+
+There are two subtleties you should remember when using this special sequence. First, this is the worst collision between Python’s string literals and regular expression sequences. In Python’s string literals, \b is the backspace character, ASCII value 8. If you’re not using raw strings, then Python will convert the \b to a backspace, and your RE won’t match as you expect it to. The following example looks the same as our previous RE, but omits the 'r' in front of the RE string.
+p = re.compile('\bclass\b')
+print(p.search('This is my class')) # None
+print(p.search('THis is declassified')) # None
+print(p.search('One subclass at a time')) # None
+print(p.search('\b' + 'class' + '\b')) # <re.Match object; span=(0, 7), match='\x08class\x08'>
+
+Second, inside a character class, where there’s no use for this assertion, \b represents the backspace character, for compatibility with Python’s string literals.
+
+\B --> Another zero-width assertion, this is the opposite of \b, only matching when the current position is not at a word boundary.
+
+Grouping
+--------
+Frequently you need to obtain more information than just whether the RE matched or not. Regular expressions are often used to dissect strings by writing a RE divided into several subgroups which match different components of interest. For example, an RFC-822 header line is divided into a header name and a value, separated by a ':', like this:
+From: author@example.com
+User-Agent: Thunderbird 1.5.0.9 (X11/20061227)
+This can be handled by writing a regular expression which matches an entire header line, and has one group which matches the header name, and another group which matches the header’s value.
+
+Groups are marked by the '(', ')' metacharacters. '(' and ')' have much the same meaning as they do in mathematical expressions; they group together the expressions contained inside them, and you can repeat the contents of a group with a repeating qualifier, such as *, +, ?, or {m,n}. For example, (ab)* will match zero or more repetitions of ab.
+
+p = re.compile('(ab)*')
+print(p.match('ababbbababb').span(1)) # (2, 4)
+
+Groups indicated with '(', ')' also capture the starting and ending index of the text that they match; this can be retrieved by passing an argument to group(), start(), end(), and span(). Groups are numbered starting with 0. Group 0 is always present; it’s the whole RE, so match object methods all have group 0 as their default argument. Later we’ll see how to express groups that don’t capture the span of text that they match.
+
+p = re.compile('(a)b')
+print(p.match('ab')) # <re.Match object; span=(0, 2), match='ab'>
+m = p.match('ab')
+print(m.group(0)) # ab
+print(m.group(1)) # a
+
+Subgroups are numbered from left to right, from 1 upward. Groups can be nested; to determine the number, just count the opening parenthesis characters, going from left to right.
+p = re.compile('(a(b)c)d')
+m = p.match('abcd')
+m.group() # 'abcd'
+m.group(1) # 'abc'
+m.group(2) # b
+
+group() can be passed multiple group numbers at a time, in which case it will return a tuple containing the corresponding values for those groups.
+m.group(2,1,2) # ('b', 'abc', 'b')
+
+The groups() method returns a tuple containing the strings for all the subgroups, from 1 up to however many there are.
+m.groups() # ('abc', 'b')
+
+Backreferences in a pattern allow you to specify that the contents of an earlier capturing group must also be found at the current location in the string. For example, \1 will succeed if the exact contents of group 1 can be found at the current position, and fails otherwise. Remember that Python’s string literals also use a backslash followed by numbers to allow including arbitrary characters in a string, so be sure to use a raw string when incorporating backreferences in a RE.
+For example, the following RE detects doubled words in a string.
+p = re.compile(r'\b(\w+)\s+\1\b')
+p.search('This is the the Paris').group() # 'the the'
+
+Backreferences like this aren’t often useful for just searching through a string — there are few text formats which repeat data in this way — but you’ll soon find out that they’re very useful when performing string substitutions.
+
+-----------------------Learnings till here-----------------------------------------
+Module Level Functions - We can apply methods directly on string without compiling and creating pattern object explicitly. Python creates the pattern object for us and applies methods on it. This pattern object is stored in cache so that each time pattern object is not created internally.
+re.match(r'\d+', 'Ramesh 10')
+
+when to use compile and when not to use?
+If you are using pattern object in loop, its good to create it once before loop. Otherwise the performance will be almost same as it is stored in cache.
+
+Compilation Flags:
+ASCII, A - Makes several escapes like \w, \b, \s and \d match only on ASCII characters with the respective property.
+DOTALL, S - Make . match any character, including newlines.
+IGNORECASE, I - Do case-insensitive matches.
+LOCALE, L - Do a locale-aware match. (Other languages word match)
+MULTILINE, M - Multi-line matching, affecting ^ and $.
+VERBOSE, X (for ‘extended’) - Enable verbose REs, which can be organized more cleanly and understandably.
+
+More Metacharacters:
+| - or condition while matching
+^ - beginning of the line, with MULTILINE it will search only beginning of the string.
+$ - end of the line
+\A - Matches only at the start of the string. When not in MULTILINE mode, \A and ^ are effectively the same.
+\Z - Matches only at the end of the string.
+\b - word boundary - word between \bword\b is matched.
+\B - this is the opposite of \b, only matching when the current position is not at a word boundary.
+
+Grouping:
+() - group characters between (). Groups are marked by the '(', ')' metacharacters. '(' and ')' have much the same meaning as they do in mathematical expressions; they group together the expressions contained inside them, and you can repeat the contents of a group with a repeating qualifier, such as *, +, ?, or {m,n}.
+
+groups - groups function returns all the matched group in the form of a tuple.
+
+-------------------------------------------------------------------------------------
+Non-capturing and Named Groups
+-------------------------------
+
+
+
