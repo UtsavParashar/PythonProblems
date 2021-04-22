@@ -7548,6 +7548,121 @@ isdecimal()     Equivalent to str.isdecimal
 ================================
 2.10 Working with missing data
 ================================
+In this section, we will discuss missing (also referred to as NA) values in pandas.
+Note: The choice of using NaN internally to denote missing data was largely for simplicity and performance reasons. Starting from pandas 1.0, some optional data types start experimenting with a native NA scalar using a mask-based approach.
+
+2.10.1 Values considered “missing”
+----------------------------------
+As data comes in many shapes and forms, pandas aims to be flexible with regard to handling missing data. While NaN is the default missing value marker for reasons of computational speed and convenience, we need to be able to easily detect this value with data of different types: floating point, integer, boolean, and general object. In many cases, however, the Python None will arise and we wish to also consider that “missing” or “not available” or “NA”.
+
+Note: If you want to consider inf and -inf to be “NA” in computations,you can set pandas.options.mode.use_inf_as_na = True.
+df = pd.DataFrame(np.random.randn(5, 3),index=["a", "c", "e", "f", "h"],
+                  columns=["one", "two", "three"],)
+df["four"] = "bar"
+df["five"] = df["one"] > 0
+df2 = df.reindex(["a", "b", "c", "d", "e", "f", "g", "h"])
+df2
+
+To make detecting missing values easier (and across different array dtypes), pandas provides the isna() and notna() functions, which are also methods on Series and DataFrame objects:
+pd.isna(df2["one"])
+pd.notna(df2["one"])
+pd.isnull(df2["one"])
+pd.notnull(df2["one"])
+
+df2.two.isna()
+df2['three'].notna()
+df2.isna()
+
+Warning: One has to be mindful that in Python (and NumPy),the nan's don’t compare equal,but None's do. Note that pandas/NumPy uses the fact that np.nan != np.nan,and treats None like np.nan.
+
+print(None == None) # True
+print(None == np.nan) # False
+print(np.nan == np.nan) # False
+print(id(np.nan)) # 4451886096
+print(id(np.nan)) # 4451886096
+print(np.nan is np.nan) # True
+
+So as compared to above, a scalar equality comparison versus a None/np.nan doesn’t provide useful information.
+df2['one'] == np.nan
+
+Integer dtypes and missing data
+--------------------------------
+Because NaN is a float, a column of integers with even one missing values is cast to floating-point dtype (see Support for integer NA for more). pandas provides a nullable integer array, which can be used by explicitly requesting the dtype:
+pd.Series([1, 2, np.nan, 4], dtype=pd.Int64Dtype())
+
+Datetimes
+-----------
+For datetime64[ns] types, NaT represents missing values. This is a pseudo-native sentinel value that can be represented by NumPy in a singular dtype (datetime64[ns]). pandas objects provide compatibility between NaT and NaN.
+df2 = df.copy()
+df2["timestamp"] = pd.Timestamp("20120101")
+df2.loc[["a", "c", "h"], ["one", "timestamp"]] = np.nan
+df2.dtypes.value_counts()
+
+2.10.2 Inserting missing data
+------------------------------
+You can insert missing values by simply assigning to containers. The actual missing value used will be chosen based on the dtype.
+For example, numeric containers will always use NaN regardless of the missing value type chosen:
+s = pd.Series([1, 2, 3])
+s.loc[0] = None
+Likewise, datetime containers will always use NaT.
+
+For object containers, pandas will use the value given:
+s = pd.Series(["a", "b", "c"])
+s.loc[0] = None
+s.loc[1] = np.nan
+
+2.10.3 Calculations with missing data
+-------------------------------------
+Missing values propagate naturally through arithmetic operations between pandas objects.
+a = df2[['one', 'two']]
+b = df2.loc[:, df2.dtypes == 'float64']
+a+b
+
+dft = pd.DataFrame({
+    'a':[10, np.nan, 30],
+    'b':[np.nan, 20, 30]
+})
+
+dft2 = pd.DataFrame({
+    'a':[np.nan, 20, 30],
+    'b':[np.nan, 20, np.nan]
+})
+
+dft + dft2
+dft.add(dft2, fill_value=0)
+
+• When summing data, NA (missing) values will be treated as zero.
+• If the data are all NA, the result will be 0.
+• Cumulative methods like cumsum() and cumprod() ignore NA values by default, but preserve them in the resulting arrays. To override this behaviour and include NA values, use skipna=False.
+
+df2.one.sum()
+df2.mean(1)
+df2.cumsum()
+df2.cumsum(skipna=False)
+
+2.10.4 Sum/prod of empties/nans
+-------------------------------
+ Warning: This behavior is now standard as of v0.22.0 and is consistent with the default in numpy; previously sum/prod of all-NA or empty Series/DataFrames would return NaN. See v0.22.0 whatsnew for more.
+
+The sum of an empty or all-NA Series or column of a DataFrame is 0.
+pd.Series([np.nan]).sum()
+pd.Series([], dtype="float64").sum()
+
+The product of an empty or all-NA Series or column of a DataFrame is 1.
+pd.Series([np.nan]).prod()
+pd.Series([], dtype="float64").prod()
+
+2.10.5 NA values in GroupBy
+---------------------------
+NA groups in GroupBy are automatically excluded. This behavior is consistent with R, for example:
+df.groupby("one").mean()
+
+Cleaning / filling missing data
+pandas objects are equipped with various data manipulation methods for dealing with missing data.
+
+
+
+
 
 
 
@@ -7578,6 +7693,8 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+notna() - boolean True if the value in the cell is na
+isna() - boolean True if the value in the cell is na
 .str.fullmatch(pattern) - element matches a pattern from the start of the string till end of the string.
 .str.match(pattern) - element matches a pattern from the start of the string.
 .str.contains(pattern) - elements contains a pattern, return bool
