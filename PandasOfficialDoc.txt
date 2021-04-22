@@ -7399,10 +7399,161 @@ s.str[1]
 2.9.6 Extracting substrings
 ----------------------------
 Extract first match in each subject (extract)
-Warning: Before version 0.23, argument expand of the extract method defaulted to False. When expand=False, expand returns a Series, Index, or DataFrame, depending on the subject and regu- lar expression pattern. When expand=True, it always returns a DataFrame, which is more consistent and less confusing from the perspective of a user. expand=True has been the default since version 0.23.0.
+Warning: Before version 0.23, argument expand of the extract method defaulted to False. When expand=False, expand returns a Series, Index, or DataFrame, depending on the subject and regular expression pattern. When expand=True, it always returns a DataFrame, which is more consistent and less confusing from the perspective of a user. expand=True has been the default since version 0.23.0.
 
 The extract method accepts a regular expression with at least one capture group.
 Extracting a regular expression with more than one group returns a DataFrame with one column per group.
+
+pd.Series(["a1", "b2", "c3"],dtype="string",).str.extract(r"([ab])(\d)", expand=False)
+
+Elements that do not match return a row filled with NaN. Thus, a Series of messy strings can be “converted” into a like-indexed Series or DataFrame of cleaned-up or more useful strings, without necessitating get() to access tuples or re.match objects. The dtype of the result is always object, even if no match is found and the result only contains NaN.
+Named groups like
+pd.Series(["a1", "b2", "c3"], dtype="string").str.extract(
+    r"(?P<letter>[ab])(?P<digit>\d)", expand=False)
+
+and optional groups like
+pd.Series(["a1", "b2", "3"],dtype="string",).str.extract(r"([ab])?(\d)", expand=False)
+can also be used. Note that any capture group names in the regular expression will be used for column names; otherwise capture group numbers will be used.
+
+Extracting a regular expression with one group returns a DataFrame with one column if expand=True.
+pd.Series(["a1", "b2", "c3"], dtype="string").str.extract(r"[ab](\d)",expand=True)
+type(pd.Series(["a1", "b2", "c3"], dtype="string").str.extract(r"[ab](\d)",expand=True)) # pandas.core.frame.DataFrame
+
+
+It returns a Series if expand=False.
+pd.Series(["a1", "b2", "c3"], dtype="string").str.extract(r"[ab](\d)",expand=False
+type(pd.Series(["a1", "b2", "c3"], dtype="string").str.extract(r"[ab](\d)",expand=False)) # pandas.core.series.Series
+
+Calling on an Index with a regex with exactly one capture group returns a DataFrame with one column if expand=True.
+s.index.str.extract("(?P<letter>[a-zA-Z])", expand=True)
+
+It returns an Index if expand=False.
+s.index.str.extract("(?P<letter>[a-zA-Z])", expand=False)
+
+Calling on an Index with a regex with more than one capture group returns a DataFrame if expand=Tru
+s.index.str.extract("(?P<letter>[a-zA-Z])(\d+)", expand=True)
+
+It raises ValueError if expand=False.
+s.index.str.extract("(?P<letter>[a-zA-Z])(\d+)", expand=False)
+ValueError: only one regex group is supported with Index
+
+The table below summarizes the behavior of extract(expand=False) (input subject in first column, number of groups in regex in first row)
+                    1 group             >1 group
+Index               Index               ValueError
+Series              Series              DataFrame
+
+Extract all matches in each subject (extractall)
+Unlike extract (which returns only the first match),
+s = pd.Series(["a1a2", "b1", "c1"], index=["A", "B", "C"], dtype="string")
+two_groups = "(?P<letter>[a-z])(?P<digit>[0-9])"
+s.str.extract(two_groups, expand=True)
+
+the extractall method returns every match. The result of extractall is always a DataFrame with a MultiIndex on its rows. The last level of the MultiIndex is named match and indicates the order in the subject.
+s.str.extractall(two_groups)
+
+When each subject string in the Series has exactly one match,
+s = pd.Series(["a3", "b3", "c2"], dtype="string")
+then
+extractall(pat).xs(0, level='match')gives the same result as extract(pat).
+extract_result = s.str.extract(two_groups, expand=True)
+extractall_result = s.str.extractall(two_groups)
+extractall_result.xs(0, level="match")
+
+Index also supports .str.extractall. It returns a DataFrame which has the same result as a Series.str. extractall with a default index (starts from 0).
+pd.Index(["a1a2", "b1", "c1"]).str.extractall(two_groups)
+pd.Series(["a1a2", "b1", "c1"], dtype="string").str.extractall(two_groups)
+
+2.9.7 Testing for strings that match or contain a pattern
+----------------------------------------------------------
+You can check whether elements contain a pattern:
+pattern = r"[0-9][a-z]"
+pd.Series(["1", "2", "3a", "3b", "03c", "4dx"],dtype="string",).str.contains(pattern)
+
+Or whether elements match a pattern:
+pd.Series(["1", "2", "3a", "3b", "03c", "4dx"],dtype="string",).str.match(pattern)
+pd.Series(["1", "2", "3a", "3b", "03c", "4dx"],dtype="string",).str.fullmatch(pattern)
+
+Note: The distinction between match, fullmatch, and contains is strictness: fullmatch tests whether the entire string matches the regular expression; match tests whether there is a match of the regular expression that begins at the first character of the string; and contains tests whether there is a match of the regular expression at any position within the string.
+
+The corresponding functions in the re package for these three match modes are re.fullmatch, re.match, and re.search, respectively.
+
+Methods like match, fullmatch, contains, startswith, and endswith take an extra na argument so missing values can be considered True or False:
+s4 = pd.Series(["A", "B", "C", "Aaba", "Baca", np.nan, "CABA", "dog", "cat"], dtype="string")
+s4.str.contains("A", na=False)
+
+2.9.8 Creating indicator variables
+-----------------------------------
+You can extract dummy variables from string columns. For example if they are separated by a '|':
+s = pd.Series(["a", "a|b", np.nan, "a|c"], dtype="string")
+s.str.get_dummies(sep="|")
+
+String Index also supports get_dummies which returns a MultiIndex.
+idx = pd.Index(["a", "a|b", np.nan, "a|c"])
+idx.str.get_dummies(sep="|")
+
+2.9.9 Method summary
+--------------------
+Method                              Description
+cat()           Concatenate strings
+split()         Split strings on delimiter
+rsplit()        Split strings on delimiter working from the end of the string
+get()           Index into each element (retrieve i-th element)
+join()          Join strings in each element of the Series with passed separator
+get_dummies()   Split strings on the delimiter returning DataFrame of dummy variables
+contains()      Return boolean array if each string contains pattern/regex
+replace()       Replace occurrences of pattern/regex/string with some other string or the return value of a callable given the occurrence
+repeat()        Duplicatevalues(s.str.repeat(3)equivalent to x * 3)
+pad()           Add whitespace to left, right, or both sides of strings
+center()        Equivalent to str.center
+ljust()         Equivalent to str.ljust
+rjust()         Equivalent to str.rjust
+zfill()         Equivalent to str.zfill
+wrap()          Split long strings into lines with length less than a given width
+slice()         Slice each string in the Series
+slice_replace() Replace slice in each string with passed value
+count()         Count occurrences of pattern
+startswith()    Equivalent to str.startswith(pat) for each element
+endswith()      Equivalent to str.endswith(pat) for each element
+findall()       Compute list of all occurrences of pattern/regex for each string
+match()         Call re.match on each element, returning matched groups as list
+extract()       Call re.search on each element, returning DataFrame with one row for each element and one column for each regex capture group
+extractall()    Call re.findall on each element, returning DataFrame with one row for each match and one column for each regex capture group
+len()           Compute string lengths
+strip()         Equivalent to str.strip
+rstrip()        Equivalent to str.rstrip
+lstrip()        Equivalent to str.lstrip
+partition()     Equivalent to str.partition
+rpartition()    Equivalent to str.rpartition
+lower()         Equivalent to str.lower
+casefold()      Equivalent to str.casefold
+upper()         Equivalent to str.upper
+find()          Equivalent to str.find
+rfind()         Equivalent to str.rfind
+index()         Equivalent to str.index
+rindex()        Equivalent to str.rindex
+capitalize()    Equivalent to str.capitalize
+swapcase()      Equivalent to str.swapcase
+normalize()     Return Unicode normal form. Equivalent to unicodedata.normalize
+translate()     Equivalent to str.translate
+isalnum()       Equivalent to str.isalnum
+isalpha()       Equivalent to str.isalpha
+isdigit()       Equivalent to str.isdigit
+isspace()       Equivalent to str.isspace
+islower()       Equivalent to str.islower
+isupper()       Equivalent to str.isupper
+istitle()       Equivalent to str.istitle
+isnumeric()     Equivalent to str.isnumeric
+isdecimal()     Equivalent to str.isdecimal
+
+================================
+2.10 Working with missing data
+================================
+
+
+
+
+
+
 
 
 
@@ -7427,10 +7578,15 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+.str.fullmatch(pattern) - element matches a pattern from the start of the string till end of the string.
+.str.match(pattern) - element matches a pattern from the start of the string.
+.str.contains(pattern) - elements contains a pattern, return bool
+.str.extractall() - extracts all groups from a string and returns a multiindex dataframe.
+.str.extract(expand=True) - extract elements from a series or df based on regex. if expand=False then returns Series else DF.
 .str.cat(sep=, na_rep=) - concatenate a series with other series or series like objects of string type.
 .str.lower, upper, len, replace(with regex), split - string methods
 factorize() - similar to np.unique to get the unique values and their index from a series/df.col
-get_dummies(columnName) - Similar to symbol in kdb, it replaces the categorical values with their index.
+get_dummies(columnName) - Similar to enumeration in kdb, it replaces the categorical values with their index.
 pd.cut(data, bins) - provide the bins for present data, look for example if not clear.
 crosstab(idex, col, values, aggfunc, margin, normalize) - Compute a simple cross tabulation of two (or more) factors. By default computes a frequency table of the factors unless an array of values and an aggregation function are passed.
 melt(id_vars, value_vars, vars_name, value_name) - melt a dataframe from width to height.
