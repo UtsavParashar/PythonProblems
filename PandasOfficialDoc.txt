@@ -2764,7 +2764,7 @@ df.reindex(index=['c', 'f', 'a'], columns=['three', 'two', 'one'])
 
 which one is faster to rearrange columns?
 %timeit df.reindex(columns=['three', 'two', 'one']) # 435 µs ± 17.1 µs per loop
-%timeit df[['three', 'two', 'one']] # 572 µs ± 26.2 µs per loop
+    %timeit df[['three', 'two', 'one']] # 572 µs ± 26.2 µs per loop
 
 You may also use reindex with an axis keyword:
 df.reindex(["c", "f", "b"], axis="index")
@@ -7660,13 +7660,68 @@ df.groupby("one").mean()
 Cleaning / filling missing data
 pandas objects are equipped with various data manipulation methods for dealing with missing data.
 
+2.10.6 Filling missing values: fillna
+--------------------------------------
+fillna() can “fill in” NA values with non-NA data in a couple of ways, which we illustrate:
 
+Replace NA with a scalar value
+-------------------------------
+df2.fillna(0)
+df2.one.fillna("missing")
 
+Fill gaps forward or backward
+------------------------------
+Using the same filling arguments as reindexing, we can propagate non-NA values forward or backward:
+df.fillna(method="pad")
 
+Question:https://stackoverflow.com/questions/67197427/how-to-fill-a-pandas-df-with-rows-for-values-that-do-not-exist-in-a-column-and-t/67197506#67197506
+ffill the items in the dataframe
+dft = pd.DataFrame({'week': [1,2,4,5,7], 'items':[1,2,3,4,5]})
+Many ways to do it using method=pad, ffill or ffill()
+dft.set_index('week').reindex(range(1,8)).fillna(method='pad').reset_index()
+%timeit dft.set_index('week').reindex(range(1,8)).fillna(method='ffill').reset_index()
+%timeit dft.set_index('week').reindex(range(1,8)).ffill().reset_index()
 
+Limit the amount of filling
+----------------------------
+If we only want consecutive gaps filled up to a certain number of data points, we can use the limit keyword:
+df.fillna(method="pad", limit=1)
 
+To remind you, these are the available filling methods:
+Method                      Action
+pad / ffill             Fill values forward
+bfill / backfill        Fill values backward
 
+With time series data, using pad/ffill is extremely common so that the “last known value” is available at every time point.
+ffill() is equivalent to fillna(method='ffill') and bfill() is equivalent to fillna(method='bfill')
 
+2.10.7 Filling with a PandasObject
+----------------------------------
+You can also fillna using a dict or Series that is alignable. The labels of the dict or index of the Series must match the columns of the frame you wish to fill. The use case of this is to fill a DataFrame with the mean of that column.
+dff = pd.DataFrame(np.random.randn(10, 3), columns=list("ABC"))
+dff.iloc[3:5, 0] = np.nan
+dff.iloc[4:6, 1] = np.nan
+dff.iloc[5:8, 2] = np.nan
+dff.fillna(dff.mean())
+dff.fillna(dff.mean()["B":"C"])
+
+Same result as above, but is aligning the ‘fill’ value which is a Series in this case.
+dff.where(pd.notna(dff), dff.mean(), axis="columns")
+
+2.10.8 Dropping axis labels with missing data: dropna
+------------------------------------------------------
+You may wish to simply exclude labels from a data set which refer to missing data. To do this, use dropna():
+df = df.iloc[:,:3]
+df['one']=np.nan
+df.dropna(axis=0)
+df.dropna(axis=1)
+df['one'].dropna()
+
+An equivalent dropna() is available for Series. DataFrame.dropna has considerably more options than Series.dropna.
+
+2.10.9 Interpolation
+--------------------
+Both Series and DataFrame objects have interpolate() that, by default, performs linear interpolation at missing data points.
 
 
 
@@ -7829,6 +7884,24 @@ head()
 tail()
 describe()
 info()
+
+==================2.19 Timeseries / date functionality=========================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+==================================================================================
 
 Important points while reading csv in pandas:
 ----------------------------------------------
