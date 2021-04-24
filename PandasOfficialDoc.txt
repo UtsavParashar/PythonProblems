@@ -7748,6 +7748,13 @@ at[] - whenever you need a scalar value go with at or iat. use at in case of lab
 iat[] - get the scalar values based on index
 
 Methods:
+TimeSeries:
+ts.resample() - resample Timestamp to a different frequency.
+tz_convert('US/Pacific') - covert timezone to a different timezone.
+tz_localize('Europe/Berlin') - Localize time of a DateTimeIndex.
+date_range('date', periods=, freq=, tz=) - generate date starting from given dates with n periods for provided freq.
+to_datetime() - converts a list of datetime objects like np.datetime64, 'date', datetime.datetime to pandas Timestamp object.
+
 notna() - boolean True if the value in the cell is na
 isna() - boolean True if the value in the cell is na
 .str.fullmatch(pattern) - element matches a pattern from the start of the string till end of the string.
@@ -7843,21 +7850,18 @@ rename() - rename a series
 .cat.set_categories()
 period.to_timestamp - get the first day of the month
 timestamp.to_period - convert date to the freq like in Months
-tz_convert - convert timezone to anotehr timezone
+tz_convert - convert timezone to another timezone
 tz_localize - specify timezone of a particular country
 pd.MultiIndex.from_tuples() 
 stack()
 df.rsub - opposite of sub(), first apply sub and then multiply values with -1
 df.sub() - subtract
 isna()
-fillna()
-dropna()
-reindex()
-date_range()
+date_range('date', periods=, freq=) - generate date starting from given dates with n periods for provided freq.
 idxmax() - get the max index
 replace({from:to})
 read_csv(parse_dates=['colName'])
-to_datetime()
+to_datetime() - converts a list of datetime objects like np.datetime64, 'date', datetime.datetime to pandas Timestamp object.
 merge(,,how, left_on, right_on)
 concat(, axis=, keys=)
 melt(id_var=, value_var=, value_name=, var_name=)
@@ -7886,10 +7890,79 @@ describe()
 info()
 
 ==================2.19 Timeseries / date functionality=========================
+pandas contains extensive capabilities and features for working with time series data for all domains. Using the NumPy datetime64 and timedelta64 dtypes, pandas has consolidated a large number of features from other Python libraries like scikits.timeseries as well as created a tremendous amount of new functionality for manipulating time series data.
+For example, pandas supports:
+Parsing time series information from various sources and formats
+dti = pd.to_datetime(
+    ['1.1.2018', np.datetime64('2018-01-01'), datetime.datetime(2018,1,1)]
+)
 
+Generate sequences of fixed-frequency dates and time spans:
+dti = pd.date_range('2018-01-01', periods=3, freq='2D')
+dti = pd.date_range('2018-01-01', periods=3, freq='4H')
 
+Manipulating and converting date times with timezone information
+dti.tz_localize('UTC')
+dti.tz_localize('Europe/Berlin')
+dti.tz_convert("US/Pacific")
+dti.tz_convert('US/Central')
 
+Resampling or converting a time series to a particular frequency
+idx = pd.date_range("2018-01-01", periods=5, freq="H")
+ts = pd.Series(range(len(idx)), index=idx)
+print(ts)
+ts.resample("2H").count()
+print(ts.resample("2H").mean())
+ts.resample("2H").median()
 
+Performing date and time arithmetic with absolute or relative time increments
+friday = pd.Timestamp("2018-01-05")
+friday.day_name()
+saturday = friday + pd.Timedelta("1 day")
+saturday.day_name() # 'Saturday'
+
+# Add 1 business day (Friday --> Monday)
+monday = friday + pd.offsets.BDay()
+(friday + pd.offsets.Day()).day_name()
+monday.day_name()
+pandas provides a relatively compact and self-contained set of tools for performing the above tasks and more.
+
+2.19.1 Overview
+pandas captures 4 general time related concepts:
+1. Date times: A specific date and time with timezone support. Similar to datetime.datetime from the standard library.
+2. Time deltas: An absolute time duration. Similar to datetime.timedelta from the standard library.
+3. Time spans: A span of time defined by a point in time and its associated frequency.
+4. Date offsets: A relative time duration that respects calendar arithmetic. Similar to dateutil. relativedelta.relativedelta from the dateutil package.
+
+Concept     Scalar Class    Array Class             pandas Data Type                    Primary Creation Method
+Date times  Timestamp       DatetimeIndex     datetime64[ns] or datetime64[ns, tz]  to_datetime or date_range
+Time deltas Timedelta       TimedeltaIndex    timedelta64[ns]                       to_timedelta or timedelta_range
+Time spans  Period          PeriodIndex       period[freq]                           Period or period_range
+Date offsets DateOffset     None              None                                   DateOffset
+
+For time series data, it’s conventional to represent the time component in the index of a Series or DataFrame so manipulations can be performed with respect to the time element.
+s = pd.Series(range(3), index=pd.date_range('2020', periods=3))
+
+However, Series and DataFrame can directly also support the time component as data itself.
+pd.Series(pd.date_range('2020', periods=3))
+
+Series and DataFrame have extended data type support and functionality for datetime, timedelta and Period data when passed into those constructors. DateOffset data however will be stored as object data.
+pd.Series(pd.period_range('1/1/2021', freq='M', periods=3))
+pd.Series([pd.DateOffset(1), pd.DateOffset(2)])
+pd.Series(pd.date_range("1/1/2011", freq="M", periods=3))
+
+Lastly, pandas represents null date times, time deltas, and time spans as NaT which is useful for representing missing or null date like values and behaves similar as np.nan does for float data.
+
+-- Problem --
+Stackoverflow -
+ df=pd.DataFrame({'Date':['2020-01-01', '2020-01-23', '2020-02-22', '2020-03-04'],  'ID':[1001,1002,1002,1003]})
+I need a table with extra column Wed, that gives me last Wednesday of Date, and if ID is 1002, returns 2 Wednesday before that Date
+
+Solution -
+df["Date"] = pd.to_datetime(df["Date"])
+df['Wed'] = np.where(df.ID == 1002,
+         df.Date - pd.offsets.Week(3, weekday=2),
+         df.Date - pd.offsets.Week(weekday=2))
 
 
 

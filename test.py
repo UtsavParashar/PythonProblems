@@ -1,5 +1,8 @@
-class Test:
-    def _intRet(self):
-        return 42
-    def extRet(self):
-        return 43
+Varx_(0,_0),0.0
+Varx_(0,_1),0.0
+Varx_(0,_10),0.0
+Varx_(0,_100),0.0
+Varx_(1,_0),0.0
+Varx_(1,_1),0.0
+Varx_(1,_10),0.0
+Varx_(1,_100),0.0
