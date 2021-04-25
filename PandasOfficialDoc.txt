@@ -7952,9 +7952,12 @@ pd.Series([pd.DateOffset(1), pd.DateOffset(2)])
 pd.Series(pd.date_range("1/1/2011", freq="M", periods=3))
 
 Lastly, pandas represents null date times, time deltas, and time spans as NaT which is useful for representing missing or null date like values and behaves similar as np.nan does for float data.
+pd.Timestamp(pd.NaT)
+pd.Timedelta(pd.NaT)
+pd.Period(pd.NaT)
 
 -- Problem --
-Stackoverflow -
+Stackoverflow - https://stackoverflow.com/questions/67225547/pandas-create-a-new-column-with-complex-condition-of-multiple-other-columns/67239962#67239962
  df=pd.DataFrame({'Date':['2020-01-01', '2020-01-23', '2020-02-22', '2020-03-04'],  'ID':[1001,1002,1002,1003]})
 I need a table with extra column Wed, that gives me last Wednesday of Date, and if ID is 1002, returns 2 Wednesday before that Date
 
@@ -7964,7 +7967,7 @@ df['Wed'] = np.where(df.ID == 1002,
          df.Date - pd.offsets.Week(3, weekday=2),
          df.Date - pd.offsets.Week(weekday=2))
 
-
+-------------------------------------------
 
 
 
