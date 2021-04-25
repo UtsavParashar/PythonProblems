@@ -7969,10 +7969,36 @@ df['Wed'] = np.where(df.ID == 1002,
 
 -------------------------------------------
 
+2.19.2 Timestamps vs. time spans
+================================
+Timestamped data is the most basic type of time series data that associates values with points in time. For pandas objects it means using the points in time.
+pd.Timestamp("2012-05-01")
+pd.Timestamp(datetime.datetime(2012, 5, 1))
+pd.Timestamp(2012, 5, 1)
 
+However, in many cases it is more natural to associate things like change variables with a time span instead. The span represented by Period can be specified explicitly, or inferred from datetime string format.
+For example:
+pd.Period("2011-01")
+pd.Period("2011.01", 'D')
+pd.Period("2011.01", freq='D')
 
+Timestamp and Period can serve as an index. Lists of Timestamp and Period are automatically coerced to DatetimeIndex and PeriodIndex respectively.
+dates = pd.date_range('2020/01/01', periods=3)
+ts = pd.Series(np.arange(3), dates)
+ts.index
+type(ts.index) # pandas.core.indexes.datetimes.DatetimeIndex
 
+periods = pd.date_range('2021-01', periods=3, freq='M')
+periods = periods.to_period()
+type(periods) # pandas.core.indexes.period.PeriodIndex
+ts = pd.Series(np.arange(3), periods)
+ts.index # PeriodIndex(['2021-01', '2021-02', '2021-03'], dtype='period[M]', freq='M')
+type(ts.index) #pandas.core.indexes.period.PeriodIndex
 
+pandas allows you to capture both representations and convert between them. Under the hood, pandas represents timestamps using instances of Timestamp and sequences of timestamps using instances of DatetimeIndex. For regular time spans, pandas uses Period objects for scalar values and PeriodIndex for sequences of spans. Better support for irregular intervals with arbitrary start and end points are forth-coming in future releases.
+
+2.19.3 Converting to timestamps
+--------------------------------
 
 
 
