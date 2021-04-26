@@ -4,6 +4,512 @@ PandasOfficialDoc
 conda activate myenv
 jupyter notebook
 
+READ-
+----------
+==================================================================================
+
+Important points while reading csv in pandas:
+----------------------------------------------
+source - https://towardsdatascience.com/all-the-pandas-read-csv-you-should-know-to-speed-up-your-data-analysis-1e16fe1039f3
+Pandas read_csv() tricks you should know to speed up your data analysis
+Some of the most helpful Pandas tricks to speed up your data analysis
+
+Importing data is the first step in any data science project. Often, you’ll work with data in CSV files and run into problems at the very beginning. In this article, you’ll see how to use the Pandas read_csv() function to deal with the following common problems.
+Dealing with different character encodings
+Dealing with headers
+Dealing with columns
+Parsing date columns
+Setting data type for columns
+Finding and locating invalid value
+Appending data to an existing CSV file
+Loading a huge CSV file with chunksize
+Please check out my Github repo for the source code.
+1. Dealing with different character encodings
+Character encodings are specific sets of rules for mapping from raw binary byte strings to characters that make up the human-readable text [1]. Python has built-in support for a list of standard encodings.
+Character encoding mismatches are less common today as UTF-8 is the standard text encoding in most of the programming languages including Python. However, it is definitely still a problem if you are trying to read a file with a different encoding than the one it was originally written. You are most likely to end up with something like below or DecodeError when that happens:
+
+Source from Kaggle character encoding
+The Pandas read_csv() function has an argument call encoding that allows you to specify an encoding to use when reading a file.
+Let’s take a look at an example below:
+First, we create a DataFrame with some Chinese characters and save it with encoding='gb2312' .
+df = pd.DataFrame({'name': '一 二 三 四'.split(), 'n': [2, 0, 2, 3]})
+df.to_csv('data/data_1.csv', encoding='gb2312', index=False)
+Then, you should get an UnicodeDecodeError when trying to read the file with the default utf8 encoding.
+# Read it with default encoding='utf8'
+# You should get an error
+pd.read_csv('data/data_1.csv')
+
+In order to read it correctly, you should pass the encoding that the file was written.
+pd.read_csv('data/data_1.csv', encoding='gb2312')
+
+2. Dealing with headers
+Headers refer to the column names. For some datasets, the headers may be completely missing, or you might want to consider a different row as headers. The read_csv() function has an argument called header that allows you to specify the headers to use.
+No headers
+If your CSV file does not have headers, then you need to set the argument header to None and the Pandas will generate some integer values as headers
+For example to import data_2_no_headers.csv
+pd.read_csv('data/data_2_no_headers.csv', header=None)
+
+Consider different row as headers
+Let’s take a look at data_2.csv
+x1,       x2,      x3,     x4
+product,  price,   cost,   profit
+a,        10,      5,      1
+b,        20,      12,     2
+c,        30,      20,     3
+d,        40,      30,     4
+It seems like more sensible columns name would be product, price, … profit, but they are not in the first row. The argument header also allows you to specify the row number to use as the column names and the start of data. In this case, we would like to skip the first row and use the 2nd row as headers:
+pd.read_csv('data/data_2.csv', header=1)
+3. Dealing with columns
+When your input dataset contains a large number of columns, and you want to load a subset of those columns into a DataFrame, then usecols will be very useful.
+Performance-wise, it is better because instead of loading an entire DataFrame into memory and then deleting the spare columns, we can select the columns we need while loading the dataset.
+Let’s use the same dataset data_2.csv and select the product and cost columns.
+pd.read_csv('data/data_2.csv',
+            header=1,
+            usecols=['product', 'cost'])
+
+We can also pass the column index to usecols:
+pd.read_csv('data/data_2.csv',
+            header=1,
+            usecols=[0, 1])
+4. Parsing date columns
+Date columns are represented as objects by default when loading data from a CSV file.
+df = pd.read_csv('data/data_3.csv')
+df.info()
+RangeIndex: 4 entries, 0 to 3
+Data columns (total 5 columns):
+ #   Column   Non-Null Count  Dtype
+---  ------   --------------  -----
+ 0   date     4 non-null      object
+ 1   product  4 non-null      object
+ 2   price    4 non-null      int64
+ 3   cost     4 non-null      int64
+ 4   profit   4 non-null      int64
+dtypes: int64(3), object(2)
+memory usage: 288.0+ bytes
+To read the date column correctly, we can use the argument parse_dates to specify a list of date columns.
+df = pd.read_csv('data/data_3.csv', parse_dates=['date'])
+df.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 4 entries, 0 to 3
+Data columns (total 5 columns):
+ #   Column   Non-Null Count  Dtype
+---  ------   --------------  -----
+ 0   date     4 non-null      datetime64[ns]
+ 1   product  4 non-null      object
+ 2   price    4 non-null      int64
+ 3   cost     4 non-null      int64
+ 4   profit   4 non-null      int64
+dtypes: datetime64[ns](1), int64(3), object(1)
+memory usage: 288.0+ bytes
+Sometime date is split up into multiple columns, for example, year, month, and day. To combine them into a datetime, we can pass a nested list to parse_dates.
+df = pd.read_csv('data/data_4.csv',
+                 parse_dates=[['year', 'month', 'day']])
+df.info()
+RangeIndex: 4 entries, 0 to 3
+Data columns (total 5 columns):
+ #   Column          Non-Null Count  Dtype
+---  ------          --------------  -----
+ 0   year_month_day  4 non-null      datetime64[ns]
+ 1   product         4 non-null      object
+ 2   price           4 non-null      int64
+ 3   cost            4 non-null      int64
+ 4   profit          4 non-null      int64
+dtypes: datetime64[ns](1), int64(3), object(1)
+memory usage: 288.0+ bytes
+To specify a custom column name instead of the auto-generated year_month_day, we can pass a dictionary instead.
+df = pd.read_csv('data/data_4.csv',
+                 parse_dates={ 'date': ['year', 'month', 'day'] })
+df.info()
+If your date column is in a different format, then you can customize a date parser and pass it to the argument date_parser:
+from datetime import datetime
+custom_date_parser = lambda x: datetime.strptime(x, "%Y %m %d %H:%M:%S")
+pd.read_csv('data/data_6.csv',
+             parse_dates=['date'],
+             date_parser=custom_date_parser)
+For more about parsing date columns, please check out this article
+4 tricks you should know to parse date columns with Pandas read_csv()
+Some of the most helpful Pandas tricks
+
+
+5. Setting data type
+If you want to set the data type for the DataFrame columns, you can use the argument dtype , for example
+pd.read_csv('data/data_7.csv',
+                 dtype={
+                     'Name': str,
+                     'Grade': int
+                 })
+6. Finding and locating invalid values
+You might get the TypeError when setting data type using the argument dtype
+
+It is always useful to find and locate the invalid values when this error happens. Here is how you can find them:
+df = pd.read_csv('data/data_8.csv')
+is_error = pd.to_numeric(df['Grade'], errors='coerce').isna()
+df[is_error]
+
+7. Appending data to an existing CSV file
+You can specify a Python write mode in the Pandas to_csv() function. For appending data to an existing CSV file, we can use mode='a':
+new_record = pd.DataFrame([['New name', pd.to_datetime('today')]],
+                      columns=['Name', 'Date'])
+new_record.to_csv('data/existing_data.csv',
+              mode='a',
+              header=None,
+              index=False)
+8. Loading a huge CSV file with chunksize
+By default, Pandas read_csv() function will load the entire dataset into memory, and this could be a memory and performance issue when importing a huge CSV file.
+read_csv() has an argument called chunksize that allows you to retrieve the data in a same-sized chunk. This is especially useful when reading a huge dataset as part of your data science project.
+Let’s take a look at an example below:
+First, let’s make a huge dataset with 400,000 rows and save it to big_file.csv
+# Make up a huge dataset
+nums = 100_000
+for name in 'a b c d'.split():
+    df = pd.DataFrame({
+        'col_1': [1]*nums,
+        'col_2': np.random.randint(100, 2000, size=nums)
+    })
+    df['name'] = name
+    df.to_csv('data/big_file.csv',
+              mode='a',
+              index=False,
+              header= name=='a')
+
+Next, let’s specify a chucksize of 50,000 when loading data with read_csv()
+dfs = pd.read_csv('data/big_file.csv',
+                  chunksize=50_000,
+                  dtype={
+                      'col_1': int,
+                      'col_2': int,
+                      'name': str
+                  })
+Let’s perform some aggregations on each chunk and then concatenate the result into a single DataFrame.
+res_dfs = []
+for chunk in dfs:
+    res = chunk.groupby('name').col_2.agg(['count', 'sum'])
+    res_dfs.append(res)
+pd.concat(res_dfs).groupby(level=0).sum()
+
+Let’s validate the result against a solution without chunksize
+pd.read_csv('data/big_file.csv',
+              dtype={
+                  'col_1': int,
+                  'col_2': int,
+                  'name': str
+              }).groupby('name').col_2.agg(['count', 'sum'])
+And you should get the same output.
+
+
+
+
+-------------__init__------------
+
+What’s __init__ for me?
+Designing for Python package import patterns
+Jacob Deppen
+Jacob Deppen
+
+Jan 8, 2019·9 min read
+
+
+I have had a few conversations lately about Python packaging, particularly around structuring the import statements to access the various modules of a package. This was something I had to do a lot of investigation of and experimentation with when I was organizing the leiap package. Still, I have not seen a good guide to best practices in various scenarios, so I thought I would share my thoughts here.
+Import patterns
+
+The key to designing how the user will interact with the modules is the package’s __init__.py file. This will define what gets brought into the namespace with the import statement.
+Modules
+It is usually a good idea to split code into smaller modules for a couple of reasons. Primarily, modules can contain all of the code related to a particular coherent topic (e.g., all of the I/O functionality) without being cluttered by code related to something completely different (e.g., plotting). For this reason, it is common to see large classes get a dedicated module (e.g., geodataframe.py within geopandas). Secondarily, dividing code into appropriate logical units makes it easier to read and easier to understand.
+However, a good module structure for the developer may or may not be a good module structure for the user. In some cases, the user might not need to know that there are various modules underlying the package. In other cases, there might be good reasons that the user should explicitly ask only for the modules they need. That is what I want to explore here: what are the different use cases and what approach do they call for from the package developer.
+An example package
+Python packages come in a variety of structures, but let’s create a simple demo one here that we can use in all the examples.
+/src
+    /example_pkg
+        __init__.py
+        foo.py
+        bar.py
+        baz.py
+    setup.py
+    README.md
+    LICENSE
+It is composed of three modules: foo.py, bar.py, and baz.py, each of which has a single function that prints the name of the module where the function resides.
+foo.py
+def foo_func():
+    print(‘this is a foo function’)
+bar.py
+def bar_func():
+    print(‘this is a bar function’)
+baz.py
+def baz_func():
+    print(‘this is a baz function’)
+Your code as a grocery store
+Now is a good time to acknowledge that talking about import statements and package structures can be pretty hard to follow, especially in text. To help make things a bit clearer, let’s think about a Python package as a grocery store and your users as the shoppers. As the developer, you are the store owner and manager. Your job is to figure out how to set up your store so that you serve your customers best. The structure of your __init__.py file will determine that setup. Below, I’ll walk through three alternative ways to set up that file: the general store, the convenience store, and the online store.
+The General Store
+
+In this scenario, the user gets access to everything right away on import example_pkg. In their code, they only need to type the package name and the class, function, or other object they want, regardless of what module of the source code it lives in.
+This scenario is like an old-timey general store. Once the customer walks in the door, they can see all the goods placed with minimal fuss in bins and shelves around the store.
+Behind the scenes
+# __init__.py
+from .foo import *
+from .bar import *
+from .baz import *
+User implementation
+import example_pkg
+example_pkg.foo_func()
+example_pkg.bar_func()
+example_pkg.baz_func()
+Advantages
+Users do not need to know module names or remember, for instance, which function is in which module. They only need the package name and the function name. In the general store, all the products are on display with minimal signage. The customer doesn’t need to know which aisle to go down.
+Users can access any functionality once the top-level package is imported. Everything is on display.
+Tab-completion gives you everything with just example_pkg.<TAB>. Tab-completion is like the general store grocer who knows exactly where everything is and is happy to help.
+When new features are added to modules, you do not need to update any import statements; they will automatically be included. In the general store, there is no fancy signage to change. Just put a new item on the shelf.
+Disadvantages
+Requires that all functions and classes must be uniquely named (i.e., there are not functions called save() in both the foo and bar modules). You don’t want to confuse your customers by putting apples in two different bins.
+If the package is large, it can add a lot to the namespace and (depending on a lot of factors) can slow things down. A general store can have a lot of little odds and ends that any individual customer might not want. That can might be overwhelming for your customers.
+Requires a bit more effort and vigilance to keep some elements away from the user. For example, you might need to use underscores to keep functions from importing (e.g., _function_name()). Most general stores don’t have a big storage area where things like brooms and mops are kept; those items are visible to the customer. Even if it is unlikely that they would pick up a broom and start sweeping your floors, you might not want them to. In that case, you have to take extra steps to hide those supplies from view.
+Recommendations
+Use when it is hard to predict the workflow of a typical user (e.g., general packages like pandas or numpy). This is the “general” part of general store.
+Use when the user might frequently bounce around between different modules (e.g., the leiap package)
+Use when function and class names are very descriptive and easy to remember and specifying the module names will not improve readability. If your products are familiar things like fruits and vegetables, you don’t need a lot of signage; customers will figure things out quite easily.
+Use with just a few modules. If there are many modules, it can be more difficult for a new user to find the functionality they want in the docs. If your general store gets too big, customers won’t be able to find the things they want.
+Use when objects might be added or removed frequently. It’s easy to add and remove products in the general store without disrupting the customer.
+Well-known examples
+pandas
+numpy (with additional complexity)
+seaborn
+The Convenience Store
+
+Photo by Caio Resende from Pexels
+By far the easiest to read and understand is a variation on the general store scenario that I call the convenience store. Instead of from .module import *, you can specify exactly what to import with from .module import func within __init__.py.
+The convenience store shares a lot of traits with the general store. It has a relatively limited selection of goods which can be replaced at any time with minimal hassle. The customer doesn’t need a lot of signage to find what they need because most of the goods are easily in view. The biggest difference is that a convenience store has a bit more order. The empty boxes, brooms, and mops are all kept out of view of the customer and only the products for sale are on the shelves.
+Behind the scenes
+# __init__.py
+from .foo import foo_func
+from .bar import bar_func
+from .baz import baz_func
+User implementation
+import example_pkg
+example_pkg.foo_func()
+example_pkg.bar_func()
+example_pkg.baz_func()
+Advantages
+Shares all of the advantages of the general store, and adds:
+Somewhat easier to control what objects are made available to the user
+Disadvantages
+__init__.py can end up very cluttered if there are many modules with many functions. Like the general store, a convenience store that is too cluttered will be harder for customers to navigate.
+When new features are added to a module (i.e., new class or functions), they have to be explicitly added to the __init__.py file too. Modern IDEs can help detect missed imports, but it is still easy to forget. Your convenience store has some minimal signage and price tags. You have to remember to update these when you change what is on the shelf.
+Recommendations
+I would add the following to the recommendations from the general store:
+Especially useful when your modules more or less consist of a single Class (e.g., from geopandas.geodataframe import GeoDataFrame)
+Use when you have a small number of objects to import
+Use when your objects have clear names
+Use when you know exactly which objects your users will need and which they will not
+Use when you do not expect to frequently add a lot of new modules and objects that will need to be imported.
+Well-known example
+geopandas
+Online grocery shopping
+
+Anyone who has bought groceries online knows that ordering the right product can take some effort on the part of the customer. You have to search for the product, choose a brand, choose the desired size, etc. All of these steps, however, allow you to buy exactly what you want from a nearly limitless stockroom.
+In the case of Python packages, in some cases, it might be more prudent to eschew the convenience of simply importing the entire package and instead force the user to be more clear about what pieces are being imported. This allows you as the developer to include a lot more pieces to the package without overwhelming the user.
+Behind the scenes
+# __init__.py
+import example_pkg.foo
+import example_pkg.bar
+import example_pkg.baz
+User implementation
+There are (at least) three different methods that a user could adopt in this case.
+import example_pkg
+example_pkg.foo.foo_func()
+example_pkg.bar.bar_func()
+example_pkg.bar.baz_func()
+or
+from example_pkg import foo, bar, baz
+foo.foo_func()
+bar.bar_func()
+baz.baz_func()
+or
+import example_pkg.foo as ex_foo
+import example_pkg.bar as ex_bar
+import example_pkg.baz as ex_baz
+ex_foo.foo_func()
+ex_bar.bar_func()
+ex_baz.baz_func()
+Advantages
+Simplifies the __init__.py file. Only needs to be updated when a new module is added. Updating your online store is relatively painless. You only need to change a setting in your product database.
+It is flexible. It can be used to import only what the user needs or to import everything. The customers in your online store can search for only what they want or need. No need to bother looking through a “fruit” bin when all you need is an apple. But if they do want everything in the “fruit” bin, they can get that too.
+Aliasing can clean up long package.module specifications (e.g., import matplotlib.pyplot as plt). While online grocery shopping can be a big pain at first, if you save your shopping list for the future, your shopping can be done a lot quicker.
+Can have multiple objects with the same name (e.g., functions called save() in both the foo and bar modules)
+Disadvantages
+Some of the import methods can make code more complicated to read. For example, foo.foo_func() does not indicate which package foo comes from.
+The most readable method (import example_pkg, with no alias) can lead to long code chunks (e.g., example_pkg.foo.foo_func()) that clutter things up.
+Can be hard for users to track down all of the possible functionality. In your online grocery store, it would be hard for the shopper to see all of the possible goods.
+Recommendations
+Use when you have a complex series of modules, most of which any one user will never need.
+Use when import example_pkg imports a LOT of objects and might be slow.
+Use when you can define pretty clear workflows for different kinds of users.
+Use when you can expect the user to be able to navigate your documentation well.
+Examples
+matplotlib *
+scikit-learn *
+bokeh *
+scipy *
+* These packages actually use combinations of different approaches in their __init__.py files. I include them here because to users, they are generally used à la carte (e.g., import matplotlib.pyplot as plt or import scipy.stats.kde).
+Conclusion
+The three scenarios I outlined are certainly not the only possible structures for a Python package, but I hope they cover most of the cases that anyone reading learning this from a blog might be considering. In conclusion, I’ll return to a point I made earlier: a good module structure for the developer may or may not be a good module structure for the user. Whatever your decision, don’t forget to put yourself in the user’s shoes even, or especially, because that user is most likely to be you.
+
+
+-----------How to group data by time intervals in Python Pandas?----------------------------
+How to group data by time intervals in Python Pandas?
+One-liners to combine Time-Series data into different intervals like based on each hour, week, or a month.
+Ankit Goel
+Ankit Goel
+
+Sep 12, 2020·7 min read
+
+
+
+Photo by Aron Visuals on Unsplash
+If you have ever dealt with Time-Series data analysis, you would have come across these problems for sure —
+Combining data into certain intervals like based on each day, a week, or a month.
+Aggregating data in the time interval like if you are dealing with price data then problems like total amount added in an hour, or a day.
+Finding patterns for other features in the dataset based on a time interval.
+In this article, you will learn about how you can solve these problems with just one-line of code using only 2 different Pandas API’s i.e. resample() and Grouper().
+As we know, the best way to learn something is to start applying it. So, I am going to use a sample time-series dataset provided by World Bank Open data and is related to the crowd-sourced price data collected from 15 countries. For more details about the data, refer Crowdsourced Price Data Collection Pilot. For this exercise, we are going to use data collected for Argentina.
+📚 Resources: Google Colab Implementation | Github Repository | Dataset 📚
+Dataset Details
+This data is collected by different contributors who participated in the survey conducted by the World Bank in the year 2015. The basic idea of the survey was to collect prices for different goods and services in different countries. We are going to use only a few columns from the dataset for the demo purposes —
+
+Sample Snippet of the Dataset by Author.
+Combining data based on different Time Intervals.
+Pandas provides an API named as resample() which can be used to resample the data into different intervals. Let’s see a few examples of how we can use this —
+Total Amount added each hour.
+Let’s say we need to find how much amount was added by a contributor in an hour, we can simply do so using —
+# data re-sampled based on an hour
+data.resample('H', on='created_at').price.sum()
+# output
+created_at
+2015-12-14 18:00:00     5449.90
+2015-12-14 19:00:00       15.98
+2015-12-14 20:00:00       66.98
+2015-12-14 21:00:00        0.00
+2015-12-14 22:00:00        0.00
+Here is what we are doing here —
+First, we resampled the data into an hour ‘H’ frequency for our date column i.e. created_at. We can use different frequencies, I will go through a few of them in this article. Check out Pandas Time Frequencies for a complete list of frequencies. You can even go up to nanoseconds.
+After this, we selected the ‘price’ from the resampled data. Later we will see how we can aggregate on multiple fields i.e. total amount, quantity, and the unique number of items in a single command.
+Computed the sum for all the prices. This will give us the total amount added in that hour.
+By default, the time interval starts from the starting of the hour i.e. the 0th minute like 18:00, 19:00, and so on. We can change that to start from different minutes of the hour using offset attribute like —
+# Starting at 15 minutes 10 seconds for each hour
+data.resample('H', on='created_at', offset='15Min10s').price.sum()
+# Output
+created_at
+2015-12-14 17:15:10     5370.00
+2015-12-14 18:15:10       79.90
+2015-12-14 19:15:10       64.56
+2015-12-14 20:15:10       18.40
+2015-12-14 21:15:10        0.00
+Please note, you need to have Pandas version > 1.10 for the above command to work.
+Total Amount added each week.
+In this example, we will see how we can resample the data based on each week.
+# data re-sampled based on an each week, just change the frequency
+data.resample('W', on='created_at').price.sum()
+# output
+created_at
+2015-12-20    4.305638e+04
+2015-12-27    6.733851e+04
+2016-01-03    4.443459e+04
+2016-01-10    1.822236e+04
+2016-01-17    1.908385e+05
+By default, the week starts from Sunday, we can change that to start from different days i.e. let’s say if we would like to combine based on the week starting on Monday, we can do so using —
+# data re-sampled based on an each week, week starting Monday
+data.resample('W-MON', on='created_at').price.sum()
+# output
+created_at
+2015-12-14    5.532860e+03
+2015-12-21    3.850762e+04
+2015-12-28    6.686329e+04
+2016-01-04    5.392410e+04
+2016-01-11    1.260869e+04
+Total Amount added each month.
+This is similar to what we have done in the examples before.
+# data re-sampled based on each month
+data.resample('M', on='created_at').price.sum()
+# Output
+created_at
+2015-12-31    1.538769e+05
+2016-01-31    4.297143e+05
+2016-02-29    9.352684e+05
+2016-03-31    7.425185e+06
+2016-04-30    1.384351e+07
+One observation to note here is that the output labels for each month are based on the last day of the month, we can use the ‘MS’ frequency to start it from 1st day of the month i.e. instead of 2015–12–31 it would be 2015–12–01 —
+# month frequency from start of the month
+data.resample('MS', on='created_at').price.sum()
+created_at
+2015-12-01    1.538769e+05
+2016-01-01    4.297143e+05
+2016-02-01    9.352684e+05
+2016-03-01    7.425185e+06
+2016-04-01    1.384351e+07
+Multiple Aggregation on sampled data.
+Often we need to apply different aggregations on different columns like in our example we might need to find —
+Unique items that were added in each hour.
+The total quantity that was added in each hour.
+The total amount that was added in each hour.
+We can do so in a one-line by using agg() on the resampled data. Let’s see how we can do it —
+# aggregating multiple fields for each hour
+data.resample('H', on='created_at').agg({'price':'sum', 'quantity':'sum','item_code':'nunique'})
+
+Aggregated data based on each hour by Author.
+Grouping data based on different Time intervals
+In the above examples, we re-sampled the data and applied aggregations on it. What if we would like to group data by other fields in addition to time-interval? Pandas provide an API known as grouper() which can help us to do that.
+In this section, we will see how we can group data on different fields and analyze them for different intervals.
+Amount added for each store type in each month.
+Let’s say we need to analyze data based on store type for each month, we can do so using —
+# Grouping data based on month and store type
+data.groupby([pd.Grouper(key='created_at', freq='M'), 'store_type']).price.sum().head(15)
+# Output
+created_at  store_type
+2015-12-31  other                          34300.00
+            public_semi_public_service       833.90
+            small_medium_shop               2484.23
+            specialized_shop              107086.00
+2016-01-31  market                           473.75
+            other                         314741.00
+            private_service_provider         325.00
+            public_semi_public_service       276.79
+            small_medium_shop              31042.79
+            specialized_shop               29648.44
+2016-02-29  market                          1974.04
+            other                         527950.00
+            private_service_provider        1620.00
+            public_semi_public_service      1028.52
+            small_medium_shop             224653.83
+Let’s understand how I did it —
+First, we passed the Grouper object as part of the groupby statement which groups the data based on month i.e. ‘M’ frequency. This is similar to resample(), so whatever we discussed above applies here as well.
+We added store_type to the groupby so that for each month we can see different store types.
+For each group, we selected the price, calculated the sum, and selected the top 15 rows.
+Total Amount added based on item_name in each month.
+As we did in the last example, we can do a similar thing for item_name as well.
+# Grouping data based on each month and item_name
+data.groupby([pd.Grouper(key='created_at', freq='M'), 'item_name']).price.sum()
+# Output
+created_at  item_name
+2015-12-31  Bar soap, solid, SB                                33.17
+            Beer, domestic brand, single bottle, WKB           29.79
+            Black tea, BL                                      12.00
+            Black tea, in bags, WKB                            60.99
+            Bread, white, sliced, WKB                          85.45
+                                                              ...
+2016-08-31  Wheat flour, not self-rising, BL                  150.38
+            White sugar, WKB                                  266.47
+            Women's haircut, basic hairdresser               7730.00
+            Wrist-watch, men's, CITIZEN Eco-Drive BM6060    52205.00
+            Yoghurt, plain, WKB                               150.96
+Multiple Aggregation for store_type in each month.
+We can apply aggregation on multiple fields similarly the way we did using resample(). The only thing which is different here is that the data would be grouped by store_type as well and also, we can do NamedAggregation (assign a name to each aggregation) on groupby object which doesn’t work for re-sample.
+# grouping data and named aggregation on item_code, quantity, and price
+data.groupby([pd.Grouper(key='created_at', freq='M'), 'store_type']).agg(unique_items=('item_code', 'nunique'),
+         total_quantity=('quantity','sum'),
+         total_amount=('price','sum'))
+
+-----------
+
+
+
 pandas: powerful Python data analysis toolkit Release 1.2.3
 ------------------------------------------------------------
 
@@ -7997,510 +8503,21 @@ type(ts.index) #pandas.core.indexes.period.PeriodIndex
 
 pandas allows you to capture both representations and convert between them. Under the hood, pandas represents timestamps using instances of Timestamp and sequences of timestamps using instances of DatetimeIndex. For regular time spans, pandas uses Period objects for scalar values and PeriodIndex for sequences of spans. Better support for irregular intervals with arbitrary start and end points are forth-coming in future releases.
 
+
+Key Takeaways from TimeStamps and Period:
+------------------------------------------
+Timestamp = pd.Timestamp
+    range - pd.to_datetime()
+    Index - DateTimeIndex(under the hood for sequence of Timestamps)
+Timespan - pd.Period
+    convert from timestamp to timespan - ts.to_period()
+    Index - PeriodIndex
+
+
 2.19.3 Converting to timestamps
 --------------------------------
+To convert a Series or list-like object of date-like objects e.g. strings, epochs, or a mixture, you can use the to_datetime function. When passed a Series, this returns a Series (with the same index), while a list-like is converted to a DatetimeIndex:
 
 
-
-
-==================================================================================
-
-Important points while reading csv in pandas:
-----------------------------------------------
-source - https://towardsdatascience.com/all-the-pandas-read-csv-you-should-know-to-speed-up-your-data-analysis-1e16fe1039f3
-Pandas read_csv() tricks you should know to speed up your data analysis
-Some of the most helpful Pandas tricks to speed up your data analysis
-
-Importing data is the first step in any data science project. Often, you’ll work with data in CSV files and run into problems at the very beginning. In this article, you’ll see how to use the Pandas read_csv() function to deal with the following common problems.
-Dealing with different character encodings
-Dealing with headers
-Dealing with columns
-Parsing date columns
-Setting data type for columns
-Finding and locating invalid value
-Appending data to an existing CSV file
-Loading a huge CSV file with chunksize
-Please check out my Github repo for the source code.
-1. Dealing with different character encodings
-Character encodings are specific sets of rules for mapping from raw binary byte strings to characters that make up the human-readable text [1]. Python has built-in support for a list of standard encodings.
-Character encoding mismatches are less common today as UTF-8 is the standard text encoding in most of the programming languages including Python. However, it is definitely still a problem if you are trying to read a file with a different encoding than the one it was originally written. You are most likely to end up with something like below or DecodeError when that happens:
-
-Source from Kaggle character encoding
-The Pandas read_csv() function has an argument call encoding that allows you to specify an encoding to use when reading a file.
-Let’s take a look at an example below:
-First, we create a DataFrame with some Chinese characters and save it with encoding='gb2312' .
-df = pd.DataFrame({'name': '一 二 三 四'.split(), 'n': [2, 0, 2, 3]})
-df.to_csv('data/data_1.csv', encoding='gb2312', index=False)
-Then, you should get an UnicodeDecodeError when trying to read the file with the default utf8 encoding.
-# Read it with default encoding='utf8'
-# You should get an error
-pd.read_csv('data/data_1.csv')
-
-In order to read it correctly, you should pass the encoding that the file was written.
-pd.read_csv('data/data_1.csv', encoding='gb2312')
-
-2. Dealing with headers
-Headers refer to the column names. For some datasets, the headers may be completely missing, or you might want to consider a different row as headers. The read_csv() function has an argument called header that allows you to specify the headers to use.
-No headers
-If your CSV file does not have headers, then you need to set the argument header to None and the Pandas will generate some integer values as headers
-For example to import data_2_no_headers.csv
-pd.read_csv('data/data_2_no_headers.csv', header=None)
-
-Consider different row as headers
-Let’s take a look at data_2.csv
-x1,       x2,      x3,     x4
-product,  price,   cost,   profit
-a,        10,      5,      1
-b,        20,      12,     2
-c,        30,      20,     3
-d,        40,      30,     4
-It seems like more sensible columns name would be product, price, … profit, but they are not in the first row. The argument header also allows you to specify the row number to use as the column names and the start of data. In this case, we would like to skip the first row and use the 2nd row as headers:
-pd.read_csv('data/data_2.csv', header=1)
-3. Dealing with columns
-When your input dataset contains a large number of columns, and you want to load a subset of those columns into a DataFrame, then usecols will be very useful.
-Performance-wise, it is better because instead of loading an entire DataFrame into memory and then deleting the spare columns, we can select the columns we need while loading the dataset.
-Let’s use the same dataset data_2.csv and select the product and cost columns.
-pd.read_csv('data/data_2.csv',
-            header=1,
-            usecols=['product', 'cost'])
-
-We can also pass the column index to usecols:
-pd.read_csv('data/data_2.csv',
-            header=1,
-            usecols=[0, 1])
-4. Parsing date columns
-Date columns are represented as objects by default when loading data from a CSV file.
-df = pd.read_csv('data/data_3.csv')
-df.info()
-RangeIndex: 4 entries, 0 to 3
-Data columns (total 5 columns):
- #   Column   Non-Null Count  Dtype
----  ------   --------------  -----
- 0   date     4 non-null      object
- 1   product  4 non-null      object
- 2   price    4 non-null      int64
- 3   cost     4 non-null      int64
- 4   profit   4 non-null      int64
-dtypes: int64(3), object(2)
-memory usage: 288.0+ bytes
-To read the date column correctly, we can use the argument parse_dates to specify a list of date columns.
-df = pd.read_csv('data/data_3.csv', parse_dates=['date'])
-df.info()
-<class 'pandas.core.frame.DataFrame'>
-RangeIndex: 4 entries, 0 to 3
-Data columns (total 5 columns):
- #   Column   Non-Null Count  Dtype
----  ------   --------------  -----
- 0   date     4 non-null      datetime64[ns]
- 1   product  4 non-null      object
- 2   price    4 non-null      int64
- 3   cost     4 non-null      int64
- 4   profit   4 non-null      int64
-dtypes: datetime64[ns](1), int64(3), object(1)
-memory usage: 288.0+ bytes
-Sometime date is split up into multiple columns, for example, year, month, and day. To combine them into a datetime, we can pass a nested list to parse_dates.
-df = pd.read_csv('data/data_4.csv',
-                 parse_dates=[['year', 'month', 'day']])
-df.info()
-RangeIndex: 4 entries, 0 to 3
-Data columns (total 5 columns):
- #   Column          Non-Null Count  Dtype
----  ------          --------------  -----
- 0   year_month_day  4 non-null      datetime64[ns]
- 1   product         4 non-null      object
- 2   price           4 non-null      int64
- 3   cost            4 non-null      int64
- 4   profit          4 non-null      int64
-dtypes: datetime64[ns](1), int64(3), object(1)
-memory usage: 288.0+ bytes
-To specify a custom column name instead of the auto-generated year_month_day, we can pass a dictionary instead.
-df = pd.read_csv('data/data_4.csv',
-                 parse_dates={ 'date': ['year', 'month', 'day'] })
-df.info()
-If your date column is in a different format, then you can customize a date parser and pass it to the argument date_parser:
-from datetime import datetime
-custom_date_parser = lambda x: datetime.strptime(x, "%Y %m %d %H:%M:%S")
-pd.read_csv('data/data_6.csv',
-             parse_dates=['date'],
-             date_parser=custom_date_parser)
-For more about parsing date columns, please check out this article
-4 tricks you should know to parse date columns with Pandas read_csv()
-Some of the most helpful Pandas tricks
-
-
-5. Setting data type
-If you want to set the data type for the DataFrame columns, you can use the argument dtype , for example
-pd.read_csv('data/data_7.csv',
-                 dtype={
-                     'Name': str,
-                     'Grade': int
-                 })
-6. Finding and locating invalid values
-You might get the TypeError when setting data type using the argument dtype
-
-It is always useful to find and locate the invalid values when this error happens. Here is how you can find them:
-df = pd.read_csv('data/data_8.csv')
-is_error = pd.to_numeric(df['Grade'], errors='coerce').isna()
-df[is_error]
-
-7. Appending data to an existing CSV file
-You can specify a Python write mode in the Pandas to_csv() function. For appending data to an existing CSV file, we can use mode='a':
-new_record = pd.DataFrame([['New name', pd.to_datetime('today')]],
-                      columns=['Name', 'Date'])
-new_record.to_csv('data/existing_data.csv',
-              mode='a',
-              header=None,
-              index=False)
-8. Loading a huge CSV file with chunksize
-By default, Pandas read_csv() function will load the entire dataset into memory, and this could be a memory and performance issue when importing a huge CSV file.
-read_csv() has an argument called chunksize that allows you to retrieve the data in a same-sized chunk. This is especially useful when reading a huge dataset as part of your data science project.
-Let’s take a look at an example below:
-First, let’s make a huge dataset with 400,000 rows and save it to big_file.csv
-# Make up a huge dataset
-nums = 100_000
-for name in 'a b c d'.split():
-    df = pd.DataFrame({
-        'col_1': [1]*nums,
-        'col_2': np.random.randint(100, 2000, size=nums)
-    })
-    df['name'] = name
-    df.to_csv('data/big_file.csv',
-              mode='a',
-              index=False,
-              header= name=='a')
-
-Next, let’s specify a chucksize of 50,000 when loading data with read_csv()
-dfs = pd.read_csv('data/big_file.csv',
-                  chunksize=50_000,
-                  dtype={
-                      'col_1': int,
-                      'col_2': int,
-                      'name': str
-                  })
-Let’s perform some aggregations on each chunk and then concatenate the result into a single DataFrame.
-res_dfs = []
-for chunk in dfs:
-    res = chunk.groupby('name').col_2.agg(['count', 'sum'])
-    res_dfs.append(res)
-pd.concat(res_dfs).groupby(level=0).sum()
-
-Let’s validate the result against a solution without chunksize
-pd.read_csv('data/big_file.csv',
-              dtype={
-                  'col_1': int,
-                  'col_2': int,
-                  'name': str
-              }).groupby('name').col_2.agg(['count', 'sum'])
-And you should get the same output.
-
-
-
-
--------------__init__------------
-
-What’s __init__ for me?
-Designing for Python package import patterns
-Jacob Deppen
-Jacob Deppen
-
-Jan 8, 2019·9 min read
-
-
-I have had a few conversations lately about Python packaging, particularly around structuring the import statements to access the various modules of a package. This was something I had to do a lot of investigation of and experimentation with when I was organizing the leiap package. Still, I have not seen a good guide to best practices in various scenarios, so I thought I would share my thoughts here.
-Import patterns
-
-The key to designing how the user will interact with the modules is the package’s __init__.py file. This will define what gets brought into the namespace with the import statement.
-Modules
-It is usually a good idea to split code into smaller modules for a couple of reasons. Primarily, modules can contain all of the code related to a particular coherent topic (e.g., all of the I/O functionality) without being cluttered by code related to something completely different (e.g., plotting). For this reason, it is common to see large classes get a dedicated module (e.g., geodataframe.py within geopandas). Secondarily, dividing code into appropriate logical units makes it easier to read and easier to understand.
-However, a good module structure for the developer may or may not be a good module structure for the user. In some cases, the user might not need to know that there are various modules underlying the package. In other cases, there might be good reasons that the user should explicitly ask only for the modules they need. That is what I want to explore here: what are the different use cases and what approach do they call for from the package developer.
-An example package
-Python packages come in a variety of structures, but let’s create a simple demo one here that we can use in all the examples.
-/src
-    /example_pkg
-        __init__.py
-        foo.py
-        bar.py
-        baz.py
-    setup.py
-    README.md
-    LICENSE
-It is composed of three modules: foo.py, bar.py, and baz.py, each of which has a single function that prints the name of the module where the function resides.
-foo.py
-def foo_func():
-    print(‘this is a foo function’)
-bar.py
-def bar_func():
-    print(‘this is a bar function’)
-baz.py
-def baz_func():
-    print(‘this is a baz function’)
-Your code as a grocery store
-Now is a good time to acknowledge that talking about import statements and package structures can be pretty hard to follow, especially in text. To help make things a bit clearer, let’s think about a Python package as a grocery store and your users as the shoppers. As the developer, you are the store owner and manager. Your job is to figure out how to set up your store so that you serve your customers best. The structure of your __init__.py file will determine that setup. Below, I’ll walk through three alternative ways to set up that file: the general store, the convenience store, and the online store.
-The General Store
-
-In this scenario, the user gets access to everything right away on import example_pkg. In their code, they only need to type the package name and the class, function, or other object they want, regardless of what module of the source code it lives in.
-This scenario is like an old-timey general store. Once the customer walks in the door, they can see all the goods placed with minimal fuss in bins and shelves around the store.
-Behind the scenes
-# __init__.py
-from .foo import *
-from .bar import *
-from .baz import *
-User implementation
-import example_pkg
-example_pkg.foo_func()
-example_pkg.bar_func()
-example_pkg.baz_func()
-Advantages
-Users do not need to know module names or remember, for instance, which function is in which module. They only need the package name and the function name. In the general store, all the products are on display with minimal signage. The customer doesn’t need to know which aisle to go down.
-Users can access any functionality once the top-level package is imported. Everything is on display.
-Tab-completion gives you everything with just example_pkg.<TAB>. Tab-completion is like the general store grocer who knows exactly where everything is and is happy to help.
-When new features are added to modules, you do not need to update any import statements; they will automatically be included. In the general store, there is no fancy signage to change. Just put a new item on the shelf.
-Disadvantages
-Requires that all functions and classes must be uniquely named (i.e., there are not functions called save() in both the foo and bar modules). You don’t want to confuse your customers by putting apples in two different bins.
-If the package is large, it can add a lot to the namespace and (depending on a lot of factors) can slow things down. A general store can have a lot of little odds and ends that any individual customer might not want. That can might be overwhelming for your customers.
-Requires a bit more effort and vigilance to keep some elements away from the user. For example, you might need to use underscores to keep functions from importing (e.g., _function_name()). Most general stores don’t have a big storage area where things like brooms and mops are kept; those items are visible to the customer. Even if it is unlikely that they would pick up a broom and start sweeping your floors, you might not want them to. In that case, you have to take extra steps to hide those supplies from view.
-Recommendations
-Use when it is hard to predict the workflow of a typical user (e.g., general packages like pandas or numpy). This is the “general” part of general store.
-Use when the user might frequently bounce around between different modules (e.g., the leiap package)
-Use when function and class names are very descriptive and easy to remember and specifying the module names will not improve readability. If your products are familiar things like fruits and vegetables, you don’t need a lot of signage; customers will figure things out quite easily.
-Use with just a few modules. If there are many modules, it can be more difficult for a new user to find the functionality they want in the docs. If your general store gets too big, customers won’t be able to find the things they want.
-Use when objects might be added or removed frequently. It’s easy to add and remove products in the general store without disrupting the customer.
-Well-known examples
-pandas
-numpy (with additional complexity)
-seaborn
-The Convenience Store
-
-Photo by Caio Resende from Pexels
-By far the easiest to read and understand is a variation on the general store scenario that I call the convenience store. Instead of from .module import *, you can specify exactly what to import with from .module import func within __init__.py.
-The convenience store shares a lot of traits with the general store. It has a relatively limited selection of goods which can be replaced at any time with minimal hassle. The customer doesn’t need a lot of signage to find what they need because most of the goods are easily in view. The biggest difference is that a convenience store has a bit more order. The empty boxes, brooms, and mops are all kept out of view of the customer and only the products for sale are on the shelves.
-Behind the scenes
-# __init__.py
-from .foo import foo_func
-from .bar import bar_func
-from .baz import baz_func
-User implementation
-import example_pkg
-example_pkg.foo_func()
-example_pkg.bar_func()
-example_pkg.baz_func()
-Advantages
-Shares all of the advantages of the general store, and adds:
-Somewhat easier to control what objects are made available to the user
-Disadvantages
-__init__.py can end up very cluttered if there are many modules with many functions. Like the general store, a convenience store that is too cluttered will be harder for customers to navigate.
-When new features are added to a module (i.e., new class or functions), they have to be explicitly added to the __init__.py file too. Modern IDEs can help detect missed imports, but it is still easy to forget. Your convenience store has some minimal signage and price tags. You have to remember to update these when you change what is on the shelf.
-Recommendations
-I would add the following to the recommendations from the general store:
-Especially useful when your modules more or less consist of a single Class (e.g., from geopandas.geodataframe import GeoDataFrame)
-Use when you have a small number of objects to import
-Use when your objects have clear names
-Use when you know exactly which objects your users will need and which they will not
-Use when you do not expect to frequently add a lot of new modules and objects that will need to be imported.
-Well-known example
-geopandas
-Online grocery shopping
-
-Anyone who has bought groceries online knows that ordering the right product can take some effort on the part of the customer. You have to search for the product, choose a brand, choose the desired size, etc. All of these steps, however, allow you to buy exactly what you want from a nearly limitless stockroom.
-In the case of Python packages, in some cases, it might be more prudent to eschew the convenience of simply importing the entire package and instead force the user to be more clear about what pieces are being imported. This allows you as the developer to include a lot more pieces to the package without overwhelming the user.
-Behind the scenes
-# __init__.py
-import example_pkg.foo
-import example_pkg.bar
-import example_pkg.baz
-User implementation
-There are (at least) three different methods that a user could adopt in this case.
-import example_pkg
-example_pkg.foo.foo_func()
-example_pkg.bar.bar_func()
-example_pkg.bar.baz_func()
-or
-from example_pkg import foo, bar, baz
-foo.foo_func()
-bar.bar_func()
-baz.baz_func()
-or
-import example_pkg.foo as ex_foo
-import example_pkg.bar as ex_bar
-import example_pkg.baz as ex_baz
-ex_foo.foo_func()
-ex_bar.bar_func()
-ex_baz.baz_func()
-Advantages
-Simplifies the __init__.py file. Only needs to be updated when a new module is added. Updating your online store is relatively painless. You only need to change a setting in your product database.
-It is flexible. It can be used to import only what the user needs or to import everything. The customers in your online store can search for only what they want or need. No need to bother looking through a “fruit” bin when all you need is an apple. But if they do want everything in the “fruit” bin, they can get that too.
-Aliasing can clean up long package.module specifications (e.g., import matplotlib.pyplot as plt). While online grocery shopping can be a big pain at first, if you save your shopping list for the future, your shopping can be done a lot quicker.
-Can have multiple objects with the same name (e.g., functions called save() in both the foo and bar modules)
-Disadvantages
-Some of the import methods can make code more complicated to read. For example, foo.foo_func() does not indicate which package foo comes from.
-The most readable method (import example_pkg, with no alias) can lead to long code chunks (e.g., example_pkg.foo.foo_func()) that clutter things up.
-Can be hard for users to track down all of the possible functionality. In your online grocery store, it would be hard for the shopper to see all of the possible goods.
-Recommendations
-Use when you have a complex series of modules, most of which any one user will never need.
-Use when import example_pkg imports a LOT of objects and might be slow.
-Use when you can define pretty clear workflows for different kinds of users.
-Use when you can expect the user to be able to navigate your documentation well.
-Examples
-matplotlib *
-scikit-learn *
-bokeh *
-scipy *
-* These packages actually use combinations of different approaches in their __init__.py files. I include them here because to users, they are generally used à la carte (e.g., import matplotlib.pyplot as plt or import scipy.stats.kde).
-Conclusion
-The three scenarios I outlined are certainly not the only possible structures for a Python package, but I hope they cover most of the cases that anyone reading learning this from a blog might be considering. In conclusion, I’ll return to a point I made earlier: a good module structure for the developer may or may not be a good module structure for the user. Whatever your decision, don’t forget to put yourself in the user’s shoes even, or especially, because that user is most likely to be you.
-
-
------------How to group data by time intervals in Python Pandas?----------------------------
-How to group data by time intervals in Python Pandas?
-One-liners to combine Time-Series data into different intervals like based on each hour, week, or a month.
-Ankit Goel
-Ankit Goel
-
-Sep 12, 2020·7 min read
-
-
-
-Photo by Aron Visuals on Unsplash
-If you have ever dealt with Time-Series data analysis, you would have come across these problems for sure —
-Combining data into certain intervals like based on each day, a week, or a month.
-Aggregating data in the time interval like if you are dealing with price data then problems like total amount added in an hour, or a day.
-Finding patterns for other features in the dataset based on a time interval.
-In this article, you will learn about how you can solve these problems with just one-line of code using only 2 different Pandas API’s i.e. resample() and Grouper().
-As we know, the best way to learn something is to start applying it. So, I am going to use a sample time-series dataset provided by World Bank Open data and is related to the crowd-sourced price data collected from 15 countries. For more details about the data, refer Crowdsourced Price Data Collection Pilot. For this exercise, we are going to use data collected for Argentina.
-📚 Resources: Google Colab Implementation | Github Repository | Dataset 📚
-Dataset Details
-This data is collected by different contributors who participated in the survey conducted by the World Bank in the year 2015. The basic idea of the survey was to collect prices for different goods and services in different countries. We are going to use only a few columns from the dataset for the demo purposes —
-
-Sample Snippet of the Dataset by Author.
-Combining data based on different Time Intervals.
-Pandas provides an API named as resample() which can be used to resample the data into different intervals. Let’s see a few examples of how we can use this —
-Total Amount added each hour.
-Let’s say we need to find how much amount was added by a contributor in an hour, we can simply do so using —
-# data re-sampled based on an hour
-data.resample('H', on='created_at').price.sum()
-# output
-created_at
-2015-12-14 18:00:00     5449.90
-2015-12-14 19:00:00       15.98
-2015-12-14 20:00:00       66.98
-2015-12-14 21:00:00        0.00
-2015-12-14 22:00:00        0.00
-Here is what we are doing here —
-First, we resampled the data into an hour ‘H’ frequency for our date column i.e. created_at. We can use different frequencies, I will go through a few of them in this article. Check out Pandas Time Frequencies for a complete list of frequencies. You can even go up to nanoseconds.
-After this, we selected the ‘price’ from the resampled data. Later we will see how we can aggregate on multiple fields i.e. total amount, quantity, and the unique number of items in a single command.
-Computed the sum for all the prices. This will give us the total amount added in that hour.
-By default, the time interval starts from the starting of the hour i.e. the 0th minute like 18:00, 19:00, and so on. We can change that to start from different minutes of the hour using offset attribute like —
-# Starting at 15 minutes 10 seconds for each hour
-data.resample('H', on='created_at', offset='15Min10s').price.sum()
-# Output
-created_at
-2015-12-14 17:15:10     5370.00
-2015-12-14 18:15:10       79.90
-2015-12-14 19:15:10       64.56
-2015-12-14 20:15:10       18.40
-2015-12-14 21:15:10        0.00
-Please note, you need to have Pandas version > 1.10 for the above command to work.
-Total Amount added each week.
-In this example, we will see how we can resample the data based on each week.
-# data re-sampled based on an each week, just change the frequency
-data.resample('W', on='created_at').price.sum()
-# output
-created_at
-2015-12-20    4.305638e+04
-2015-12-27    6.733851e+04
-2016-01-03    4.443459e+04
-2016-01-10    1.822236e+04
-2016-01-17    1.908385e+05
-By default, the week starts from Sunday, we can change that to start from different days i.e. let’s say if we would like to combine based on the week starting on Monday, we can do so using —
-# data re-sampled based on an each week, week starting Monday
-data.resample('W-MON', on='created_at').price.sum()
-# output
-created_at
-2015-12-14    5.532860e+03
-2015-12-21    3.850762e+04
-2015-12-28    6.686329e+04
-2016-01-04    5.392410e+04
-2016-01-11    1.260869e+04
-Total Amount added each month.
-This is similar to what we have done in the examples before.
-# data re-sampled based on each month
-data.resample('M', on='created_at').price.sum()
-# Output
-created_at
-2015-12-31    1.538769e+05
-2016-01-31    4.297143e+05
-2016-02-29    9.352684e+05
-2016-03-31    7.425185e+06
-2016-04-30    1.384351e+07
-One observation to note here is that the output labels for each month are based on the last day of the month, we can use the ‘MS’ frequency to start it from 1st day of the month i.e. instead of 2015–12–31 it would be 2015–12–01 —
-# month frequency from start of the month
-data.resample('MS', on='created_at').price.sum()
-created_at
-2015-12-01    1.538769e+05
-2016-01-01    4.297143e+05
-2016-02-01    9.352684e+05
-2016-03-01    7.425185e+06
-2016-04-01    1.384351e+07
-Multiple Aggregation on sampled data.
-Often we need to apply different aggregations on different columns like in our example we might need to find —
-Unique items that were added in each hour.
-The total quantity that was added in each hour.
-The total amount that was added in each hour.
-We can do so in a one-line by using agg() on the resampled data. Let’s see how we can do it —
-# aggregating multiple fields for each hour
-data.resample('H', on='created_at').agg({'price':'sum', 'quantity':'sum','item_code':'nunique'})
-
-Aggregated data based on each hour by Author.
-Grouping data based on different Time intervals
-In the above examples, we re-sampled the data and applied aggregations on it. What if we would like to group data by other fields in addition to time-interval? Pandas provide an API known as grouper() which can help us to do that.
-In this section, we will see how we can group data on different fields and analyze them for different intervals.
-Amount added for each store type in each month.
-Let’s say we need to analyze data based on store type for each month, we can do so using —
-# Grouping data based on month and store type
-data.groupby([pd.Grouper(key='created_at', freq='M'), 'store_type']).price.sum().head(15)
-# Output
-created_at  store_type
-2015-12-31  other                          34300.00
-            public_semi_public_service       833.90
-            small_medium_shop               2484.23
-            specialized_shop              107086.00
-2016-01-31  market                           473.75
-            other                         314741.00
-            private_service_provider         325.00
-            public_semi_public_service       276.79
-            small_medium_shop              31042.79
-            specialized_shop               29648.44
-2016-02-29  market                          1974.04
-            other                         527950.00
-            private_service_provider        1620.00
-            public_semi_public_service      1028.52
-            small_medium_shop             224653.83
-Let’s understand how I did it —
-First, we passed the Grouper object as part of the groupby statement which groups the data based on month i.e. ‘M’ frequency. This is similar to resample(), so whatever we discussed above applies here as well.
-We added store_type to the groupby so that for each month we can see different store types.
-For each group, we selected the price, calculated the sum, and selected the top 15 rows.
-Total Amount added based on item_name in each month.
-As we did in the last example, we can do a similar thing for item_name as well.
-# Grouping data based on each month and item_name
-data.groupby([pd.Grouper(key='created_at', freq='M'), 'item_name']).price.sum()
-# Output
-created_at  item_name
-2015-12-31  Bar soap, solid, SB                                33.17
-            Beer, domestic brand, single bottle, WKB           29.79
-            Black tea, BL                                      12.00
-            Black tea, in bags, WKB                            60.99
-            Bread, white, sliced, WKB                          85.45
-                                                              ...
-2016-08-31  Wheat flour, not self-rising, BL                  150.38
-            White sugar, WKB                                  266.47
-            Women's haircut, basic hairdresser               7730.00
-            Wrist-watch, men's, CITIZEN Eco-Drive BM6060    52205.00
-            Yoghurt, plain, WKB                               150.96
-Multiple Aggregation for store_type in each month.
-We can apply aggregation on multiple fields similarly the way we did using resample(). The only thing which is different here is that the data would be grouped by store_type as well and also, we can do NamedAggregation (assign a name to each aggregation) on groupby object which doesn’t work for re-sample.
-# grouping data and named aggregation on item_code, quantity, and price
-data.groupby([pd.Grouper(key='created_at', freq='M'), 'store_type']).agg(unique_items=('item_code', 'nunique'),
-         total_quantity=('quantity','sum'),
-         total_amount=('price','sum'))
 
 --------------------------------------------------------
