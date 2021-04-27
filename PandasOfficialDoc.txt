@@ -1874,7 +1874,7 @@ consider a 1-dimensional vector of True and False for which you want to count th
 In simple words we need to count the number of cases in which True comes after False.
 Eg:
 x = np.array([False, False, True, True,False])
-np.count_nonzero(x[:-1]<x[1:]) # 1 - only once True comes after false at position 3
+np.cunt_nonzero(x[:-1]<x[1:]) # 1 - only once True comes after false at position 3
 
 Classic Python:
 def get_count(x) -> int:
@@ -5170,7 +5170,7 @@ df_orig = df.copy()
 df_orig.where(df_orig>0, 0., inplace=True)
 df_orig
 
-Note: The signature for DataFrame.where() differs from numpy.where(). Roughly df1.where(m, df2)isequivalenttonp.where(m, df1, df2)
+Note: The signature for DataFrame.where() differs from numpy.where(). Roughly df1.where(m, df2)is equivalent tonp.where(m, df1, df2)
 df.where(df < 0, -df) == np.where(df < 0, df, -df)
 
 which is faster?
@@ -8495,6 +8495,7 @@ ts.index
 type(ts.index) # pandas.core.indexes.datetimes.DatetimeIndex
 
 periods = pd.date_range('2021-01', periods=3, freq='M')
+DatetimeIndex(['2021-01-31', '2021-02-28', '2021-03-31'], dtype='datetime64[ns]', freq='M')
 periods = periods.to_period()
 type(periods) # pandas.core.indexes.period.PeriodIndex
 ts = pd.Series(np.arange(3), periods)
@@ -8507,7 +8508,7 @@ pandas allows you to capture both representations and convert between them. Unde
 Key Takeaways from TimeStamps and Period:
 ------------------------------------------
 Timestamp = pd.Timestamp
-    range - pd.to_datetime()
+    range - pd.to_datetime(), pd.date_range()
     Index - DateTimeIndex(under the hood for sequence of Timestamps)
 Timespan - pd.Period
     convert from timestamp to timespan - ts.to_period()
@@ -8517,6 +8518,38 @@ Timespan - pd.Period
 2.19.3 Converting to timestamps
 --------------------------------
 To convert a Series or list-like object of date-like objects e.g. strings, epochs, or a mixture, you can use the to_datetime function. When passed a Series, this returns a Series (with the same index), while a list-like is converted to a DatetimeIndex:
+
+pd.to_datetime(pd.Series(["Jul 31, 2020","2010-01-10", None]))
+pd.to_datetime(["Jul 31, 2020","2010-01-10", None]) # DatetimeIndex(['2020-07-31', '2010-01-10', 'NaT'], dtype='datetime64[ns]', freq=None)
+
+If you use dates which start with the day first (i.e. European style), you can pass the dayfirst flag:
+pd.to_datetime('04-01-2021',dayfirst=True)
+pd.to_datetime('04-18-2021',dayfirst=True) # Timestamp('2021-04-18 00:00:00')
+
+ Warning: You see in the above example that dayfirst isn’t strict, so if a date can’t be parsed with the day being first it will be parsed as if dayfirst were False.
+
+ If you pass a single string to to_datetime, it returns a single Timestamp. Timestamp can also accept string input, but it doesn’t accept string parsing options like dayfirst or format, so use to_datetime if these are required.
+ pd.to_datetime("2010/11/12")
+ pd.Timestamp("2010/11/12")
+
+ You can also use the DatetimeIndex constructor directly:
+ pd.DatetimeIndex(["2018-01-01", "2018-01-03", "2018-01-05"])
+
+The string ‘infer’ can be passed in order to set the frequency of the index as the inferred frequency upon creation:
+pd.DatetimeIndex(["2018-01-01", "2018-01-03", "2018-01-05"], freq="infer") # DatetimeIndex(['2018-01-01', '2018-01-03', '2018-01-05'], dtype='datetime64[ns]', freq='2D')
+pd.DatetimeIndex(["2018-01-01", "2018-01-03", "2018-01-06"], freq="infer") # DatetimeIndex(['2018-01-01', '2018-01-03', '2018-01-06'], dtype='datetime64[ns]', freq=None)
+
+Providing a format argument
+-----------------------------
+In addition to the required datetime string, a format argument can be passed to ensure specific parsing. This could also potentially speed up the conversion considerably.
+pd.to_datetime("2020/11/12", format="%Y/%m/%d")
+pd.to_datetime("12-11-2010 00:00", format="%d-%m-%Y %H:%M")
+
+For more information on the choices available when specifying the format option -https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
+
+Assembling datetime from multiple DataFrame columns
+----------------------------------------------------
+
 
 
 

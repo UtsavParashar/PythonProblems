@@ -1,0 +1,43 @@
+pivot dupe
+https://stackoverflow.com/q/47152691/
+booelan indexing dupe
+https://stackoverflow.com/q/17071871
+idxmax + groupby dupe
+https://stackoverflow.com/q/15705630
+idxmin + groupby dupe
+https://stackoverflow.com/q/23394476
+melt dupe
+https://stackoverflow.com/q/28654047
+explode dupe
+https://stackoverflow.com/q/12680754
+cumcount dupe
+https://stackoverflow.com/q/23435270
+map dupe
+https://stackoverflow.com/q/24216425
+groupby+size+unstack dupe
+https://stackoverflow.com/q/39132742
+https://stackoverflow.com/q/38278603
+sorting inplace dupe
+https://stackoverflow.com/q/42613581
+factorize dupe
+https://stackoverflow.com/q/39357882
+groupby+size dupe
+https://stackoverflow.com/q/19384532
+groupby+ mean dupe
+https://stackoverflow.com/q/30482071
+transform sum dupe
+https://stackoverflow.com/q/30244952
+transform size dupe
+https://stackoverflow.com/q/37189878
+keyerror dupe
+https://stackoverflow.com/q/43736163
+merge/map dupe
+https://stackoverflow.com/q/53010406
+value_count dupe
+https://stackoverflow.com/q/15411158
+numpy select, where dupe
+https://stackoverflow.com/q/19913659
+wide_to_long dupe
+https://stackoverflow.com/q/55766565
+reset_index dupe
+https://stackoverflow.com/q/36932759
