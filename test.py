@@ -1,6 +1,3 @@
-"""0,1,2,3,4,5,6,7,8,9 10 11
-5_TKE12,0,1,0,0,2,0,1,0,0,0,0
-1_aeroD15,0,1,0,0,0,0,1,0,1,0,0
-6D9,1,2,1,0,0,0,0,0,0,0,1
-24_RSG24,0,0,0,2,2,0,0,0,0,0,0
-Other imm.as_SHF12,0,1,1,0,2,0,0,0,0,0,0"""
+"""A,B,C
+1129,19-APR-2021,'Zip Code Details: City: Huntsville_Alabama , Zip: 35808 , 801thru816 City: Anchorage_Alaska , Zip: 99506 , 501thru524'
+1139,20-APR-2021,'Zip Code Details: City: Miami_Florida , Zip: 33128 , 124thru190 City: Atlanta_Georgia , Zip: 30301 , 301thru381'"""
