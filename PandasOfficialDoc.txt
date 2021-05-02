@@ -8660,6 +8660,120 @@ pd.date_range(start, end, freq='M')
 pd.period_range(start, end, freq='M')
 pd.bdate_range(start, end, freq='M')
 
+Convenience functions like date_range and bdate_range can utilize a variety of frequency aliases:
+pd.date_range(start, periods=5, freq='QS')
+pd.bdate_range(start, periods=5, freq='BQS')
+pd.period_range(start, periods=4, freq='W-MON')
+
+date_range and bdate_range make it easy to generate a range of dates using various combinations of parame- ters like start, end, periods, and freq. The start and end dates are strictly inclusive, so dates outside of those specified will not be generated:
+pd.date_range(start, end, freq="BM") ## value in freq takes priority
+pd.bdate_range(start, end, freq="M")
+pd.bdate_range(end=end, periods=3, freq='BM')
+pd.bdate_range(start=start, periods=20)
+
+Specifying start, end, and periods will generate a range of evenly spaced dates from start to end inclusively, with periods number of elements in the resulting DatetimeIndex:
+pd.date_range("2018-01-01", "2018-01-05", periods=5)
+
+Custom frequency ranges
+------------------------
+bdate_range can also generate a range of custom frequency dates by using the weekmask and holidays parameters. These parameters will only be used if a custom frequency string is passed.
+weekmask = "Mon Wed Fri"
+holidays = [datetime.datetime(2011, 1, 5), datetime.datetime(2011, 3, 14)]
+pd.bdate_range(datetime.datetime(2011, 1, 1),
+              datetime.datetime(2011, 4, 30), freq='C',
+             weekmask=weekmask, holidays=holidays)
+
+-----------------------------------
+Convert dates from dd MMM YYYY format to datetime
+    pd.to_datetime('10 Feb 2021', format="%d %b %Y")
+
+Add days to existing datetime
+    pd.to_datetime('10.02.2021', dayfirst=True) + pd.DateOffset(days=84)
+
+Convert a julian date to normal date
+df = pd.DataFrame({'Date': ['16234', '16003']})
+df['Date'] = pd.to_datetime(df['Date'], format='%y%j')
+------------------------------------
+
+2.19.5 Timestamp limitations
+-----------------------------
+Since pandas represents timestamps in nanosecond resolution, the time span that can be represented using a 64-bit integer is limited to approximately 584 years:
+pd.Timestamp.min # Timestamp('1677-09-21 00:12:43.145225')
+pd.Timestamp.max # Timestamp('2262-04-11 23:47:16.854775807')
+
+2.19.6 Indexing
+----------------
+One of the main uses for DatetimeIndex is as an index for pandas objects. The DatetimeIndex class contains many time series related optimizations:
+• A large range of dates for various offsets are pre-computed and cached under the hood in order to make gener- ating subsequent date ranges very fast (just have to grab a slice).
+• Fast shifting using the shift method on pandas objects.
+• Unioning of overlapping DatetimeIndex objects with the same frequency is very fast (important for fast
+data alignment).
+• Quick access to date fields via properties such as year, month, etc.
+• Regularization functions like snap and very fast asof logic.
+DatetimeIndex objects have all the basic functionality of regular Index objects, and a smorgasbord of advanced time series specific methods for easy frequency processing.
+
+Note: While pandas does not force you to have a sorted dateindex,some of these methods may have unexpected or incorrect behavior if the dates are unsorted.
+
+DatetimeIndex can be used like a regular index and offers all of its intelligent functionality like selection, slicing, etc.
+rng = pd.bdate_range(start, end, freq="BM")
+ts = pd.Series(np.random.randn(len(rng)), index=rng)
+ts[:5]
+ts[:5].index
+ts[::2].index
+
+Partial string indexing
+-----------------------
+Dates and strings that parse to timestamps can be passed as indexing parameters:
+ts["1/31/2011"]
+ts[datetime.datetime(2011, 12, 25):]
+ts["10/31/2011":"12/31/2011"]
+
+To provide convenience for accessing longer time series, you can also pass in the year or year and month as strings:
+ts['2011']
+ts['2011-5']
+
+This type of slicing will work on a DataFrame with a DatetimeIndex as well. Since the partial string selection is a form of label slicing, the endpoints will be included. This would include matching times on an included date:
+
+Warning: Indexing DataFrame rows with a single string with getitem (e.g. frame[dtstring]) is depre- cated starting with pandas 1.2.0 (given the ambiguity whether it is indexing the rows or selecting a column) and will be removed in a future version. The equivalent with .loc (e.g. frame.loc[dtstring]) is still supported.
+
+df = ts.to_frame()
+df.rename(columns={(0):'col'}, inplace=True)
+df['2011-01-31'] # KeyError: '2011-01-31'
+df.loc['2011-01-31'] # col   -0.100624
+dft.loc['2013']
+
+This starts on the very first time in the month, and includes the last date and time for the month:
+dft["2013-1":"2013-2"]
+This specifies a stop time that includes all of the times on the last day:
+dft["2013-1":"2013-2-28"]
+This specifies an exact stop time (and is not the same as the above):
+dft["2013-1":"2013-2-28 00:00:00"]
+We are stopping on the included end-point as it is part of the index:
+dft["2013-1-15":"2013-1-15 12:30:00"]
+DatetimeIndex partial string indexing also works on a DataFrame with a MultiIndex:
+dft2 = pd.DataFrame(
+    np.random.randn(20,1),
+    columns=['A'],
+    index=pd.MultiIndex.from_product([
+        pd.date_range("2020.01.01", periods=10, freq='12H'),
+        ['a','b']
+    ])
+)
+dft2.loc['20200105']
+idx = pd.IndexSlice
+dft2 = dft2.swaplevel(0,1).sort_index()
+dft2.loc[idx[:,'20200105'], :]
+dft2.loc[idx['a','20200105'], :]
+
+New in version 0.25.0.
+Slicing with string indexing also honors UTC offset.
+
+df = pd.DataFrame([0],
+        index=pd.DatetimeIndex(["2019-01-01"],tz="US/Pacific"))
+df["2019-01-01 12:00:00+04:00":"2019-01-01 13:00:00+04:00"]
+
+Slice vs. exact match
+----------------------
 
 
 
