@@ -8273,6 +8273,13 @@ to_period(dateTime) - convert datetime objects to periods with provided frequenc
 pd.period_range(start='2020.01.01', end='2020.01.03') - returns Period Index with period type and necessary freq.
 df.truncate(before=, after=) fetch values based on ts, after values are not provided in output.
 idx.isocalendar() - converts datetime index to iso format providing year, week, day
+.day_name() - provides the day for a given date
+
+## rollforwarrd and rollbackward methods are present only with offsets and not timedelta.
+offset.rollforward(ts) - rollforward a date offset from the given timeseries
+offset.rollbackward(ts) - rollforward a date offset from the given timeseries
+
+timestamp.normalize() - normalize a given timestamp to 00:00.
 
 notna() - boolean True if the value in the cell is na
 isna() - boolean True if the value in the cell is na
@@ -8880,6 +8887,102 @@ idx = pd.date_range(start="2019-12-29", freq="D", periods=4)
 idx.isocalendar()
 idx.to_series().dt.isocalendar()
 
+2.19.8 DateOffset objects
+--------------------------
+In the preceding examples, frequency strings (e.g. 'D') were used to specify a frequency that defined: • how the date times in DatetimeIndex were spaced when using date_range()
+• the frequency of a Period or PeriodIndex
+These frequency strings map to a DateOffset object and its subclasses. A DateOffset is similar to a Timedelta that represents a duration of time but follows specific calendar duration rules. For example, a Timedelta day will always increment datetimes by 24 hours, while a DateOffset day will increment datetimes to the same time the next day whether a day represents 23, 24 or 25 hours due to daylight savings time. However, all DateOffset subclasses that are an hour or smaller (Hour, Minute, Second, Milli, Micro, Nano) behave like Timedelta and respect absolute time.
+The basic DateOffset acts similar to dateutil.relativedelta (relativedelta documentation) that shifts a date time by the corresponding calendar duration specified. The arithmetic operator (+) or the apply method can be used to perform the shift.
+
+# This particular day contains a day light savings time transition
+In [144]: ts = pd.Timestamp("2016-10-30 00:00:00", tz="Europe/Helsinki")
+# Respects absolute time
+In [145]: ts + pd.Timedelta(days=1)
+Out[145]: Timestamp('2016-10-30 23:00:00+0200', tz='Europe/Helsinki')
+# Respects calendar time
+In [146]: ts + pd.DateOffset(days=1)
+Out[146]: Timestamp('2016-10-31 00:00:00+0200', tz='Europe/Helsinki')
+
+friday = pd.Timestamp('2021.05.07')
+friday.day_name()
+
+# Add 2 business days (Friday --> Tuesday)
+two_business_days = 2 * pd.offsets.BDay()
+two_business_days.apply(friday)
+two_business_days + friday
+(two_business_days + friday).day_name()
+
+Most DateOffsets have associated frequencies strings, or offset aliases, that can be passed into freq keyword arguments. The available date offsets and associated frequency strings can be found below:
+
+Date Offset                 Frequency String            Description
+DateOffset                  None                Generic offset class, defaults to absolute 24 hours
+BDay or BusinessDay         'B'                 business day (weekday)
+CDay or CustomBusinessDay   'C'                 custom business day
+Week                        'W'                 one week, optionally anchored on a day of the week
+WeekOfMonth                 'WOM'               the x-th day of the y-th week of each month
+LastWeekOfMonth             'LWOM'              the x-th day of the last week of each month
+MonthEnd                    'M'                 calendar month end
+MonthBegin                  'MS'                calendar month begin
+BMonthEnd or BusinessMonthEnd       'BM'         business month end
+BMonthBegin or BusinessMonthBegin   'BMS'        business month begin
+CBMonthEnd 'CBM'
+or CustomBusinessMonthEnd
+custom business month end
+CBMonthBegin                        'CBMS' custom business month begin or
+CustomBusinessMonthBegin
+SemiMonthEnd                        'SM'    15th (or other day_of_month) and calendar month end
+SemiMonthBegin'                     'SMS'   15th (or other day_of_month) and calendar month begin
+QuarterEnd                           'Q'    calendar quarter end
+QuarterBegin                        'QS'   calendar quarter begin
+BQuarterEnd                 'BQ             business quarter end
+BQuarterBegin               'BQS'           business quarter begin
+FY5253Quarter'REQ'
+retail (aka 52-53 week) quarter
+YearEnd                     'A'             calendar year end
+YearBegin                   'AS' or 'BYS'   calendar year begin
+BYearEnd                    'BA'            business year end
+BYearBegin                  'BAS'           business year begin
+FY5253
+'RE'
+retail (aka 52-53 week) year
+Easter                      None            Easter holiday
+BusinessHour                'BH'           business hour
+CustomBusinessHour          'CBH'           custom business hour
+Day                         'D'             one absolute day
+Hour                        'H'             one hour
+Minute                      'T' or 'min'    one minute
+Second                      'S'             one second
+Milli                   'L' or 'ms'         one millisecond
+Micro                   'U' or 'us'         one microsecond
+Nano                    'N'                 one nanosecond
+
+DateOffsets additionally have rollforward() and rollback() methods for moving a date forward or back- ward respectively to a valid offset date relative to the offset. For example, business offsets will roll dates that land on the weekends (Saturday and Sunday) forward to Monday since business offsets operate on the weekdays.
+
+ts = pd.Timestamp("2018-01-06 00:00:00")
+ts.day_name()
+
+ts = pd.Timestamp("2021-05-08 00:00:00")
+
+# BusinessHour's valid offset dates are Monday through Friday
+offset = pd.offsets.BusinessHour(start="09:00")
+
+# Bring the date to the closest offset date (Monday
+offset.rollforward(ts) # Timestamp('2018-01-08 09:00:00')
+
+# Date is brought to the closest offset date first and then the hour is added
+ts + offset # Timestamp('2021-05-10 10:00:00')
+
+These operations preserve time (hour, minute, etc) information by default. To reset time to midnight, use normalize() before or after applying the operation (depending on whether you want the time information included in the operation).
+ts = pd.Timestamp("2014-01-01 09:00")
+day = pd.offsets.Day()
+day.apply(ts) # Timestamp('2014-01-02 09:00:00')
+day.apply(ts).normalize() # Timestamp('2014-01-02 00:00:00')
+
+ts = pd.Timestamp("2014-01-01 22:00")
+hour = pd.offsets.Hour()
+(ts + hour).normalize() # Timestamp('2014-01-01 00:00:00')
+
+hour.apply(pd.Timestamp("2014-01-01 23:30")).normalize() # Timestamp('2014-01-02 00:00:00')
 
 
 --------------------------------------------------------
