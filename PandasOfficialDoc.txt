@@ -8255,6 +8255,10 @@ iat[] - get the scalar values based on index
 
 Methods:
 TimeSeries:
+Period Index is capable of storing values outside Timestamp(dt64[ns]) daterange.
+    pd.Timestamp.max # Timestamp('2262-04-11 23:47:16.854775807')
+    pd.Timestamp.min # Timestamp('1677-09-21 00:12:43.145225')
+
 ts.resample() - resample Timestamp to a different frequency.
 tz_convert('US/Pacific') - covert timezone to a different timezone.
 tz_localize('Europe/Berlin') - Localize time of a DateTimeIndex.
@@ -8267,11 +8271,8 @@ pd.Index(dates) - will also convert the dates to DatetimeIndex.
 pd.Period() - define a timespan in frequency, eg -pd.Period('2020.01.01', freq='M') # Period('2020-01', 'M')
 to_period(dateTime) - convert datetime objects to periods with provided frequency.
 pd.period_range(start='2020.01.01', end='2020.01.03') - returns Period Index with period type and necessary freq.
-Period Index is capable of storing values outside Timestamp(dt64[ns]) daterange.
-    pd.Timestamp.max # Timestamp('2262-04-11 23:47:16.854775807')
-    pd.Timestamp.min # Timestamp('1677-09-21 00:12:43.145225')
-
-
+df.truncate(before=, after=) fetch values based on ts, after values are not provided in output.
+idx.isocalendar() - converts datetime index to iso format providing year, week, day
 
 notna() - boolean True if the value in the cell is na
 isna() - boolean True if the value in the cell is na
@@ -8774,8 +8775,110 @@ df["2019-01-01 12:00:00+04:00":"2019-01-01 13:00:00+04:00"]
 
 Slice vs. exact match
 ----------------------
+The same string used as an indexing parameter can be treated either as a slice or as an exact match depending on the resolution of the index. If the string is less accurate than the index, it will be treated as a slice, otherwise as an exact match.
+Consider a Series object with a minute resolution index:
 
+series_minute = pd.Series(np.arange(1,4),
+            pd.DatetimeIndex(["2011-12-31 23:59:00", "2012-01-01 00:00:00",
+                              "2012-01-01 00:02:00"],))
+series_minute.index.resolution # 'minute'
+# A timestamp string less accurate than a minute gives a Series object.
+series_minute['2011-12-31 23'] # 2011-12-31 23:59:00
 
+A timestamp string with minute resolution (or more accurate), gives a scalar instead, i.e. it is not casted to a slice.
+series_minute["2011-12-31 23:59"] # 1
+series_minute["2011-12-31 23:59:00"] # 1
+series_minute['2012-01-01 00:00'] # 2
+
+If index resolution is second, then the minute-accurate timestamp gives a Series.
+series_second = pd.Series([1, 2, 3],pd.DatetimeIndex(
+    ["2011-12-31 23:59:59", "2012-01-01 00:00:00", "2012-01-01 00:00:01"],
+     ))
+series_second.index.resolution # 'second'
+series_second["2011-12-31 23:59"] # 2011-12-31 23:59:59    1
+series_second["2011-12-31 23:59:59"] # 1
+
+If the timestamp string is treated as a slice, it can be used to index DataFrame with .loc[] as well.
+dft_minute = pd.DataFrame(
+    {"a": [1, 2, 3], "b": [4, 5, 6]}, index=series_minute.index
+)
+dft_minute.loc['2012-01-01 00:02']
+
+Warning: However,if the string is treated as an exact match,the selection in DataFrame’s [] will be column- wise and not row-wise, see Indexing Basics. For example dft_minute['2011-12-31 23:59'] will raise KeyError as '2012-12-31 23:59' has the same resolution as the index and there is no column with such name:
+To always have unambiguous selection, whether the row is treated as a slice or a single selection, use .loc.
+
+dft_minute.loc["2011-12-31 23:59"]
+
+Note also that DatetimeIndex resolution cannot be less precise than day.
+series_monthly = pd.Series(
+    [1, 2, 3], pd.DatetimeIndex(["2011-12", "2012-01", "2012-02"])
+)
+series_monthly.index.resolution # 'day'
+series_monthly["2011-12"] # returns Series - 2011-12-01
+series_monthly["2011-12-01"] # returns scaler
+
+Exact indexing
+---------------
+As discussed in previous section, indexing a DatetimeIndex with a partial string depends on the “accuracy” of the period, in other words how specific the interval is in relation to the resolution of the index. In contrast, indexing with Timestamp or datetime objects is exact, because the objects have exact meaning. These also follow the semantics of including both endpoints.
+These Timestamp and datetime object shave exact hours, minutes,and seconds,even though they were not explicitly specified (they are 0).
+dft[datetime.datetime(2013, 1, 1): datetime.datetime(2013, 2, 28)]
+
+With no defaults.
+dft[datetime.datetime(2013, 1, 1, 10, 12, 0): datetime.datetime(2013, 2, 28, 10, 12, 0)]
+
+Truncating & fancy indexing
+----------------------------
+A truncate() convenience function is provided that is similar to slicing. Note that truncate assumes a 0 value for any unspecified date component in a DatetimeIndex in contrast to slicing which returns any partially matching dates:
+
+rng2 = pd.date_range("2020-01-01", "2021-01-01", freq="W")
+rng2
+ts2 = pd.Series(np.random.randn(len(rng2)), index=rng2)
+ts2.truncate(before='2020-1', after='2020-02') # after month is not included
+ts2['2020-01':'2020-02']
+
+Even complicated fancy indexing that breaks the DatetimeIndex frequency regularity will result in a DatetimeIndex, although frequency is lost:
+ts2[[0,2,6]]
+ts2[[0,2,6]].index # Freq is lost
+ts2[[0,2,4]].index # Freq is present
+
+2.19.7 Time/date components
+----------------------------
+There are several time/date properties that one can access from Timestamp or a collection of timestamps like a DatetimeIndex.
+
+Property    Description
+year        The year of the datetime
+month       The month of the datetime
+day         The days of the datetime
+hour        The hour of the datetime
+minute      The minutes of the datetime
+second      The seconds of the datetime
+microsecond     The microseconds of the datetime
+nanosecond      The nanoseconds of the datetime
+date            Returns datetime.date (does not contain timezone information)
+time            Returns datetime.time (does not contain timezone information)
+timetz          Returns datetime.time as local time with timezone information
+dayofyear       The ordinal day of year
+day_of_year     The ordinal day of year
+weekofyear      The week ordinal of the year
+week            The week ordinal of the year
+dayofweek       The number of the day of the week with Monday=0, Sunday=6
+day_of_week     The number of the day of the week with Monday=0, Sunday=6
+weekday         The number of the day of the week with Monday=0, Sunday=6
+quarter         Quarter of the date: Jan-Mar = 1, Apr-Jun = 2, etc.
+days_in_month   The number of days in the month of the datetime
+is_month_start  Logical indicating if first day of month (defined by frequency)
+is_month_end    Logical indicating if last day of month (defined by frequency)
+is_quarter_start    Logical indicating if first day of quarter (defined by frequency)
+is_quarter_end      Logical indicating if last day of quarter (defined by frequency)
+is_year_start       Logical indicating if first day of year (defined by frequency)
+is_year_end         Logical indicating if last day of year (defined by frequency)
+is_leap_year        Logical indicating if the date belongs to a leap year
+
+Furthermore, if you have a Series with datetimelike values, then you can access these properties via the .dt accessor,
+You may obtain the year, week and day components of the ISO year from the ISO 8601 standard:
+idx = pd.date_range(start="2019-12-29", freq="D", periods=4)
+idx.isocalendar()
+idx.to_series().dt.isocalendar()
 
 
 
