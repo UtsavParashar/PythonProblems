@@ -1,7 +1,4 @@
-ID,      items,      Amount
-
-A1,       10,         100
-
-A2,       20,         200
-
-A3,       30,         300
+"""name id,prob_val,chrom,pos,sample_name
+indel,chr_1_xx,0.00001,chr1,8827192,m43zh
+indel,chr_2_yy,1e-10,chr2,7727881,ljhh12
+indel,chr_9_rr,1e-10,chr8,1223334,suh18"""

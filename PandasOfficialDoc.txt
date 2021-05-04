@@ -8701,6 +8701,9 @@ Add days to existing datetime
 Convert a julian date to normal date
 df = pd.DataFrame({'Date': ['16234', '16003']})
 df['Date'] = pd.to_datetime(df['Date'], format='%y%j')
+
+Convert Integer days to timedelta and then divide by years
+df['age_in_years'] = pd.to_timedelta(df.age_in_day, unit='D') / np.timedelta64(1,'Y')
 ------------------------------------
 
 2.19.5 Timestamp limitations
@@ -8983,6 +8986,65 @@ hour = pd.offsets.Hour()
 (ts + hour).normalize() # Timestamp('2014-01-01 00:00:00')
 
 hour.apply(pd.Timestamp("2014-01-01 23:30")).normalize() # Timestamp('2014-01-02 00:00:00')
+
+Parametric offsets
+-------------------
+Some of the offsets can be “parameterized” when created to result in different behaviors. For example, the Week offset for generating weekly data accepts a weekday parameter which results in the generated dates always lying on a particular day of the week:
+
+d = datetime.datetime(2021, 5, 4, 9, 0)
+d = pd.Timestamp('2021.05.04 09:00')
+d + pd.offsets.Week(weekday=4) # Timestamp('2021-05-07 09:00:00')
+
+d = datetime.datetime(2021, 5, 4, 9, 0)
+d = pd.Timestamp('2021.05.04 09:00')
+d + pd.offsets.Week(weekday=4) # Timestamp('2021-05-07 09:00:00')
+(d + pd.offsets.Week(weekday=4)).weekday() # 4
+(d + pd.offsets.Week(weekday=4)).day_name() # 'Friday'
+(d + pd.offsets.Week(weekday=4)).month_name() # 'May'
+
+The normalize option will be effective for addition and subtraction.
+d - pd.offsets.Week(normalize=True) # Timestamp('2021-05-11 00:00:00')
+d - pd.offsets.Week(normalize=True) # Timestamp('2021-04-27 00:00:00')
+
+Another example is parameterizing YearEnd with the specific ending month:
+d + pd.offsets.YearEnd() # Timestamp('2021-12-31 09:00:00')
+d + pd.offsets.YearEnd(normalize=True) # Timestamp('2021-12-31 00:00:00')
+d + pd.offsets.YearEnd(month=6) # Timestamp('2021-06-30 09:00:00')
+
+Using offsets with Series / DatetimeIndex
+------------------------------------------
+Offsets can be used with either a Series or DatetimeIndex to apply the offset to each element.
+rng = pd.date_range("2012-01-01", "2012-01-03")
+s = pd.Series(rng)
+rng + pd.DateOffset(months=2)
+s + pd.DateOffset(months=2)
+s - pd.DateOffset(months=2)
+
+-----------Difference between DateOffsets and Offsets--------------------------
+DateOffsets are relative whereas Offsets are absolute
+d = pd.date_range('2021.05.04', periods=2)
+d + pd.DateOffset(months=1) ## DatetimeIndex(['2021-06-04', '2021-06-05'], dtype='datetime64[ns]', freq=None)
+d + pd.offsets.MonthEnd() ## DatetimeIndex(['2021-05-31', '2021-05-31'], dtype='datetime64[ns]', freq=None)
+
+where can they be used interchangable, when dealing with days
+d - pd.offsets.Day(2) ## DatetimeIndex(['2021-05-02', '2021-05-03'], dtype='datetime64[ns]', freq=None)
+d - pd.DateOffset(2) ## DatetimeIndex(['2021-05-02', '2021-05-03'], dtype='datetime64[ns]', freq=None)
+
+--------------------------------------------------------------------------------
+
+If the offset class maps directly to a Timedelta (Day, Hour, Minute, Second, Micro, Milli, Nano) it can be used exactly like a Timedelta -
+s - pd.offsets.Day(2)
+td = s - pd.Series(pd.date_range('2011.12.28', '2011.12.30'))
+td + pd.offsets.Minute(15)
+
+Note that some offsets (such as BQuarterEnd) do not have a vectorized implementation. They can still be used but may calculate significantly slower and will show a PerformanceWarning
+rng + pd.offsets.BQuarterEnd()
+
+Custom business days
+---------------------
+
+
+
 
 
 --------------------------------------------------------
