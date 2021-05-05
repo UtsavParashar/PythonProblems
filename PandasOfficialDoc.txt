@@ -8280,6 +8280,8 @@ offset.rollforward(ts) - rollforward a date offset from the given timeseries
 offset.rollbackward(ts) - rollforward a date offset from the given timeseries
 
 timestamp.normalize() - normalize a given timestamp to 00:00.
+ts.shift() - used to shift index or values forward or backward.
+ts.asfreq() - can be used as reindex to fill missing timestamps and can also be used to fill values for nans.
 
 notna() - boolean True if the value in the cell is na
 isna() - boolean True if the value in the cell is na
@@ -9268,6 +9270,130 @@ In [254]: pd.Timestamp("2014-01-31") + pd.offsets.MonthEnd(n=0) Out[254]: Timest
 
 Holidays / holiday calendars
 ------------------------------
+Holidays and calendars provide a simple way to define holiday rules to be used with CustomBusinessDay or in other analysis that requires a predefined set of holidays. The AbstractHolidayCalendar class provides all the necessary methods to return a list of holidays and only rules need to be defined in a specific holiday calendar class. Furthermore, the start_date and end_date class attributes determine over what date range holidays are generated. These should be overwritten on the AbstractHolidayCalendar class to have the range apply to all calendar subclasses. USFederalHolidayCalendar is the only calendar that exists and primarily serves as an example for developing other calendars.
+For holidays that occur on fixed dates (e.g., US Memorial Day or July 4th) an observance rule determines when that holiday is observed if it falls on a weekend or some other non-observed day. Defined observance rules are:
+Rule                        Description
+nearest_workday             move Saturday to Friday and Sunday to Monday
+sun- day_to_monday          move Sunday to following Monday
+next_monday_or_tuesday      Saturday to Monday and Sunday/Monday to Tuesday
+previous_friday             move Saturday and Sunday to previous Friday”
+next_monday                 move Saturday and Sunday to following Monday
+An example of how holidays and holiday calendars are defined:
+
+In [255]: from pandas.tseries.holiday import (
+.....: Holiday,
+.....: USMemorialDay,
+.....: AbstractHolidayCalendar,
+.....: nearest_workday,
+.....: MO, .....: ) .....:
+In [256]: class ExampleCalendar(AbstractHolidayCalendar):
+              rules = [
+                  USMemorialDay,
+                  Holiday("July 4th", month=7, day=4, observance=nearest_workday),
+                  Holiday(
+                      "Columbus Day",
+                      month=10,
+                      day=1,
+                      offset=pd.DateOffset(weekday=MO(2)),
+), ]
+In [257]: cal = ExampleCalendar()
+In [258]: cal.holidays(datetime.datetime(2012, 1, 1), datetime.datetime(2012, 12, 31)) Out[258]: DatetimeIndex(['2012-05-28', '2012-07-04', '2012-10-08'], dtype=
+˓→'datetime64[ns]', freq=None)
+
+hint weekday=MO(2) is same as 2 * Week(weekday=2)
+Using this calendar, creating an index or doing offset arithmetic skips weekends and holidays (i.e., Memorial Day/July 4th). For example, the below defines a custom business day offset using the ExampleCalendar. Like any other offset, it can be used to create a DatetimeIndex or added to datetime or Timestamp objects.
+
+pd.date_range(
+.....: start="7/1/2012", end="7/10/2012", freq=pd.offsets.CDay(calendar=cal) .....: ).to_pydatetime()
+.....:
+
+In [260]: offset = pd.offsets.CustomBusinessDay(calendar=cal) In [261]: datetime.datetime(2012, 5, 25) + offset
+Out[261]: Timestamp('2012-05-29 00:00:00')
+In [262]: datetime.datetime(2012, 7, 3) + offset
+Out[262]: Timestamp('2012-07-05 00:00:00')
+In [263]: datetime.datetime(2012, 7, 3) + 2 * offset Out[263]: Timestamp('2012-07-06 00:00:00')
+
+Ranges are defined by the start_date and end_date class attributes of AbstractHolidayCalendar. The defaults are shown below.
+
+In [265]: AbstractHolidayCalendar.start_date Out[265]: Timestamp('1970-01-01 00:00:00')
+In [266]: AbstractHolidayCalendar.end_date Out[266]: Timestamp('2200-12-31 00:00:00')
+
+These dates can be overwritten by setting the attributes as datetime/Timestamp/string.
+In [267]: AbstractHolidayCalendar.start_date = datetime.datetime(2012, 1, 1) In [268]: AbstractHolidayCalendar.end_date = datetime.datetime(2012, 12, 31)
+In [269]: cal.holidays()
+Out[269]: DatetimeIndex(['2012-05-28', '2012-07-04', '2012-10-08'], dtype=
+˓→'datetime64[ns]', freq=None)
+
+Every calendar class is accessible by name using the get_calendar function which returns a holiday class instance. Any imported calendar class will automatically be available by this function. Also, HolidayCalendarFactory provides an easy interface to create calendars that are combinations of calendars or calendars with additional rules.
+In [270]: from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, ˓→USLaborDay
+In [271]: cal = get_calendar("ExampleCalendar")
+In [272]: cal.rules
+Out[272]:
+[Holiday: Memorial Day (month=5, day=31, offset=<DateOffset: weekday=MO(-1)>),
+Holiday: July 4th (month=7, day=4, observance=<function nearest_workday at ˓→0x7fd285956ca0>),
+ Holiday: Columbus Day (month=10, day=1, offset=<DateOffset: weekday=MO(+2)>)]
+In [273]: new_cal = HolidayCalendarFactory("NewExampleCalendar", cal, USLaborDay)
+In [274]: new_cal.rules
+Out[274]:
+[Holiday: Labor Day (month=9, day=1, offset=<DateOffset: weekday=MO(+1)>),
+ Holiday: Memorial Day (month=5, day=31, offset=<DateOffset: weekday=MO(-1)>),
+Holiday: July 4th (month=7, day=4, observance=<function nearest_workday at ˓→0x7fd285956ca0>),
+ Holiday: Columbus Day (month=10, day=1, offset=<DateOffset: weekday=MO(+2)>)]
+
+2.19.9 Time series-related instance methods
+--------------------------------------------
+Shifting / lagging
+------------------
+One may want to shift or lag the values in a time series back and forward in time. The method for this is shift(), which is available on all of the pandas objects.
+
+rng = pd.date_range("2012-01-01", "2012-01-03")
+ts = pd.Series(range(len(rng)), index=rng)
+ts[:5]
+ts.shift(1)
+ts.shift(1).bfill()
+
+The shift method accepts an freq argument which can accept a DateOffset class or other timedelta-like object or also an offset alias.
+When freq is specified, shift method changes all the dates in the index rather than changing the alignment of the data and the index:
+ts.shift(5, freq='D')
+ts.shift(5, freq=pd.offsets.BDay())
+ts.shift(5, freq="BM")
+
+Note that  when freq is specified, the leading entry is no longer NaN because the data is not being realigned.
+ts.shift(-1).ffill()
+
+(ts.shift(-1)+ts).ffill()
+(ts.shift(1, freq='D') + ts).ffill().bfill()
+
+Frequency conversion
+---------------------
+df = pd.DataFrame({
+    'date':pd.to_datetime('2021.05.01, 2021.05.01, 2021.05.3, 2021.05.4'.split(',')),
+    'val':[10,20,12,15]
+})
+
+df.groupby('date').val.agg(['min', 'max', 'mean']).asfreq('3D')
+
+The primary function for changing frequencies is the asfreq() method. For a DatetimeIndex, this is basically just a thin, but convenient wrapper around reindex() which generates a date_range and calls reindex.
+
+hint weekday=MO(2) is same as 2 * Week(weekday=2)
+dr = pd.date_range(start='2010.1.1', periods=3, freq=3*pd.offsets.BDay())
+ts = pd.Series(np.random.randn(3), index=dr)
+ts.asfreq(pd.offsets.BDay())
+ts.asfreq(pd.DateOffset(1))
+ts.asfreq(pd.offsets.BDay()).ffill()
+
+asfreq provides a further convenience so you can specify an interpolation method for any gaps that may appear after the frequency conversion.
+ts.asfreq(pd.DateOffset(), method='pad')
+
+Filling forward / backward
+Related to asfreq and reindex is fillna(),
+
+Converting to Python datetimes
+DatetimeIndex can be converted to an array of Python native datetime.datetime objects using the to_pydatetime method.
+rng.to_pydatetime()
+
+2.19.10 Resampling
+------------------
 
 
 --------------------------------------------------------
