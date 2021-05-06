@@ -9364,6 +9364,9 @@ ts.shift(-1).ffill()
 (ts.shift(-1)+ts).ffill()
 (ts.shift(1, freq='D') + ts).ffill().bfill()
 
+You can also fill the nans with default values
+ts.shift(1, fill_value=10)
+
 Frequency conversion
 ---------------------
 df = pd.DataFrame({
@@ -9394,6 +9397,41 @@ rng.to_pydatetime()
 
 2.19.10 Resampling
 ------------------
+pandas has a simple, powerful, and efficient functionality for performing resampling operations during frequency conversion (e.g., converting secondly data into 5-minutely data). This is extremely common in, but not limited to, financial applications.
+resample() is a time-based groupby, followed by a reduction method on each of its groups
+The resample() method can be used directly from DataFrameGroupBy objects.
+
+Basics
+-------
+rng = pd.date_range("1/1/2012", periods=400, freq="S")
+ts = pd.Series(np.random.randint(0, 500, len(rng)), index=rng)
+ts.resample('5min').sum()
+
+The resample function is very flexible and allows you to specify many different parameters to control the frequency conversion and resampling operation.
+Any function available via dispatching is available as a method of the returned object, including sum, mean, std, sem, max, min, median, first, last, ohlc:
+
+rng = pd.date_range("1/1/2012", periods=400, freq="S")
+ts = pd.Series(np.random.randint(0, 500, len(rng)), index=rng)
+ts.resample('5min').sum()
+ts.resample('5 Min').mean()
+ts.resample('5 min').ohlc() ## Open high low close
+ts.resample('5 min').max()
+
+For downsampling, closed can be set to ‘left’ or ‘right’ to specify which end of the interval is closed:
+## Default left
+rng = pd.date_range("1/1/2012", periods=7, freq="T")
+ts = pd.Series(np.random.randint(0, 10, len(rng)), index=rng)
+ts.resample('5 min').sum()
+ts.resample('5 min', closed='right').sum()
+
+Parameters like label are used to manipulate the resulting labels. label specifies whether the result is labeled with the beginning or the end of the interval.
+## Default Left
+ts.resample('5 min').sum()
+ts.resample('5 min', label='right').sum()
+
+Warning: The default values for label and closed is ‘left’ for all frequency offsets except for‘M’,‘A’,‘Q’, ‘BM’, ‘BA’, ‘BQ’, and ‘W’ which all have a default of ‘right’.
+This might unintendedly lead to looking ahead, where the value for a later time is pulled back to a previous time as in the following example with the BusinessDay frequency:
+
 
 
 --------------------------------------------------------
