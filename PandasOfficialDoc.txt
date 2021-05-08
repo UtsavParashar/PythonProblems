@@ -9638,8 +9638,110 @@ PeriodIndex has its own dtype named period,
 
 Period dtypes
 --------------
+PeriodIndex has a custom period dtype. This is a pandas extension dtype similar to the timezone aware dtype (datetime64[ns, tz]).
+pi = pd.period_range("2016-01-01", periods=3, freq="M")
+pi.dtype # period[M]
 
+The period dtype can be used in .astype(...). It allows one to change the freq of a PeriodIndex like .asfreq() and convert a DatetimeIndex to PeriodIndex like to_period():
+# change monthly freq to daily freq
+pi.astype("period[D]")
 
+# convert to DatetimeIndex
+pi.astype("datetime64[ns]")
+
+# convert to PeriodIndex
+dti = pd.date_range("2011-01-01", freq="M", periods=3)
+dti.astype("period[M]")
+
+PeriodIndex partial string indexing
+------------------------------------
+PeriodIndex now supports partial string slicing with non-monotonic indexes.
+ps["2011-01"]
+idx = pd.period_range('2010.12.01', periods=90, freq='D')
+ps = pd.Series(np.random.randn(len(idx)), idx)
+ps["2011-01"]
+ps.index = ps.index.astype('Period[M]')
+ps["2011-01"]
+ps[datetime.datetime(2011, 12, 25):]
+ps["10/31/2011":"12/31/2011"]
+
+Passing a string representing a lower frequency than PeriodIndex returns partial sliced data.
+ps["2011"]
+
+dfp = pd.DataFrame(
+    np.random.randn(600, 1),
+    columns=["A"],
+    index=pd.period_range("2013-01-01 9:00", periods=600, freq="T"),
+)
+dfp
+dfp.loc["2013-01-01 10H"]
+dfp["2013-01-01 10H":"2013-01-01 11H"]
+
+As with DatetimeIndex, the endpoints will be included in the result. The example below slices data starting from 10:00 to 11:59.
+
+Frequency conversion and resampling with PeriodIndex
+-----------------------------------------------------
+The frequency of Period and PeriodIndex can be converted via the asfreq method. Let’s start with the fiscal year 2011, ending in December:
+p = pd.Period("2011", freq="A-DEC")
+
+We can convert it to a monthly frequency. Using the how parameter, we can specify whether to return the starting or ending month:
+p.asfreq("M", how="start")
+p.asfreq("M", how="end")
+
+The shorthands ‘s’ and ‘e’ are provided for convenience:
+p.asfreq("M", "s")
+p.asfreq("M", "e")
+
+Converting to a “super-period” (e.g., annual frequency is a super-period of quarterly frequency) automatically returns the super-period that includes the input period:
+p = pd.Period("2011-12", freq="M")
+p.asfreq("A-NOV")
+
+Note that since we converted to an annual frequency that ends the year in November, the monthly period of December 2011 is actually in the 2012 A-NOV period.
+Period conversions with anchored frequencies are particularly useful for working with various quarterly data common to economics, business, and other fields. Many organizations define quarters relative to the month in which their fiscal year starts and ends. Thus, first quarter of 2011 could start in 2010 or a few months into 2011. Via anchored frequencies, pandas works for all quarterly frequencies Q-JAN through Q-DEC.
+Q-DEC define regular calendar quarters:
+
+p = pd.Period("2012Q1", freq="Q-DEC")
+p.asfreq("D", "s")
+p.asfreq("D", "e")
+
+Q-MAR defines fiscal year end in March:
+p = pd.Period("2011Q4", freq="Q-MAR")
+p.asfreq("D", "s")
+p.asfreq("D", "e")
+
+2.19.12 Converting between representations
+-------------------------------------------
+Timestamped data can be converted to PeriodIndex-ed data using to_period and vice-versa using to_timestamp:
+rng = pd.date_range("1/1/2012", periods=5, freq="M")
+ts = pd.Series(np.random.randn(len(rng)), index=rng)
+ps = ts.to_period()
+ps.to_timestamp('D',how='e')
+ps.to_timestamp('D',how='e').index.date
+ps.to_timestamp("D", how="s")
+
+Converting between period and timestamp enables some convenient arithmetic functions to be used. In the following example, we convert a quarterly frequency with year ending in November to 9am of the end of the month following the quarter end:
+prng = pd.period_range("1990Q1", "2000Q4", freq="Q-NOV")
+ts = pd.Series(np.random.randn(len(prng)), prng)
+ts.index = (prng.asfreq("M", "e") + 1).asfreq("H", "s") + 9
+
+2.19.13 Representing out-of-bounds spans
+-----------------------------------------
+If you have data that is outside of the Timestamp bounds, see Timestamp limitations, then you can use a PeriodIndex and/or Series of Periods to do computations.
+span=pd.period_range("1215.01.01", '1381.01.01', freq='D')
+
+To convert from an int64 based YYYYMMDD representation.
+s=pd.Series([20121231, 20141130, 99991231])
+
+def conv(x):
+    return pd.Period(year=x//10000, month=x/100%100, day=x%100, freq='D')
+
+s.apply(conv)
+
+These can easily be converted to a PeriodIndex:
+span = pd.PeriodIndex(s.apply(conv))
+
+2.19.14 Time zone handling
+--------------------------
 
 
 
