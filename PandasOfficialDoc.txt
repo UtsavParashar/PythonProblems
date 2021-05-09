@@ -8283,6 +8283,9 @@ timestamp.normalize() - normalize a given timestamp to 00:00.
 ts.shift() - used to shift index or values forward or backward.
 ts.asfreq() - can be used as reindex to fill missing timestamps and can also be used to fill values for nans.
 
+pd.to_timedelta() - convert a scaler, series to Timedelta and TimedeltaIndex type respectively.
+pf.Timedelta('delta') - convert a timedelta, string ,np.timedelta64 object to Timedelta.
+
 notna() - boolean True if the value in the cell is na
 isna() - boolean True if the value in the cell is na
 .str.fullmatch(pattern) - element matches a pattern from the start of the string till end of the string.
@@ -9440,7 +9443,7 @@ s.dt.day_name()
 s.resample('B').last().dt.day_name()
 
 Notice how the value for Sunday got pulled back to the previous Friday. To get the behavior where the value for Sunday is pushed to Monday, use instead
-s.resample('B', label='right', closed='right').last().dt.day_name()
+s.df[]('B', label='right', closed='right').last().dt.day_name()
 
 The axis parameter can be set to 0 or 1 and allows you to resample the specified axis for a DataFrame.
 kind can be set to ‘timestamp’ or ‘period’ to convert the resulting index to/from timestamp and time span represen-
@@ -9908,6 +9911,136 @@ s_aware.to_numpy(dtype="datetime64[ns]")
 
 2.20 Time deltas
 ----------------
+Timedeltas are differences in times, expressed in difference units, e.g. days, hours, minutes, seconds. They can be both positive and negative.
+Timedelta is a subclass of datetime.timedelta, and behaves in a similar manner, but allows compatibility with np.timedelta64 types as well as a host of custom representation, parsing, and attributes.
+
+2.20.1 Parsing
+---------------
+You can construct a Timedelta scalar through various arguments, including ISO 8601 Duration strings.
+
+import datetime
+# strings
+pd.Timedelta("1 day")
+pd.Timedelta("1 days")
+pd.Timedelta("1 days 00:00:00")
+pd.Timedelta("1 days 2 hours")
+pd.Timedelta("-1 days 2 min 3us")
+
+# like datetime.timedelta
+# note: these MUST be specified as keyword arguments
+pd.Timedelta(days=1, seconds=1)
+
+# integers with a unit
+pd.Timedelta(1, unit="d")
+
+# from a datetime.timedelta/np.timedelta64
+pd.Timedelta(datetime.timedelta(days=1, seconds=1))
+pd.Timedelta(np.timedelta64(1, "ms"))
+
+# negative Timedeltas have this string repr
+# to be more consistent with datetime.timedelta conventions
+pd.Timedelta("-1us")
+
+# a NaT
+pd.Timedelta("nan")
+pd.Timedelta("nat")
+
+# ISO 8601 Duration strings
+pd.Timedelta("P0DT0H1M0S")
+pd.Timedelta("P0DT0H0M0.000000123S")
+
+DateOffsets(Day, Hour, Minute, Second, Milli, Micro, Nano)canalsobeusedinconstruction.
+pd.Timedelta(pd.offsets.Second(2))
+
+Further, operations among the scalars yield another scalar Timedelta.
+pd.Timedelta(pd.offsets.Day(2)) + pd.Timedelta(pd.offsets.Second(2)) + pd.Timedelta("00:00:00.000123")
+
+to_timedelta
+-------------
+Using the top-level pd.to_timedelta, you can convert a scalar, array, list, or Series from a recognized timedelta format / value into a Timedelta type. It will construct Series if the input is a Series, a scalar if the input is scalar-like, otherwise it will output a TimedeltaIndex.
+You can parse a single string to a Timedelta:
+pd.to_timedelta("1 days 06:05:01.00003")
+pd.to_timedelta("15.5us")
+
+or a list/array of strings:
+pd.to_timedelta(["1 days 06:05:01.00003", "15.5us", "nan"])
+
+The unit keyword argument specifies the unit of the Timedelta:
+pd.to_timedelta(np.arange(5), unit="s")
+
+Timedelta limitations
+----------------------
+pandas represents Timedeltas in nanosecond resolution using 64 bit integers. As such, the 64 bit integer limits determine the Timedelta limits
+pd.Timedelta.min # Timedelta('-106752 days +00:12:43.145224193')
+pd.Timedelta.max # Timedelta('106751 days 23:47:16.854775807')
+
+2.20.2 Operations
+------------------
+You can operate on Series/DataFrames and construct timedelta64[ns] Series through subtraction operations on datetime64[ns] Series, or Timestamps.
+s = pd.Series(pd.date_range("2012-1-1", periods=3, freq="D"))
+s = pd.Series(pd.date_range('2021-1-1', periods=3, freq='D'))
+td = pd.Series([pd.Timedelta(days=i)for i in range(3)])
+df = DataFrame({'A':s, 'B':td})
+df["C"] = df["A"] + df["B"]
+df.dtypes
+
+s - s.max()
+s - datetime.datetime(2011, 1, 1, 3, 5)
+s + datetime.timedelta(minutes=5)
+s + pd.offsets.Minute(5)
+s + pd.offsets.Minute(5) + pd.offsets.Milli(5)
+
+Operations with scalars from a timedelta64[ns] series:
+y = s - s[0]
+
+Series of timedeltas with NaT values are supported:
+y=s-s.shift()
+
+Elements can be set to NaT using np.nan analogously to datetimes:
+y[1] = np.nan
+
+Operands can also appear in a reversed order (a singular object operated with a Series):
+s.max() - s
+datetime.datetime(2011, 1, 1, 3, 5) - s
+datetime.timedelta(minutes=5) + s
+
+min, max and the corresponding idxmin, idxmax operations are supported on frames:
+A = s - pd.Timestamp("20210101") - pd.Timedelta("00:05:05")
+B = s - pd.Series(pd.date_range("2021-1-2", periods=3, freq="D"))
+df = pd.DataFrame({"A": A, "B": B})
+print(df)
+df.min()
+df.max()
+df.idxmin()
+df.idxmax()
+df.min(axis=1)
+
+min, max, idxmin, idxmax operations are supported on Series as well.A scalar result will be a Timedelta.
+df.min().max()
+df.min(axis=1).min()
+df.min().idxmax()
+df.min(axis=1).idxmin()
+
+You can fillna on timedeltas, passing a timedelta to get a particular value.
+ y.fillna(pd.Timedelta(0))
+ y.fillna(pd.Timedelta(10, unit="s"))
+ y.fillna(pd.Timedelta("-1 days, 00:00:05"))
+
+You can also negate, multiply and use abs on Timedeltas:
+td1 = pd.Timedelta("-1 days 2 hours 3 seconds")
+-1 * td1
+-td1
+abs(td1)
+
+2.20.3 Reductions
+------------------
+
+
+
+
+
+
+
 
 
 --------------------------------------------------------
