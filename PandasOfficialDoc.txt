@@ -10034,10 +10034,75 @@ abs(td1)
 
 2.20.3 Reductions
 ------------------
+Numeric reduction operation for timedelta64[ns] will return Timedelta objects. As usual NaT are skipped during evaluation.
+y2 = pd.Series(pd.to_timedelta(["-1 days +00:00:05", "nat",
+                                "-1 days +00:00:05", "1 days"]))
+y2.mean()
+y2.median()
+y2.quantile(.1)
+y2.sum()
 
+2.20.4 Frequency conversion
+---------------------------
+Timedelta Series, TimedeltaIndex, and Timedelta scalars can be converted to other ‘frequencies’ by dividing by another timedelta, or by astyping to a specific timedelta type. These operations yield Series and propagate NaT -> nan. Note that division by the NumPy scalar is true division, while astyping is equivalent of floor division.
+december = pd.Series(pd.date_range("20121201", periods=4))
+january = pd.Series(pd.date_range("20130101", periods=4))
+td = january - december
+td[2] += datetime.timedelta(minutes=5, seconds=3)
+td[3] = np.nan
+td / np.timedelta64(1, "D")
+td.astype("timedelta64[D]")
 
+# to seconds
+td / np.timedelta64(1, "s")
+td.astype("timedelta64[s]")
 
+# to months (these are constant months)
+td / np.timedelta64(1, "M")
+td.astype("timedelta64[M]")
 
+Dividing or multiplying a timedelta64[ns] Series by an integer or integer Series yields another timedelta64[ns] dtypes Series
+td * -1
+td * pd.Series([1, 2, 3, 4])
+
+Rounded division (floor-division) of a timedelta64[ns] Series by a scalar Timedelta gives a series of integers.
+td // pd.Timedelta(days=3, hours=4)
+pd.Timedelta(days=3, hours=4) // td
+
+The mod (%) and divmod operations are defined for Timedelta when operating with another timedelta-like or with a numeric argument.
+pd.Timedelta(hours=37) % datetime.timedelta(hours=2)
+
+# divmod against a timedelta-like returns a pair (int, Timedelta)
+divmod(datetime.timedelta(hours=2), pd.Timedelta(minutes=11))
+
+# divmod against a numeric returns a pair (Timedelta, Timedelta)
+divmod(pd.Timedelta(hours=25), 86400000000000)
+
+2.20.5 Attributes
+-----------------
+You can access various components of the Timedelta or TimedeltaIndex directly using the attributes days,seconds,microseconds,nanoseconds. These are identical to the values returned by datetime. timedelta, in that, for example, the .seconds attribute represents the number of seconds >= 0 and < 1 day. These are signed according to whether the Timedelta is signed.
+These operations can also be directly accessed via the .dt property of the Series as well.
+Note: Note that the attributes are NOT the displayed values of the Timedelta.Use .components to retrieve the
+displayed values.
+For a Series:
+td.dt.days
+td.dt.seconds
+
+You can access the value of the fields for a scalar Timedelta directly.
+tds = pd.Timedelta("31 days 5 min 3 sec")
+tds.days
+tds.seconds
+(-tds).seconds
+
+You can use the .components property to access a reduced form of the timedelta. This returns a DataFrame indexed similarly to the Series. These are the displayed values of the Timedelta.
+td.dt.components
+td.dt.components.seconds
+
+You can convert a Timedelta to an ISO 8601 Duration string with the .isoformat method
+pd.Timedelta(days=6, minutes=50, seconds=3, milliseconds=10, microseconds=10,nanoseconds=12).isoformat()
+
+2.20.6 TimedeltaIndex
+----------------------
 
 
 
