@@ -10103,8 +10103,76 @@ pd.Timedelta(days=6, minutes=50, seconds=3, milliseconds=10, microseconds=10,nan
 
 2.20.6 TimedeltaIndex
 ----------------------
+To generate an index with time delta, you can use either the TimedeltaIndex or the timedelta_range() constructor.
+Using TimedeltaIndex you can pass string-like, Timedelta, timedelta, or np.timedelta64 objects. Passing np.nan/pd.NaT/nat will represent missing values.
+pd.TimedeltaIndex(["1 days","1 days, 00:00:05",np.timedelta64(2, "D"),datetime.timedelta(days=2, seconds=2),])
 
+The string ‘infer’ can be passed in order to set the frequency of the index as the inferred frequency upon creation:
+pd.TimedeltaIndex(["0 days", "10 days", "20 days"], freq="infer")
 
+Generating ranges of time deltas
+--------------------------------
+Similar to date_range(), you can construct regular ranges of a TimedeltaIndex using timedelta_range(). The default frequency for timedelta_range is calendar day:
+pd.timedelta_range(start="1 days", periods=5)
+
+Various combinations of start, end, and periods can be used with timedelta_range:
+pd.timedelta_range(start="1 days", end="5 days")
+pd.timedelta_range(end="10 days", periods=4)
+
+The freq parameter can passed a variety of frequency aliases:
+pd.timedelta_range(start="1 days", end="2 days", freq="30T")
+pd.timedelta_range(start="1 days", periods=5, freq="2D5H")
+
+Specifying start, end, and periods will generate a range of evenly spaced timedeltas from start to end inclusively, with periods number of elements in the resulting TimedeltaIndex:
+pd.timedelta_range("0 days", "4 days", periods=5)
+
+Using the TimedeltaIndex
+-------------------------
+Similarly to other of the datetime-like indices, DatetimeIndex and PeriodIndex, you can use TimedeltaIndex as the index of pandas objects.
+s = pd.Series(np.arange(100),index=pd.timedelta_range("1 days", periods=100, freq="h"),)
+Selections work similarly, with coercion on string-likes and slices:
+s["1 day":"2 day"]
+s["1 day 01:00:00"]
+s[pd.Timedelta("1 day 1h")]
+Furthermore you can use partial string selection and the range will be inferre
+s["1 day":"1 day 5 hours"]
+
+Operations
+-----------
+Finally, the combination of TimedeltaIndex with DatetimeIndex allow certain combination operations that are NaT preserving:
+tdi = pd.TimedeltaIndex(["1 days", pd.NaT, "2 days"])
+tdi.to_list()
+dti = pd.date_range("20130101", periods=3)
+dti.to_list()
+(dti + tdi).to_list()
+(dti - tdi).to_list()
+
+Conversions
+------------
+Similarly to frequency conversion on a Series above, you can convert these indices to yield another Index.
+tdi / np.timedelta64(1, "s")
+tdi.astype("timedelta64[s]")
+
+Scalars type ops work as well. These can potentially return a different type of index.
+# adding or timedelta and date -> datelike
+tdi + pd.Timestamp("20130101")
+
+# subtraction of a date and a timedelta -> datelike
+# note that trying to subtract a date from a Timedelta will raise an exception
+(pd.Timestamp("20130101") - tdi).to_list()
+
+# timedelta + timedelta -> timedelta
+tdi + pd.Timedelta("10 days")
+
+# division can result in a Timedelta if the divisor is an integer
+tdi / 2
+
+# or a Float64Index if the divisor is a Timedelta
+tdi / tdi[0]
+
+2.20.7 Resampling
+Similar to timeseries resampling, we can resample with a TimedeltaIndex.
+s.resample("D").mean()
 
 
 
