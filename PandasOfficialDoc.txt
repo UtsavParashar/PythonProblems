@@ -8226,15 +8226,147 @@ df['one'].dropna()
 An equivalent dropna() is available for Series. DataFrame.dropna has considerably more options than Series.dropna.
 
 2.10.9 Interpolation
---------------------
+=====================
 Both Series and DataFrame objects have interpolate() that, by default, performs linear interpolation at missing data points.
+rng = pd.date_range('2000.01.31', periods=100, freq='BM')
+ts = pd.Series(np.random.randn(len(rng)), index=rng)
+ts[1:21]=np.nan
+ts[44:58]=np.nan
+ts.count() ## 66
+ts.plot()
+
+Index aware interpolation is available via the method keyword:
+ts2.interpolate(method="time")
+ts.interpolate(method='time').head()
+
+For a floating-point index, use method='values':
+ts2.interpolate(method="values")
+
+You can also interpolate with a DataFrame:
+df = pd.DataFrame({"A": [1, 2.1, np.nan, 4.7, 5.6, 6.8],"B": [0.25, np.nan, np.nan, 4, 12.2, 14.4],})
+df.interpolate()
+
+The method argument gives access to fancier interpolation methods. If you have scipy installed, you can pass the name of a 1-d interpolation routine to method. You’ll want to consult the full scipy interpolation documentation and reference guide for details. The appropriate interpolation method will depend on the type of data you are working with.
+• If you are dealing with a time series that is growing at an increasing rate, method='quadratic' may be appropriate.
+• If you have values approximating a cumulative distribution function, then method='pchip' should work well.
+• To fill missing values with goal of smooth plotting, consider method='akima'.
+ts.interpolate(method='quadratic').head()
+
+2.10.10 Replacing generic values
+--------------------------------
+Often times we want to replace arbitrary values with other values.
+replace() in Series and replace() in DataFrame provides an efficient yet flexible way to perform such replace- ments.
+For a Series, you can replace a single value or a list of values by another value:
+ser = pd.Series([4.0, 1.0, 0.0, 3.0, 2.0])
+ser.replace(0,5)
+
+You can replace a list of values by a list of other values:
+ser.replace([0, 1, 2, 3, 4], [4, 3, 2, 1, 0])
+
+You can also specify a mapping dict:
+ser.replace({0: 10, 1: 100})
+
+For a DataFrame, you can specify individual values by column:
+df = pd.DataFrame({"a": [0, 1, 2, 3, 4], "b": [5, 6, 7, 8, 9]})
+df.replace({"a": 0, "b": 5}, 100)
+
+Instead of replacing with specified values, you can treat all given values as missing and interpolate over them:
+ser.replace([1, 2, 3], method="pad") ## Replace non-np.nan values
+
+2.10.11 String/regular expression replacement
+---------------------------------------------
+Note: Python strings prefixed with the r character such as r'hello world' are so-called “raw” strings. They have different semantics regarding backslashes than strings without this prefix. Backslashes in raw strings will be interpreted as an escaped backslash,e.g.,r'\' == '\\'.You should read about them if this is unclear - https://docs.python.org/3/reference/lexical_analysis.html#string-literals
+
+Replace the ‘.’ with NaN (str -> str):
+d = {"a": list(range(4)), "b": list("ab.."), "c": ["a", "b", np.nan, "d"]}
+df = pd.DataFrame(d)
+df.replace('.', np.nan)
+
+Now do it with a regular expression that removes surrounding whitespace (regex -> regex):
+df.replace(r"\s*\.\s*", np.nan, regex=True)
+
+Replace a few different values (list -> list):
+df.replace(["a", "."], ["b", np.nan])
+
+list of regex -> list of regex:
+df.replace([r"\.", r"(a)"], ["dot", r"\1stuff"], regex=True)
+
+Only search in column 'b' (dict -> dict):
+df.replace({"b": "."}, {"b": np.nan})
+
+Same as the previous example, but use a regular expression for searching instead (dict of regex -> dict):
+df.replace({"b": r"\s*\.\s*"}, {"b": np.nan}, regex=True)
+
+You can pass nested dictionaries of regular expressions that use regex=True:
+df.replace({"b": {"b": r""}}, regex=True)
+
+Alternatively, you can pass the nested dictionary like so:
+df.replace(regex={"b": {r"\s*\.\s*": np.nan}})
+
+You can also use the group of a regular expression match when replacing (dict of regex -> dict of regex), this works for lists as well.
+df.replace({"b": r"\s*(\.)\s*"}, {"b": r"\1ty"}, regex=True)
+
+You can pass a list of regular expressions, of which those that match will be replaced with a scalar (list of regex -> regex).
+df.replace([r"\s*\.\s*", r"a|b"], np.nan, regex=True)
+
+All of the regular expression examples can also be passed with the to_replace argument as the regex argument. In this case the value argument must be passed explicitly by name or regex must be a nested dictionary. The previous example, in this case, would then be:
+ df.replace(regex=[r"\s*\.\s*", r"a|b"], value=np.nan)
+
+ This can be convenient if you do not want to pass regex=True every time you want to use a regular expression.
+Note: Any where in the above replace examples that you see a regular expression a compiled regular expression is
+valid as well.
+
+2.10.12 Numeric replacement
+============================
+replace() is similar to fillna().
+df = pd.DataFrame(np.random.randn(10, 2))
+df[np.random.rand(df.shape[0]) > 0.5] = 1.5
+df.replace(1.5, np.nan)
+
+Replacing more than one value is possible by passing a list.
+df00 = df.iloc[0, 0]
+df.replace([1.5, df00], [np.nan, "a"])
+
+You can also operate on the DataFrame in place:
+df.replace(1.5, np.nan, inplace=True)
+
+Missing data casting rules and indexing
+---------------------------------------
+While pandas supports storing arrays of integer and boolean type, these types are not capable of storing missing data. Until we can switch to using a native NA type in NumPy, we’ve established some “casting rules”. When a reindexing operation introduces missing data, the Series will be cast according to the rules introduced in the table below.
+
+data type               Cast to
+integer                 float
+boolean                 object
+float                   no cast
+object                  no cast
+
+For example:
+s = pd.Series(np.random.randn(5), index=[0, 2, 4, 6, 7])
+s > 0
+(s > 0).dtype # dtype('bool')
+crit = (s > 0).reindex(list(range(8)))
+crit.dtype
+
+Ordinarily NumPy will complain if you try to use an object array (even if it contains boolean values) instead of a boolean array to get or set values from an ndarray (e.g. selecting values based on some criteria). If a boolean vector contains NAs, an exception will be generated:
+s = pd.Series(np.random.randn(5), index=[0, 2, 4, 6, 7])
+reindexed = s.reindex(list(range(8))).fillna(0)
+crit = (s > 0).reindex(list(range(8)))
+reindexed[crit]
+ValueError: Cannot mask with non-boolean array containing NA / NaN values
+
+However, these can be filled in using fillna() and it will work fine:
+reindexed[crit.fillna(False)]
+reindexed[crit.fillna(True)]
+
+pandas provides a nullable integer dtype, but you must explicitly request it when creating the series or column. Notice that we use a capital “I” in the dtype="Int64".
+s = pd.Series([0, 1, np.nan, 3, 4], dtype="Int64")
+
+2.10.13 Experimental NA scalar to denote missing values
+-------------------------------------------------------
 
 
-
-
-
-
-
+====================================================================================
+====================================================================================
 Attributes:
 pd.Index.name
 .array - get the series or index in the form of Extension array
