@@ -1048,7 +1048,7 @@ print('Current Thread', threading.current_thread().getName())
 How many ways can we create Thread in Python? Three Ways
 1. Creating a Thread without using any class
 2. Creating a Thread by extending Thread class
-3. Creating a Thread by without extending Thread class
+3. Creating a Thread without extending Thread class
 
 join(): If a thread wants to wait for other threads completion then it call join().
 -------Say main thread wants to wait for child thread t1 to complete then main thread calls 
@@ -1067,7 +1067,7 @@ def display():
     for i in range(10):
         print('Child Thread')
         
-t=threading.Thread(target=display) #Creation of Thread and calling dispaly method
+t=threading.Thread(target=display) #Creation of Thread and calling display method
 t.start()
 
 for i in range(10):

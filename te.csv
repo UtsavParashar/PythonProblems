@@ -1,0 +1,5 @@
+"""ID,Value1,Value2
+ID_1,NaN,2  
+ID_2,NaN,7    
+ID_1,5,NaN   
+ID_2,8,NaN"""
