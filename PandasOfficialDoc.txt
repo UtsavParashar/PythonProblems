@@ -8601,8 +8601,94 @@ Note: In contrast to R’s factor function, there is currently no way to assign/
 
 2.12.2 CategoricalDtype
 -----------------------
+2.12.2 CategoricalDtype
+A categorical’s type is fully described by
+1. categories: a sequence of unique values and no missing values
+2. ordered: a boolean
+This information can be stored in a CategoricalDtype. The categories argument is optional, which implies that the actual categories should be inferred from whatever is present in the data when the pandas.Categorical is created. The categories are assumed to be unordered by default.
 
+from pandas.api.types import CategoricalDtype
+CategoricalDtype(['a','b','c']) # CategoricalDtype(categories=['a', 'b', 'c'], ordered=False)
+CategoricalDtype(["a", "b", "c"], ordered=True) # CategoricalDtype(categories=['a', 'b', 'c'], ordered=True)
+CategoricalDtype() # CategoricalDtype(categories=None, ordered=False)
 
+A CategoricalDtype can be used in any place pandas expects a dtype. For example pandas.read_csv(), pandas.DataFrame.astype(), or in the Series constructor.
+
+Note: As a convenience,you can use the string 'category' inplace of a CategoricalDtype when you want the default behavior of the categories being unordered, and equal to the set values present in the array. In other words, dtype='category' is equivalent to dtype=CategoricalDtype().
+
+Equality semantics
+-------------------
+Two instances of CategoricalDtype compare equal whenever they have the same categories and order. When comparing two unordered categoricals, the order of the categories is not considered.
+CategoricalDtype('a b c'.split(), ordered=False)
+# Equal, since order is not considered when ordered=False
+CategoricalDtype('b a c'.split(), ordered=False)
+
+# Unequal, since the second CategoricalDtype is ordered
+CategoricalDtype('b a c'.split(), ordered=True)
+
+All instances of CategoricalDtype compare equal to the string 'category'.
+c1 == "category" # True
+
+Warning: Since dtype='category' is essentially CategoricalDtype(None, False), and since all instances CategoricalDtype compare equal to 'category', all instances of CategoricalDtype compareequaltoaCategoricalDtype(None, False),regard less of categories orordered.
+
+2.12.3 Description
+-------------------
+Using describe() on categorical data will produce similar output to a Series or DataFrame of type string.
+cat = pd.Categorical(['a', 'c', 'c', np.nan], categories=['b','a', 'c'])
+df = pd.DataFrame({
+    'cat':cat,
+    's':['a','c','c',np.nan]
+})
+df.describe()
+
+2.12.4 Working with categories
+-------------------------------
+Categorical data has a categories and a ordered property, which list their possible values and whether the ordering matters or not. These properties are exposed as s.cat.categories and s.cat.ordered. If you don’t manually specify categories and ordering, they are inferred from the passed arguments.
+c=CategoricalDtype(['a','b','c'], True)
+s = pd.Series(['a','b','c'], dtype=c)
+s.cat.categories # Index(['a', 'b', 'c'], dtype='object')
+s.cat.ordered # False
+c= None
+s
+
+It’s also possible to pass in the categories in a specific order:
+s = pd.Series(pd.Categorical(['a','b','c'], categories=['b','c','a']))
+s.cat.categories
+s.cat.ordered
+
+Note: New categorical data are not automatically ordered. You must explicitly pass ordered=True to indicate an ordered Categorical.
+Note: The result of unique() is not always the same as Series.cat.categories, because Series. unique() has a couple of guarantees, namely that it returns categories in the order of appearance, and it only includes values that are actually present.
+
+s = pd.Series(list("babc")).astype(CategoricalDtype(list("abcd")))
+s.cat.categories # Index(['a', 'b', 'c', 'd'], dtype='object')
+s.unique() # ['b', 'a', 'c']
+
+Renaming categories
+--------------------
+Renaming categories is done by assigning new values to the Series.cat.categories property or by using the rename_categories() method:
+s=pd.Series(['a','b','c','a'], dtype='category')
+s.cat.categories = [f'Group {i}'for i in s.cat.categories]
+s = s.cat.rename_categories(['Ramesh', 'Suresh', 'Chandu'])
+# You can also pass a dict-like object to map the renaming
+s = s.cat.rename_categories({'Ramesh':'R', 'Suresh':'S', 'Chandu':'C'})
+
+Note: In contrast to R’s factor, categorical data can have categories of other types than string.
+Note: Be aware that assigning new categories is an inplace operation, while most other operations under Series. cat per default return a new Series of dtype category.
+
+Categories must be unique or a ValueError is raised:
+try:
+    s.cat.categories = [1,1,1]
+except ValueError as e:
+    print('ValueError', str(e)) # ValueError Categorical categories must be unique
+
+Categories must also not be NaN or a ValueError is raised:
+try:
+    s.cat.categories = [1,1,np.nan]
+except ValueError as e:
+    print('ValueError', str(e)) # ValueError Categorical categories cannot be null
+
+Appending new categories
+-------------------------
 
 
 ====================================================================================
