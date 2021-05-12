@@ -8629,7 +8629,7 @@ CategoricalDtype('b a c'.split(), ordered=True)
 All instances of CategoricalDtype compare equal to the string 'category'.
 c1 == "category" # True
 
-Warning: Since dtype='category' is essentially CategoricalDtype(None, False), and since all instances CategoricalDtype compare equal to 'category', all instances of CategoricalDtype compareequaltoaCategoricalDtype(None, False),regard less of categories orordered.
+Warning: Since dtype='category' is essentially CategoricalDtype(None, False), and since all instances CategoricalDtype compare equal to 'category', all instances of CategoricalDtype compare equal to aCategoricalDtype(None, False),regard less of categories ordered.
 
 2.12.3 Description
 -------------------
@@ -8689,6 +8689,58 @@ except ValueError as e:
 
 Appending new categories
 -------------------------
+Appending categories can be done by using the add_categories() method:
+s = s.cat.add_categories(5)
+s.cat.categories # Index(['R', 'S', 'C', 4, 5], dtype='object')
+
+Removing categories
+-------------------
+Removing categories can be done by using the remove_categories() method. Values which are removed are replaced by np.nan.:
+s = s.cat.remove_categories([4])
+
+Removing unused categories
+---------------------------
+Removing unused categories can also be done:
+s = pd.Series(pd.Categorical(['a','b','a'], categories=['a','b','c','d']))
+s.cat.remove_unused_categories()
+
+Setting categories
+-------------------
+If you want to do remove and add new categories in one step (which has some speed advantage), or simply set the categories to a predefined scale, use set_categories().
+s = pd.Series(["one", "two", "four", "-"], dtype="category")
+s = s.cat.set_categories(["one", "two", "three", "four"])
+s
+
+Note: Be aware that Categorical.set_categories() cannot know whether some category is omitted in- tentionally or because it is misspelled or (under Python3) due to a type difference (e.g., NumPy S1 dtype and Python strings). This can result in surprising behaviour!
+
+2.12.5 Sorting and order
+========================
+If categorical data is ordered (s.cat.ordered == True), then the order of the categories has a meaning and certain operations are possible. If the categorical is unordered, .min()/.max() will raise a TypeError.
+s = pd.Series(pd.Categorical(["a", "b", "c", "a"], ordered=False))
+s.sort_values(inplace=True)
+s.min() # TypeError: Categorical is not ordered for operation min
+
+s = pd.Series(pd.Categorical(["a", "b", "c", "a"], ordered=True))
+s.sort_values(inplace=True)
+s.min() # 'a'
+
+You can set categorical data to be ordered by using as_ordered() or unordered by using as_unordered(). These will by default return a new object.
+s.cat.as_ordered()
+s.cat.as_unordered()
+
+Sorting will use the order defined by categories, not any lexical order present on the data type. This is even true for strings and numeric data:
+s = pd.Series([1, 2, 3, 1], dtype="category")
+s = s.cat.set_categories([2, 3, 1], ordered=True)
+s.sort_values(inplace=True)
+
+Reordering
+----------
+
+
+
+
+
+
 
 
 ====================================================================================
@@ -8744,7 +8796,14 @@ ts.asfreq() - can be used as reindex to fill missing timestamps and can also be 
 pd.to_timedelta() - convert a scaler, series to Timedelta and TimedeltaIndex type respectively.
 pf.Timedelta('delta') - convert a timedelta, string ,np.timedelta64 object to Timedelta.
 
-
+s.cat.set_category() - to set a category i.e to remove and add new category have performance benefits
+s.cat.remove_unused_category() - to remove unused category
+s.cat.add_category() - to add a category
+s.cat.remove_category() - to remove a category
+s.cat.rename_category() - to rename a category
+s.cat.ordered - returns boolean telling that the category is ordered or not.
+s.cat.categories - to get all the categories in a series
+pd.Categorical(categories=[]) - create a categorical dtype
 convert_dtypes() - convert object dtype to string dtype
 notna() - boolean True if the value in the cell is na
 isna() - boolean True if the value in the cell is na
