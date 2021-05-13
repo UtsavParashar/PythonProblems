@@ -8826,9 +8826,157 @@ In [139]: cats2 = pd.Categorical(["a", "a", "b", "b"], categories=["a", "b", "c"
 
 2.12.8 Data munging
 --------------------
+The optimized pandas data access methods .loc, .iloc, .at, and .iat, work as normal. The only difference is the return type (for getting) and that only values already in categories can be assigned.
+Getting
+If the slicing operation returns either a DataFrame or a column of type Series, the category dtype is preserved.
+idx = pd.Index(["h", "i", "j", "k", "l", "m", "n"])
+In [146]: cats = pd.Series(["a", "b", "b", "b", "c", "c", "c"], dtype="category",
+˓→index=idx)
+In [147]: values = [1, 2, 2, 2, 3, 4, 5]
+In [148]: df = pd.DataFrame({"cats": cats, "values": values}, index=idx)
+df.iloc[2:4, :]
+df.loc["h":"j", "cats"]
+df[df["cats"] == "b"]
+An example where the category type is not preserved is if you take one single row: the resulting Series is of dtype object:
+df.loc["h", :]
+Returning a single item from categorical data will also return the value, not a categorical of length “1”.
+df.iat[0, 0]
+To get a single value Series of type category, you pass in a list with a single value:
+df.loc[["h"], "cats"]
 
+String and datetime accessors
+The accessors .dt and .str will work if the s.cat.categories are of an appropriate type:
+str_s = pd.Series(list("aabb"))
+str_cat = str_s.astype("category")
+str_cat.str.contains("a")
 
+date_s = pd.Series(pd.date_range("1/1/2015", periods=5))
+date_cat = date_s.astype("category")
+date_cat.dt.day
 
+Note: The returned Series (or DataFrame) is of the same type as if you used the .str.<method> / .dt. <method> on a Series of that type (and not of type category!).
+
+Merging / concatenation
+------------------------
+By default, combining Series or DataFrames which contain the same categories results in category dtype, otherwise results will depend on the dtype of the underlying categories. Merges that result in non-categorical dtypes will likely have higher memory usage. Use .astype or union_categoricals to ensure category results.
+
+If both df/series are category type then result is category as object or other type.
+s1 = pd.Series(["a", "b"], dtype="category")
+s2 = pd.Series(["a", "b", "a"], dtype="category")
+pd.concat([s1, s2])
+
+s3 = pd.Series(["b", "c"], dtype="category")
+pd.concat([s1, s3])
+
+# Output dtype is inferred based on categories values
+int_cats = pd.Series([1, 2], dtype="category")
+float_cats = pd.Series([3.0, 4.0], dtype="category")
+pd.concat([int_cats, float_cats])
+
+pd.concat([s1, s3]).astype("category")
+
+The following table summarizes the results of merging Categoricals:
+arg1                    arg2                identical       result
+category                category            True            category
+category (object)       category (object)   False           object (dtype is inferred)
+category (int)          category (float)    False           float (dtype is inferred)
+
+Unioning
+If you want to combine categoricals that do not necessarily have the same categories, the union_categoricals() function will combine a list-like of categoricals. The new categories will be the union of the categories being combined.
+from pandas.api.types import union_categoricals
+a = pd.Categorical(["b", "c"])
+b = pd.Categorical(["a", "b"])
+union_categoricals([a, b])
+
+By default, the resulting categories will be ordered as they appear in the data. If you want the categories to be lexsorted, use sort_categories=True argument.
+union_categoricals([a, b], sort_categories=True)
+
+union_categoricals also works with the “easy” case of combining two categoricals of the same categories and order information (e.g. what you could also append for).
+a = pd.Categorical(["a", "b"], ordered=True)
+b = pd.Categorical(["a", "b", "a"], ordered=True)
+union_categoricals([a, b])
+
+The below raises TypeError because the categories are ordered and not identical.
+
+2.12.10 Missing data
+pandas: powerful Python data analysis toolkit, Release 1.2.3
+ pandas primarily uses the value np.nan to represent missing data. It is by default not included in computations. See the Missing Data section.
+Missing values should not be included in the Categorical’s categories, only in the values. Instead, it is under- stood that NaN is different, and is always a possibility. When working with the Categorical’s codes, missing values will always have a code of -1.
+s = pd.Series(["a", "b", np.nan, "a"], dtype="category")
+s.cat.codes
+
+Methods for working with missing data, e.g. isna(), fillna(), dropna(), all work normally:
+s = pd.Series(["a", "b", np.nan], dtype="category")
+pd.isna(s)
+s.fillna("a")
+
+2.12.12 Gotchas Memory usage
+-----------------------------
+The memory usage of a Categorical is proportional to the number of categories plus the length of the data. In contrast, an object dtype is a constant times the length of the data.
+s = pd.Series(["foo", "bar"] * 2)
+s.nbytes # 32
+s.astype('category').nbytes # 20
+
+Note: If the number of categories approaches the length of the data,the Categorical will use nearly the same or more memory than an equivalent object dtype representation.
+s = pd.Series(["foo%04d" %i for i in range(2)])
+s.nbytes # 16
+s.astype('category').nbytes # 18
+
+Categorical is not a numpy array
+Currently, categorical data and the underlying Categorical is implemented as a Python object and not as a low-
+level NumPy array dtype. This leads to some problems. NumPy itself doesn’t know about the new dtype:
+np.dtype("category") #TypeError: data type 'category' not understood
+dtype = pd.Categorical(["a"]).dtype # TypeError: Cannot interpret 'CategoricalDtype(categories=['a'], ordered=False)' as a ˓→data type
+
+To check if a Series contains Categorical data,use hasattr(s, 'cat'):
+
+hasattr(pd.Series(["a"], dtype="category"), "cat")
+hasattr(pd.Series(["a"]), "cat")
+
+Using NumPy functions on a Series of type category should not work as Categoricals are not numeric data (even in the case that .categories is numeric).
+s = pd.Series(pd.Categorical([1, 2, 3, 4]))
+np.sum(s) # TypeError: 'Categorical' does not implement reduction 'sum'
+behavior is same as symbol in kdb
+
+dtype in apply
+--------------
+pandas currently does not preserve the dtype in apply functions: If you apply along rows you get a Series of object dtype (same as getting a row -> getting one element will return a basic type) and applying along columns will also convert to object. NaN values are unaffected. You can use fillna to handle missing values before applying a function.
+df = pd.DataFrame({
+    "a": [1, 2, 3, 4],
+    "b": ["a", "b", "c", "d"],
+    "cats": [1, 2, 3, 2],
+})
+df.cats = df.cats.astype('category')
+df.apply(lambda row: type(row["cats"]), axis=1)
+df.apply(lambda col: col.dtype, axis=0)
+
+Categorical index
+CategoricalIndex is a type of index that is useful for supporting indexing with duplicates. This is a container around a Categorical and allows efficient indexing and storage of an index with a large number of duplicated elements. See the advanced indexing docs for a more detailed explanation.
+Setting the index will create a CategoricalIndex:
+
+cats = pd.Categorical([1, 2, 3, 4], categories=[4, 2, 3, 1])
+strings = ["a", "b", "c", "d"]
+values = [4, 2, 3, 1]
+df = pd.DataFrame({"strings": strings, "values": values}, index=cats)
+# This now sorts by the categories order
+df.sort_index() Out[263]:
+
+Side effects
+Constructing a Series from a Categorical will not copy the input Categorical. This means that changes to the Series will in most cases change the original Categorical:
+cat = pd.Categorical([1, 2, 3, 10], categories=[1, 2, 3, 4, 10])
+s = pd.Series(cat, name="cat")
+s.iloc[0:2] = 10
+cat
+
+df = pd.DataFrame(s)
+df["cat"].cat.categories = [1, 2, 3, 4, 5]
+Use copy=True to prevent such a behaviour or simply don’t reuse Categoricals:
+
+cat = pd.Categorical([1, 2, 3, 10], categories=[1, 2, 3, 4, 10])
+s = pd.Series(cat, name="cat", copy=True)
+s.iloc[0:2] = 10
+
+Note: This also happens in some cases when you supply a NumPy array instead of a Categorical: using an int array (e.g. np.array([1,2,3,4])) will exhibit the same behavior, while using a string array (e.g. np.array([ "a","b","c","a"])) will not.
 
 
 

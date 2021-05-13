@@ -1,3 +1,8 @@
-"""Month,Day,Jane,Bob
-Mar,10,['Orange', 'Apples'],['Banana', 'Apples']
-Mar,11,['Pear', 'Grape'],['Strawberry', 'Cherry']"""
+"""Customer,Date (YYYYMM),Spend
+A,202001,$200
+B,202001,$400
+A,202002,$500
+A,202003,$200
+A,202004,$700
+B,202002,$100
+C,202001,$50"""
