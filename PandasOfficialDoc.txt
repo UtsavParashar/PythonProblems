@@ -8979,6 +8979,110 @@ s.iloc[0:2] = 10
 Note: This also happens in some cases when you supply a NumPy array instead of a Categorical: using an int array (e.g. np.array([1,2,3,4])) will exhibit the same behavior, while using a string array (e.g. np.array([ "a","b","c","a"])) will not.
 
 
+Visualization
+==============
+We use the standard convention for referencing the matplotlib API:
+In [1]: import matplotlib.pyplot as plt
+In [2]: plt.close("all")
+
+We provide the basics in pandas to easily create decent looking plots. See the ecosystem section(https://pandas.pydata.org/pandas-docs/stable/ecosystem.html#ecosystem-visualization) for visualization libraries that go beyond the basics documented here.
+
+Basic plotting: plot
+--------------------
+We will demonstrate the basics, see the cookbook for some advanced strategies.
+The plot method on Series and DataFrame is just a simple wrapper around plt.plot():
+ts = pd.Series(np.random.randn(1000), index=pd.date_range('2010.01.01', periods=1000))
+ts = ts.cumsum()
+ts.plot()
+
+If the index consists of dates, it calls gcf().autofmt_xdate() to try to format the x-axis nicely as per above.
+On DataFrame, plot() is a convenience to plot all of the columns with labels:
+df = DataFrame(np.random.randn(1000, 4), index=pd.date_range(
+                '2010.01.01', periods=1000))
+df = df.cumsum()
+df.plot()
+
+You can plot one column versus another using the x and y keywords in plot():
+df = pd.DataFrame(np.random.randn(1000,2), columns=['A','B']).cumsum()
+df['C'] = pd.Series(range(len(df)))
+df.plot(x='C', y=['A', 'B'])
+
+Other plots
+-----------
+Plotting methods allow for a handful of plot styles other than the default line plot. These methods can be provided as the kind keyword argument to plot(), and include:
+‘bar’ or ‘barh’ for bar plots
+‘hist’ for histogram
+‘box’ for boxplot
+‘kde’ or ‘density’ for density plots
+‘area’ for area plots
+‘scatter’ for scatter plots
+‘hexbin’ for hexagonal bin plots
+‘pie’ for pie plots
+
+plt.figure()
+df.iloc[:5].plot(kind='hist')
+
+You can also create these other plots using the methods DataFrame.plot.<kind> instead of providing the kind keyword argument. This makes it easier to discover plot methods and the specific arguments they use:
+df.iloc[:5].plot.barh()
+
+In addition to these kind s, there are the DataFrame.hist(), and DataFrame.boxplot() methods, which use a separate interface.
+Finally, there are several plotting functions in pandas.plotting that take a Series or DataFrame as an argument. These include:
+
+Scatter Matrix
+Andrews Curves
+Parallel Coordinates
+Lag Plot
+Autocorrelation Plot
+Bootstrap Plot
+RadViz
+Plots may also be adorned with errorbars or tables.
+
+Bar plots - Categorical data
+-----------------------------
+For labeled, non-time series data, you may wish to produce a bar plot:
+plt.figure()
+df.iloc[5].plot.bar()
+plt.axhline(0, color='k')
+
+Calling a DataFrame’s plot.bar() method produces a multiple bar plot:
+df2 = DataFrame(np.random.randn(5, 4), columns=list('abcd'))
+df2.plot.bar()
+
+To get horizontal bar plots, use the barh method:
+df2 = DataFrame(np.random.randn(5, 4), columns=list('abcd'))
+df2.plot.barh()
+df2.plot.barh(stacked=True)
+
+Histograms
+-----------
+Histograms can be drawn by using the DataFrame.plot.hist() and Series.plot.hist() methods.
+df4 = pd.DataFrame(
+   {
+         "a": np.random.randn(1000) + 1,
+         "b": np.random.randn(1000),
+         "c": np.random.randn(1000) - 1,
+     },
+     columns=["a", "b", "c"],
+ )
+df4.plot.hist(alpha=.7)
+
+A histogram can be stacked using stacked=True. Bin size can be changed using the bins keyword.
+df4.plot.hist(alpha=.7, stacked=True, bins=20)
+
+You can pass other keywords supported by matplotlib hist. For example, horizontal and cumulative histograms can be drawn by orientation='horizontal' and cumulative=True.
+df4["a"].plot.hist(orientation="horizontal", cumulative=True);
+
+rolling dice hist:
+
+plt.figure()
+df = pd.DataFrame({
+    'a':pd.Series(np.random.randint(1,7,6000))
+})
+df['b'] = df['a'] + np.random.randint(1, 7, 6000)
+df.plot.hist()
+
+
+
 
 
 

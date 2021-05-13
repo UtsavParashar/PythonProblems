@@ -1,8 +1,6 @@
-"""Customer,Date (YYYYMM),Spend
-A,202001,$200
-B,202001,$400
-A,202002,$500
-A,202003,$200
-A,202004,$700
-B,202002,$100
-C,202001,$50"""
+"""ID,Country,Measurement,Sample,On/Off
+1234567890,Denmark,38,Sample 2,On
+2345678901,Denmark,12,Sample 1,On
+xyz789,Brazil,333,Sample 2,Off 
+abc123,Brazil,50,Sample 6,Off 
+def456,Brazil,44,Sample 3,Off"""
