@@ -1,6 +1,4 @@
-"""ID,Country,Measurement,Sample,On/Off
-1234567890,Denmark,38,Sample 2,On
-2345678901,Denmark,12,Sample 1,On
-xyz789,Brazil,333,Sample 2,Off 
-abc123,Brazil,50,Sample 6,Off 
-def456,Brazil,44,Sample 3,Off"""
+"""as_date, end_date,pdate,A, b
+05/11/2021,05/11/2021,05/08/2021,1.6, 0.9
+05/11/2021,05/11/2021,05/09/2021,0.8, 1.4
+05/12/2021,05/11/2021,05/10/2021,1.4, 0.6"""

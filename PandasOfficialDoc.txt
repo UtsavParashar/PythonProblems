@@ -9072,6 +9072,18 @@ df4.plot.hist(alpha=.7, stacked=True, bins=20)
 You can pass other keywords supported by matplotlib hist. For example, horizontal and cumulative histograms can be drawn by orientation='horizontal' and cumulative=True.
 df4["a"].plot.hist(orientation="horizontal", cumulative=True);
 
+The existing interface DataFrame.hist to plot histogram still can be used.
+plt.figure();
+df.a.diff().hist()
+
+DataFrame.hist() plots the histograms of the columns on multiple subplots:
+plt.figure();
+df.diff().hist(color='k', alpha=0.5, bins=50)
+
+The by keyword can be specified to plot grouped histograms:
+data = pd.Series(np.random.randn(1000))
+data.hist(by=np.random.randint(0,4,1000), figsize=(10,6))
+
 rolling dice hist:
 
 plt.figure()
@@ -9081,7 +9093,8 @@ df = pd.DataFrame({
 df['b'] = df['a'] + np.random.randint(1, 7, 6000)
 df.plot.hist()
 
-
+Box plots
+==========
 
 
 
