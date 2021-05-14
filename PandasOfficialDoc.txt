@@ -9247,6 +9247,160 @@ Controlling the legend
 -----------------------
 You may set the legend argument to False to hide the legend, which is shown by default.
 
+=============================
+Nullable integer data type===
+=============================
+IntegerArray is currently experimental. Its API or implementation may change without warning.
+In Working with missing data, we saw that pandas primarily uses NaN to represent missing data. Because NaN is a float, this forces an array of integers with any missing values to become floating point. In some cases, this may not matter much. But if your integer column is, say, an identifier, casting to float can be problematic. Some integers cannot even be represented as floating point numbers.
+
+Construction
+pandas can represent integer data with possibly missing values using arrays.IntegerArray. This is an extension types implemented within pandas.
+arr = pd.array([1,2,None], dtype='Int64')
+
+Or the string alias "Int64" (note the capital "I", to differentiate from NumPy’s 'int64' dtype
+arr = pd.array([1,2,np.nan], dtype='Int64')
+
+All NA-like values are replaced with pandas.NA.
+pd.array([1, 2, np.nan, None, pd.NA], dtype="Int64")
+
+This array can be stored in a DataFrame or Series like any NumPy array.
+pd.Series(arr)
+
+You can also pass the list-like object to the Series constructor with the dtype.
+Warning
+Currently pandas.array() and pandas.Series() use different rules for dtype inference. pandas.array() will infer a nullable- integer dtype
+In [6]: pd.array([1, None])
+Out[6]:
+<IntegerArray>
+[1, <NA>]
+Length: 2, dtype: Int64
+In [7]: pd.array([1, 2])
+Out[7]:
+<IntegerArray>
+[1, 2]
+Length: 2, dtype: Int64
+
+For backwards-compatibility, Series infers these as either integer or float dtype
+In [8]: pd.Series([1, None])
+Out[8]:
+0    1.0
+1    NaN
+dtype: float64
+In [9]: pd.Series([1, 2])
+Out[9]:
+0    1
+1    2
+dtype: int64
+
+We recommend explicitly providing the dtype to avoid confusion.
+In [10]: pd.array([1, None], dtype="Int64")
+Out[10]:
+<IntegerArray>
+[1, <NA>]
+Length: 2, dtype: Int64
+In [11]: pd.Series([1, None], dtype="Int64")
+Out[11]:
+0       1
+1    <NA>
+dtype: Int64
+In the future, we may provide an option for Series to infer a nullable-integer dtype.
+
+Operations
+-----------
+Operations involving an integer array will behave similar to NumPy arrays. Missing values will be propagated, and the data will be coerced to another dtype if needed.
+s = pd.Series([1, 2, None], dtype="Int64")
+
+# arithmetic
+s+1
+
+# comparison
+s==1
+
+# indexing
+s.iloc[1:3]
+
+# operate with other dtypes
+s + s.iloc[1:3].astype('Int8')
+
+# coerce when needed
+s+.001
+
+These dtypes can operate as part of DataFrame.
+df = pd.DataFrame({"A": s, "B": [1, 1, 3], "C": list("aab")})
+df.dtypes
+
+These dtypes can be merged & reshaped & casted.
+pd.concat([df[["A"]], df[["B", "C"]]], axis=1).dtypes
+df["A"].astype(float)
+
+Reduction and groupby operations such as ‘sum’ work as well.
+df.sum()
+df.groupby("B").A.sum()
+
+arrays.IntegerArray uses pandas.NA as its scalar missing value. Slicing a single element that’s missing will return pandas.NA
+a = pd.array([1, None], dtype="Int64")
+
+===========================
+Nullable Boolean data type=
+===========================
+Indexing with NA values
+-----------------------
+pandas allows indexing with NA values in a boolean array, which are treated as False.
+
+s = pd.Series([1, 2, 3])
+mask = pd.array([True, False, pd.NA], dtype="boolean")
+s[mask]
+
+If you would prefer to keep the NA values you can manually fill them with fillna(True).
+s[mask.fillna(True)]
+
+Kleene logical operations
+--------------------------
+arrays.BooleanArray implements Kleene Logic (sometimes called three-value logic) for logical operations like & (and), | (or) and ^ (exclusive-or).
+
+This table demonstrates the results for every combination. These operations are symmetrical, so flipping the left- and right-hand side makes no difference in the result.
+
+Expression          Result
+True & True         True
+True & False        False
+True & NA           NA
+False & False       False
+False & NA          False
+NA & NA             NA
+True | True         True
+True | False        True
+True | NA           True
+False | False       False
+False | NA          NA
+NA | NA             NA
+True ^ True         False
+True ^ False        True
+True ^ NA           NA
+False ^ False       False
+False ^ NA          NA
+NA ^ NA             NA
+
+When an NA is present in an operation, the output value is NA only if the result cannot be determined solely based on the other input. For example, True | NA is True, because both True | True and True | False are True. In that case, we don’t actually need to consider the value of the NA.
+On the other hand, True & NA is NA. The result depends on whether the NA really is True or False, since True & True is True, but True & False is False, so we can’t determine the output.
+This differs from how np.nan behaves in logical operations. pandas treated np.nan is always false in the output.
+
+In or
+-----
+pd.Series([True, False, np.nan], dtype="object") | True
+pd.Series([True, False, np.nan], dtype="boolean") | True
+
+In and
+-------
+pd.Series([True, False, np.nan], dtype="object") & True
+pd.Series([True, False, np.nan], dtype="boolean") & True
+
+
+
+
+
+
+
+
 ====================================================================================
 ====================================================================================
 Attributes:
