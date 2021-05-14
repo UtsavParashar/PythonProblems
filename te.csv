@@ -1,4 +1,10 @@
-"""as_date, end_date,pdate,A, b
-05/11/2021,05/11/2021,05/08/2021,1.6, 0.9
-05/11/2021,05/11/2021,05/09/2021,0.8, 1.4
-05/12/2021,05/11/2021,05/10/2021,1.4, 0.6"""
+"""etiqueta,suma
+2015-10,33
+Baja California,12
+Campeche,21
+2015-11,12
+Colima,6
+Ciudad de México,6
+2015-12,30
+Ciudad de México,20
+Quintana Roo,10"""
