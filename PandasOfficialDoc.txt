@@ -9394,9 +9394,114 @@ In and
 pd.Series([True, False, np.nan], dtype="object") & True
 pd.Series([True, False, np.nan], dtype="boolean") & True
 
+===========================
+2.16 Computational tools===
+===========================
+2.16.1 Statistical functions
+----------------------------
 
+Percent change
+---------------
+Series and DataFrame have a method pct_change() to compute the percent change over a given number of periods (using fill_method to fill NA/null values before computing the percent change).
+ser = pd.Series(np.random.randn(8))
+ser.pct_change()
 
+df = DataFrame(np.random.rand(10, 4))
+df.pct_change(3)
 
+s = pd.Series(range(1,6))
+print(s)
+s.pct_change(3)
+
+Covariance
+-----------
+If two assets are moving together in the same direction then they are said to have positive covariance else negative covariance.
+
+Series.cov() can be used to compute covariance between series (excluding missing values).
+s1 = pd.Series(range(1,11))
+s2 = pd.Series(range(2,21,2))
+s1.cov(s2)
+
+Analogously, DataFrame.cov() to compute pairwise covariances among the series in the DataFrame, also exclud- ing NA/null values.
+
+Note: Assuming the missing data are missing at random this results in an estimate for the covariance matrix which is unbiased. However, for many applications this estimate may not be acceptable because the estimated covariance matrix is not guaranteed to be positive semi-definite. This could lead to estimated correlations having absolute values which are greater than one, and/or a non-invertible covariance matrix.
+frame = pd.DataFrame(np.random.randn(1000, 5), columns=["a", "b", "c", "d", "e"])
+frame.cov()
+
+DataFrame.cov also supports an optional min_periods keyword that specifies the required minimum number of observations for each column pair in order to have a valid result.
+frame = pd.DataFrame(np.random.randn(20, 3), columns=["a", "b", "c"])
+frame.loc[frame.index[:5], "a"] = np.nan
+frame.loc[frame.index[5:10], "b"] = np.nan
+frame.cov()
+frame.cov(min_periods=12)
+
+s1 = pd.Series(range(1,6))
+s2 = pd.Series(range(6,11))
+s2[:3] = np.nan
+s1.cov(s2, min_periods=2)
+
+Correlation
+------------
+Correlation may be computed using the corr() method. Using the method parameter, several methods for com- puting correlations are provided:
+Method name                             Description
+pearson(default)                    Standard correlation coefficient
+kendall                             Kendall Tau correlation coefficient
+spearman                            Spearman rank correlation coefficient
+
+All of these are currently computed using pairwise complete observations. Wikipedia has articles covering the above correlation coefficients:
+• Pearson correlation coefficient
+• Kendall rank correlation coefficient
+• Spearman’s rank correlation coefficient
+
+Note: Please see the caveats associated with this method of calculating correlation matrices in the covariance section.
+
+Note that non-numeric columns will be automatically excluded from the correlation calculation. Like cov, corr also supports the optional min_periods keyword:
+
+frame = pd.DataFrame(np.random.randn(20, 3), columns=["a", "b", "c"])
+frame.loc[frame.index[:5], "a"] = np.nan
+frame.loc[frame.index[5:10], "b"] = np.nan
+frame.corr()
+frame.corr(min_periods=12)
+
+The method argument can also be a callable for a generic correlation calculation. In this case, it should be a single function that produces a single value from two ndarray inputs. Suppose we wanted to compute the correlation based on histogram intersection:
+# histogram intersection
+def histogram_intersection(a, b):
+    return np.minimum(np.true_divide(a, a.sum()),
+                      np.true_divide(b, b.sum())).sum()
+
+frame.corr(method=histogram_intersection)
+
+A related method corrwith() is implemented on DataFrame to compute the correlation between like-labeled Series contained in different DataFrame objects.
+index = ["a", "b", "c", "d", "e"]
+columns = ["one", "two", "three", "four"]
+df1 = pd.DataFrame(np.random.randn(5, 4), index=index, columns=columns)
+df2 = pd.DataFrame(np.random.randn(4, 4), index=index[:4], columns=columns)
+
+df1.corrwith(df2)
+df2.corrwith(df1, axis=1)
+
+Data ranking
+------------
+The rank() method produces a data ranking with ties being assigned the mean of the ranks (by default) for the group:
+s = pd.Series(np.random.randn(5), index=list("abcde"))
+s["d"] = s["b"] # so there's a tie
+s.rank()
+
+rank() is also a DataFrame method and can rank either the rows (axis=0) or the columns (axis=1). NaN values are excluded from the ranking
+df = pd.DataFrame(np.random.randn(10, 6))
+df[4] = df[2][:5] # some ties
+df.rank(1, ascending=False)
+
+rank optionally takes a parameter ascending which by default is true; when false, data is reverse-ranked, with larger values assigned a smaller rank.
+
+rank supports different tie-breaking methods, specified with the method parameter: • average : average rank of tied group
+• min : lowest rank in the group
+• max : highest rank in the group
+• first : ranks assigned in the order they appear in the array
+
+=====================================
+2.17 Group by: split-apply-combine===
+=====================================
 
 
 
@@ -9596,6 +9701,68 @@ head()
 tail()
 describe()
 info()
+
+
+================2.18 Windowing Operations ================================
+pandas contains a compact set of APIs for performing windowing operations - an operation that performs an aggregation over a sliding partition of values. The API functions similarly to the groupby API in that Series and DataFrame call the windowing method with necessary parameters and then subsequently call the aggregation function.
+s = pd.Series(range(5))
+print(s)
+s.rolling(window=2).sum()
+
+The windows are comprised by looking back the length of the window from the current observation. The result above can be derived by taking the sum of the following windowed partitions of data:
+for window in s.rolling(2):
+    print(window)
+
+Overview
+---------
+pandas supports 4 types of windowing operations:
+Rolling window: Generic fixed or variable sliding window over the values.
+Weighted window: Weighted, non-rectangular window supplied by the scipy.signal library.
+Expanding window: Accumulating window over the values.
+Exponentially Weighted window: Accumulating and exponentially weighted window over the values.
+
+Concept             Method        Returned Object     Supports time-based windows     Supports chained groupby
+Rolling window      rolling       Rolling             Yes                             Yes
+Weighted window     rolling       Window                No                              No
+Expanding window    expanding       Expanding           No                              Yes
+Exponentially
+Weighted window    ewm              ExponentialMovingWindow  No                         Yes (as of version 1.2)
+
+As noted above, some operations support specifying a window based on a time offset:
+s = pd.Series(np.arange(5), index=pd.date_range('2020.01.01', periods=5))
+s.rolling(2).sum()
+
+Additionally, some methods support chaining a groupby operation with a windowing operation which will first group the data by the specified keys and then perform a windowing operation per group.
+df = DataFrame({
+    'A':list('ababa'),
+    'B':range(5)
+})
+df.groupby('A').expanding().sum().droplevel(1).reset_index()
+Note: Windowing operations currently only support numeric data (integer and float) and will always return float64 values.
+
+Warning: Some windowing aggregation, mean, sum, var and std methods may suffer from numerical im- precision due to the underlying windowing algorithms accumulating sums. When values differ with magnitude 1/𝑛𝑝.𝑓𝑖𝑛𝑓𝑜(𝑛𝑝.𝑑𝑜𝑢𝑏𝑙𝑒).𝑒𝑝𝑠 this results in truncation. It must be noted, that large values may have an impact on windows, which do not include these values. Kahan summation is used to compute the rolling sums to preserve accuracy as much as possible.
+
+All windowing operations support a min_periods argument that dictates the minimum amount of non-np.nan values a window must have; otherwise, the resulting value is np.nan. min_peridos defaults to 1 for time-based windows and window for fixed windows
+s = pd.Series([np.nan, 1, 2, np.nan, np.nan, 3])
+s.rolling(3, min_periods=1).sum()
+s.rolling(3, min_periods=1).sum()
+s.rolling(3).sum()
+s.rolling(window=3, min_periods=2).sum()
+
+# Equivalent to min_periods=3
+s.rolling(window=3, min_periods=None).sum()
+
+Additionally, all windowing operations supports the aggregate method for returning a result of multiple aggrega- tions applied to a window.
+
+
+
+
+
+
+
+
+
+
 
 ==================2.19 Timeseries / date functionality=========================
 pandas contains extensive capabilities and features for working with time series data for all domains. Using the NumPy datetime64 and timedelta64 dtypes, pandas has consolidated a large number of features from other Python libraries like scikits.timeseries as well as created a tremendous amount of new functionality for manipulating time series data.

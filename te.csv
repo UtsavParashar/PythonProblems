@@ -1,10 +1,6 @@
-"""etiqueta,suma
-2015-10,33
-Baja California,12
-Campeche,21
-2015-11,12
-Colima,6
-Ciudad de México,6
-2015-12,30
-Ciudad de México,20
-Quintana Roo,10"""
+"""segment,sku,sales
+Milk,m2341,2
+Milk,m235,3
+Chocolate,c132,2
+Chocolate,c241,5
+Chocolate,c891,3"""
