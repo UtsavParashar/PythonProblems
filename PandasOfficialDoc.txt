@@ -9666,6 +9666,179 @@ s.groupby(level=["first", "second"]).sum()
 Index level names may be supplied as keys.
 s.groupby(["first", "second"]).sum()
 
+Grouping DataFrame with Index levels and columns
+-------------------------------------------------
+arrays = [["bar", "bar", "baz", "baz", "foo", "foo", "qux", "qux"],
+          ["one", "two", "one", "two", "one", "two", "one", "two"],
+         ]
+index = pd.MultiIndex.from_arrays(arrays, names=['first', 'second'])
+
+df = pd.DataFrame({"A": [1, 1, 1, 1, 2, 2, 3, 3], "B": np.arange(8)},
+                  index=index)
+df
+The following example groups df by the second index level and the A column.
+df.groupby(['A', pd.Grouper(level=1)]).sum()
+
+Index levels may also be specified by name.
+df.groupby(['A', pd.Grouper(level='second')]).sum()
+
+Index level names may be specified as keys directly to groupby.
+df.groupby(['second','A',]).sum()
+
+DataFrame column selection in GroupBy
+--------------------------------------
+Once you have created the GroupBy object from a DataFrame, you might want to do something different for each of the columns. Thus, using [] similar to getting a column from a DataFrame, you can do:
+
+df = pd.DataFrame({
+    "A": ["foo", "bar", "foo", "bar", "foo", "bar", "foo", "foo"],
+    "B": ["one", "one", "two", "three", "two", "two", "one", "three"],
+    "C": np.random.randn(8),
+    "D": np.random.randn(8),
+})
+grouped = df.groupby(["A"])
+grouped['C']
+grouped.D
+
+This is mainly syntactic sugar for the alternative and much more verbose:
+df["C"].groupby(df["A"])
+
+Additionally this method avoids recomputing the internal grouping information derived from the passed key.
+
+2.17.2 Iterating through groups
+-------------------------------
+With the GroupBy object in hand, iterating through the grouped data is very natural and functions similarly to itertools.groupby():
+grouped = df.groupby('A')
+for name, group in grouped:
+    print(name)
+    print(group)
+
+In the case of grouping by multiple keys, the group name will be a tuple:
+for name, group in df.groupby(['A','B']):
+    print(name)
+    print(group)
+
+2.17.3 Selecting a group
+=========================
+A single group can be selected using get_group():
+grouped = df.groupby(["A"])
+grouped.get_group('bar')
+
+Or for an object grouped on multiple columns:
+df.groupby(['A','B']).get_group(('bar', 'one'))
+
+2.17.4 Aggregation
+===================
+Once the GroupBy object has been created, several methods are available to perform a computation on the grouped data. These operations are similar to the aggregating API, window API, and resample API.
+An obvious one is aggregation via the aggregate() or equivalently agg() method:
+grouped = df.groupby("A")
+grouped.aggregate(np.sum)
+
+grouped = df.groupby(['A', 'B'])
+grouped.aggregate(np.sum)
+
+As you can see, the result of the aggregation will have the group names as the new index along the grouped axis. In the case of multiple keys, the result is a MultiIndex by default, though this can be changed by using the as_index option:
+grouped = df.groupby(["A", "B"], as_index=False)
+grouped.aggregate(sum)
+df.groupby("A", as_index=False).sum()
+
+Note that you could use the reset_index DataFrame function to achieve the same result as the column names are stored in the resulting MultiIndex:
+df.groupby(["A", "B"]).sum().reset_index()
+
+Another simple aggregation example is to compute the size of each group. This is included in GroupBy as the size method. It returns a Series whose index are the group names and whose values are the sizes of each group.
+grouped.size()
+grouped.describe()
+
+Another aggregation example is to compute the number of unique values of each group. This is similar to the value_counts function, except that it only counts unique values.
+ll = [['foo', 1], ['foo', 2], ['foo', 2], ['bar', 1], ['bar', 1]]
+df4 = pd.DataFrame(ll, columns=["A", "B"])
+print(df4)
+print(df4.groupby('A').nunique())
+df4.groupby('A').B.value_counts()
+
+Note: Aggregation functions will not return the groups that you are aggregating over if they are named columns, when as_index=True, the default. The grouped columns will be the indices of the returned object.
+Passing as_index=False will return the groups that you are aggregating over, if they are named columns.
+
+Aggregating functions are the ones that reduce the dimension of the returned objects. Some common aggregating
+functions are tabulated below:
+Function            Description
+mean()              Compute mean of groups
+sum()               Compute sum of group values
+size()              Compute group sizes
+count()             Compute count of group
+std()               Standard deviation of groups
+var()               Compute variance of groups
+sem()               Standard error of the mean of groups
+describe()          Generates descriptive statistics
+first()             Compute first of group values
+last()              Compute last of group values
+nth()               Take nth value, or a subset if n is a list
+min()               Compute min of group values
+max()               Compute max of group values
+
+df4.groupby('A').agg(['count', 'size'])
+
+The aggregating functions above will exclude NA values. Any function which reduces a Series to a scalar value is an aggregation function and will work, a trivial example is df.groupby('A').agg(lambda ser: 1). Note that nth() can act as a reducer or a filter.
+
+Applying multiple functions at once
+With grouped Series you can also pass a list or dict of functions to do aggregation with, outputting a DataFrame:
+grouped = df.groupby("A")
+grouped.C.agg([np.sum, np.mean, np.std])
+
+The resulting aggregations are named for the functions themselves. If you need to rename, then you can add in a chained operation for a Series like this:
+grouped.C.agg([np.sum, np.mean, np.std]).rename(columns={'sum':'foo',
+                'mean':'bar', 'std':'baz'})
+
+For a grouped DataFrame, you can rename in a similar manner:
+grouped.agg([np.sum, np.mean, np.std]).rename(
+       columns={"sum": "foo", "mean": "bar", "std": "baz"}
+)
+
+Note: In general, the output column names should be unique. You can’t apply the same function (or two functions with the same name) to the same column.
+grouped["C"].agg(["sum", "sum"])
+
+pandas does allow you to provide multiple lambdas. In this case, pandas will mangle the name of the (nameless) lambda functions, appending _<i> to each subsequent lambda.
+grouped["C"].agg([lambda x: x.max() - x.min(), lambda x: x.median() - x.mean()])
+
+Named aggregation
+==================
+New in version 0.25.0.
+To support column-specific aggregation with control over the output column names, pandas accepts the special syntax
+in GroupBy.agg(), known as “named aggregation”, where
+• The keywords are the output column names
+• The values are tuples whose first element is the column to select and the second element is the aggregation to apply to that column. pandas provides the pandas.NamedAgg namedtuple with the fields ['column', 'aggfunc'] to make it clearer what the arguments are. As usual, the aggregation can be a callable or a string alias.
+
+animals.groupby("kind").agg(min_height=pd.NamedAgg(column="height", aggfunc="min"),
+                max_height=pd.NamedAgg(column="height", aggfunc="max"),
+                average_weight=pd.NamedAgg(column="weight", aggfunc=np.mean),
+                )
+
+pandas.NamedAgg is just a namedtuple. Plain tuples are allowed as well.
+animals.groupby('kind').agg(min_height = ('height', min),
+                           max_height = ('height', max),
+                           avg_weight = ('weight', 'mean'))
+
+If your desired output column names are not valid Python keywords, construct a dictionary and unpack the keyword arguments
+animals.groupby("kind").agg(
+    **{
+        "total weight": pd.NamedAgg(column="weight", aggfunc=sum)
+    })
+
+# Syntactic sugar
+animals.groupby("kind").agg(
+    **{
+        "total weight": ("weight", sum)
+    })
+
+Additional keyword arguments are not passed through to the aggregation functions. Only pairs of (column, aggfunc) should be passed as **kwargs. If your aggregation functions requires additional arguments, partially apply them with functools.partial().
+
+Note: For Python 3.5 and earlier, the order of **kwargs in a functions was not preserved. This means that the output column ordering would not be consistent. To ensure consistent ordering, the keys (and so output columns) will always be sorted for Python 3.5.
+
+Named aggregation is also valid for Series groupby aggregations. In this case there’s no column selection, so the values are just the functions.
+animals.groupby('kind').height.agg(min_height = min, max_height=max)
+
+Applying different functions to DataFrame columns
+==================================================
+
 
 
 
@@ -11039,7 +11212,7 @@ df = pd.DataFrame({
 )
 df.resample('M',on='date').sum()
 
-Similarly, if you instead want to resample by a datetimelike level of MultiIndex, its name or location can be passed to the level keyword.
+Similarly, if you instead want to  by a datetimelike level of MultiIndex, its name or location can be passed to the level keyword.
 df.resample("M", level="d").sum()
 
 Iterating through groups
