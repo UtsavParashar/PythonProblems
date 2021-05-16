@@ -9502,6 +9502,171 @@ rank supports different tie-breaking methods, specified with the method paramete
 =====================================
 2.17 Group by: split-apply-combine===
 =====================================
+By “group by” we are referring to a process involving one or more of the following steps: • Splitting the data into groups based on some criteria.
+• Applying a function to each group independently.
+• Combining the results into a data structure.
+Out of these, the split step is the most straightforward. In fact, in many situations we may wish to split the data set into groups and do something with those groups. In the apply step, we might wish to do one of the following:
+• Aggregation: compute a summary statistic (or statistics) for each group. Some examples: – Compute group sums or means.
+– Compute group sizes / counts.
+• Transformation: perform some group-specific computations and return a like-indexed object. Some examples: – Standardize data (zscore) within a group.
+– Filling NAs within groups with a value derived from each group.
+• Filtration: discard some groups, according to a group-wise computation that evaluates True or False. Some examples:
+– Discard data that belongs to groups with only a few members.
+– Filter out data based on the group sum or mean.
+• Some combination of the above: GroupBy will examine the results of the apply step and try to return a sensibly
+combined result if it doesn’t fit into either of the above two categories.
+Since the set of object instance methods on pandas data structures are generally rich and expressive, we often simply want to invoke, say, a DataFrame function on each group. The name GroupBy should be quite familiar to those who have used a SQL-based tool (or itertools), in which you can write code like:
+
+ SELECT Column1, Column2, mean(Column3), sum(Column4) FROM SomeTable
+GROUP BY Column1, Column2
+
+We aim to make operations like this natural and easy to express using pandas. We’ll address each area of GroupBy functionality then provide some non-trivial examples / use cases.
+
+2.17.1 Splitting an object into groups
+=======================================
+pandas objects can be split on any of their axes. The abstract definition of grouping is to provide a mapping of labels to group names. To create a GroupBy object (more on what the GroupBy object is later), you may do the following:
+
+df = pd.DataFrame([
+    ("bird", "Falconiformes", 389.0),
+    ("bird", "Psittaciformes", 24.0),
+    ("mammal", "Carnivora", 80.2),
+    ("mammal", "Primates", np.nan),
+    ("mammal", "Carnivora", 58),
+],
+   index=["falcon", "parrot", "lion", "monkey", "leopard"],
+   columns=("class", "order", "max_speed"),
+)
+df
+
+# default is axis=0
+grouped = df.groupby('class')
+grouped = df.groupby('order', axis='columns')
+grouped = df.groupby(["class", "order"])
+
+The mapping can be specified many different ways:
+• A Python function, to be called on each of the axis labels.
+• A list or NumPy array of the same length as the selected axis.
+• A dict or Series, providing a label -> group name mapping.
+• For DataFrame objects, a string indicating either a column name or an index level name to be used to group. • df.groupby('A') is just syntactic sugar for df.groupby(df['A']).
+• A list of any of the above things.
+Collectively we refer to the grouping objects as the keys. For example, consider the following DataFrame:
+
+Note: A string passed to groupby may refer to either a column or an index level.If a string matches both a column
+name and an index level name, a ValueError will be raised.
+
+On a DataFrame, we obtain a GroupBy object by calling groupby(). We could naturally group by either the A or B columns, or both:
+grouped = df.groupby("A")
+grouped = df.groupby(["A", "B"])
+
+If we also have a MultiIndex on columns A and B, we can group by all but the specified columns
+df2 = df.set_index(["A", "B"])
+grouped = df2.groupby(df2.index.names.difference(["B"]))
+grouped.sum()
+
+These will split the DataFrame on its index (rows). We could also split by the columns:
+def get_letter_type(letter):
+    if letter.lower() in 'aeiou':
+        return 'vowel'
+    else:
+        return 'consonant'
+df.groupby(get_letter_type, axis=1).apply(lambda x: x.values)
+
+pandas Index objects support duplicate values. If a non-unique index is used as the group key in a groupby operation, all values for the same index value will be considered to be in one group and thus the output of aggregation functions will only contain unique index values:
+lst = [1, 2, 3, 1, 2, 3]
+s = pd.Series([1, 2, 3, 10, 20, 30], lst)
+grouped = s.groupby(level=0)
+grouped.first()
+grouped.last()
+grouped.sum()
+
+Note that no splitting occurs until it’s needed. Creating the GroupBy object only verifies that you’ve passed a valid mapping.
+
+Note: Many kinds of complicated data manipulations can be expressed in terms of GroupByoperations (though can’t be guaranteed to be the most efficient). You can get quite creative with the label mapping functions.
+
+GroupBy sorting
+---------------
+By default the group keys are sorted during the groupby operation. You may however pass sort=False for potential speedups:
+df2 = pd.DataFrame({"X": ["B", "B", "A", "A"], "Y": [1, 2, 3, 4]})
+df2.groupby('X', sort=False).sum()
+df2.groupby('X').sum()
+
+Note that groupby will preserve the order in which observations are sorted within each group. For example, the groups created by groupby() below are in the order they appeared in the original DataFrame:
+df3 = pd.DataFrame({"X": ["A", "B", "A", "B"], "Y": [1, 4, 3, 2]})
+df3.groupby('X').get_group('A')
+df3.groupby('X').get_group('B')
+
+GroupBy dropna
+--------------
+By default NA values are excluded from group keys during the groupby operation. However, in case you want to include NA values in group keys, you could pass dropna=False to achieve it.
+df_list = [[1, 2, 3], [1, None, 4], [2, 1, 3], [1, 2, 2]]
+df_dna = pd.DataFrame(df_list, columns=["a", "b", "c"])
+df_dna
+
+# Default ``dropna`` is set to True, which will exclude NaNs in keys
+df_dna.groupby(by="b").sum()
+# In order to allow NaN in keys, set ``dropna`` to False
+df_dna.groupby(by="b", dropna=False).sum()
+
+GroupBy object attributes
+-------------------------
+The groups attribute is a dict whose keys are the computed unique groups and corresponding values being the axis labels belonging to each group. In the above example we have:
+df.groupby('A').groups
+df.groupby(get_letter_type, axis=1).groups
+df.groupby(get_letter_type, axis=1).groups
+
+Calling the standard Python len function on the GroupBy object just returns the length of the groups dict, so it is largely just a convenience:
+grouped = df.groupby(['A','B'])
+grouped.groups
+len(grouped)
+
+GroupBy will tab complete column names (and other attributes):
+d="""date,height,weight,gender
+2000-01-01,42.849980,157.500553,male
+2000-01-02,49.607315,177.340407,male
+2000-01-03,56.293531,171.524640,male
+2000-01-04,48.421077,144.251986,female
+2000-01-05,46.556882,152.526206,male
+2000-01-06,68.448851,168.272968,female
+2000-01-07,70.757698,136.431469,male
+2000-01-08,58.909500,176.499753,female
+2000-01-09,76.435631,174.094104,female
+2000-01-10,45.306120,177.540920,male"""
+df=g(d)
+df['date'] = pd.to_datetime(df.date)
+df = df.set_index('date')
+gb = df.groupby('gender')
+gb.<TAB>
+
+GroupBy with MultiIndex
+------------------------
+With hierarchically-indexed data, it’s quite natural to group by one of the levels of the hierarchy. Let’s create a Series with a two-level MultiIndex.
+
+arrays = [
+    ["bar", "bar", "baz", "baz", "foo", "foo", "qux", "qux"],
+    ["one", "two", "one", "two", "one", "two", "one", "two"],
+]
+index = pd.MultiIndex.from_arrays(arrays, names=['first', 'second'])
+s = pd.Series(np.random.rand(8), index=index)
+s
+
+# We can then group by one of the levels in s.
+grouped = s.groupby(level=1)
+grouped.sum()
+
+# If the MultiIndex has names specified, these can be passed instead of the level number:
+s.groupby(level='second').sum()
+
+
+The aggregation functions such as sum will take the level parameter directly. Additionally, the resulting index will be named according to the chosen level:
+s.sum(level='second')
+
+Grouping with multiple levels is supported.
+s.groupby(level=["first", "second"]).sum()
+
+Index level names may be supplied as keys.
+s.groupby(["first", "second"]).sum()
+
+
 
 
 
