@@ -1,8 +1,5 @@
-"""a,b
-1,4
-1,4
-2,3
-3,2
-4,1
-5,0
-1,6"""
+"""Column_A
+11.2 some text 17 some text 21
+some text 25.2 4.1 some text 53 17 78
+121.1 bla bla bla 14 some text
+12 some text"""
