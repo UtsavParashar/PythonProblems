@@ -10049,6 +10049,200 @@ gb.nsmallest(2)
 
 2.17.8 Flexible apply
 -----------------------
+Some operations on the grouped data might not fit into either the aggregate or transform categories. Or, you may simply want GroupBy to infer how to combine the results. For these, use the apply function, which can be substituted for both aggregate and transform in many standard use cases. However, apply can handle some exceptional use cases, for example:
+df = pd.DataFrame({
+    "A": ["foo", "bar", "foo", "bar", "foo", "bar", "foo", "foo"],
+    "B": ["one", "one", "two", "three", "two", "two", "one", "three"],
+    "C": np.random.randn(8),
+    "D": np.random.randn(8),
+})
+grouped = df.groupby('A')
+
+# could also just call .describe()
+grouped.C.apply(lambda x: x.describe())
+
+The dimension of the returned result can also change:
+grouped = df.groupby('A').C
+
+def f(group):
+    print(group)
+    return pd.DataFrame({
+        'original':group,
+        'deamed':group - group.mean()
+    })
+
+grouped.apply(f)
+
+apply on a Series can operate on a returned value from the applied function, that is itself a series, and possibly upcast the result to a DataFrame:
+def f(x):
+    return pd.Series([x, x**2], index=["x", "x^2"])
+
+def f1(x):
+    return pd.Series(x, index=['x'])
+
+s = pd.Series(np.random.rand(5))
+s.apply(f)
+
+# When we apply apply on a series, it returns df
+s.apply(f1)
+
+Note: apply can act as a reducer, transformer, or filter function, depending on exactly what is passed to it. So depending on the path taken, and exactly what you are grouping. Thus the grouped columns(s) may be included in the output as well as set the indices.
+
+2.17.9 Numba Accelerated Routines
+==================================
+New in version 1.1.
+If Numba is installed as an optional dependency, the transform and aggregate methods support engine='numba' and engine_kwargs arguments. The engine_kwargs argument is a dictionary of key- word arguments that will be passed into the numba.jit decorator. These keyword arguments will be applied to the passed function. Currently only nogil, nopython, and parallel are supported, and their default values are set to False, True and False respectively.
+The function signature must start with values, index exactly as the data belonging to each group will be passed into values, and the group index will be passed into index.
+
+Note: In terms of performance, the first time a function is run using the Numba engine will be slow as Numba will have some function compilation overhead. However, the compiled functions are cached, and subsequent calls will be fast. In general, the Numba engine is performant with a larger amount of data points (e.g. 1+ million).
+
+Warning: When using engine='numba', there will be no “fall back” behavior internally. The group data and group index will be passed as NumPy arrays to the JITed user defined function, and no alternative execution attempts will be tried.
+
+In [1]: N = 10 ** 3
+In [2]: data = {0: [str(i) for i in range(100)] * N, 1: list(range(100)) * N} In [3]: df = pd.DataFrame(data, columns=[0, 1])
+In [4]: def f_numba(values, index):
+...:
+...:
+...:
+...:
+...:
+...:
+...:
+...:
+total = 0
+for i, value in enumerate(values):
+ifi%2: total
+else: total
+return total
++=value+5 +=value*2
+In [5]: def f_cython(values):
+total = 0
+for i, value in enumerate(values):
+ifi%2: total
+else: total
+return total
++=value+5 +=value*2
+In [6]: groupby = df.groupby(0)
+# Run the first time, compilation time will affect performance
+In [7]: %timeit -r 1 -n 1 groupby.aggregate(f_numba, engine='numba') # noqa: E225 2.14 s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+# Function is cached and performance will improve
+In [8]: %timeit groupby.aggregate(f_numba, engine='numba')
+4.93 ms ± 32.3 μs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+In [9]: %timeit groupby.aggregate(f_cython, engine='cython')
+18.6 ms ± 84.8 μs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+2.17.10 Other useful features
+==============================
+Automatic exclusion of “nuisance” columns
+Again consider the example DataFrame we’ve been looking at:
+
+we don’t care about the data in column B. We refer to this as a “nuisance” column. If the passed aggregation function can’t be applied to some columns, the troublesome columns will be (silently) dropped. Thus, this does not pose any problems:
+df.groupby('A').std()
+
+Note that df.groupby('A').colname.std(). is more efficient than df.groupby('A').std(). colname, so if the result of an aggregation function is only interesting over one column (here colname), it may be filtered before applying the aggregation function.
+
+Note: Any object column, also if it contains numerical values such as Decimal objects,is considered as a “nuisance” columns. They are excluded from aggregate functions automatically in groupby.
+If you do wish to include decimal or object columns in an aggregation with other non-nuisance data types, you must do so explicitly.
+
+from decimal import Decimal
+
+df_dec = pd.DataFrame({
+    'id':np.tile([1,2],2),
+    'int_column':np.arange(1,5),
+    'decimal_column':[Decimal('0.5'), Decimal('0.15'),
+                     Decimal('0.25'), Decimal('0.4')]
+})
+df_dec
+
+# Decimal columns can be sum'd explicitly by themselves...
+df_dec.groupby('id', as_index=False)[['decimal_column']].sum()
+df_dec.groupby('id', as_index=False).decimal_column.sum()
+
+# ...but cannot be combined with standard data types or they will be excluded
+df_dec.groupby(["id"])[["int_column", "decimal_column"]].sum()
+
+# Use .agg function to aggregate over standard and "nuisance" data types
+# at the same time
+
+df_dec.groupby(["id"]).agg({"int_column": "sum", "decimal_column": "sum"})
+
+Handling of (un)observed Categorical values
+============================================
+When using a Categorical grouper (as a single grouper, or as part of multiple groupers), the observed keyword controls whether to return a cartesian product of all possible groupers values (observed=False) or only those that are observed groupers (observed=True).
+Show all values
+pd.Series([1, 1, 1]).groupby(
+    pd.Categorical(np.repeat('a',3), categories=['a','b']),
+    observed=False).count()
+
+Show only the observed values:
+pd.Series([1, 1, 1]).groupby(
+    pd.Categorical(np.repeat('a',3), categories=['a','b']),
+    observed=True).count()
+
+The returned dtype of the grouped will always include all of the categories that were grouped.
+s = (pd.Series([1, 1, 1]).groupby(
+    pd.Categorical(np.repeat('a',3), categories=['a','b']),
+    observed=False).count())
+s.index.dtype # CategoricalDtype(categories=['a', 'b'], ordered=False)
+
+NA and NaT group handling
+--------------------------
+If there are any NaN or NaT values in the grouping key, these will be automatically excluded. In other words, there will never be an “NA group” or “NaT group”. This was not the case in older versions of pandas, but users were generally discarding the NA group anyway (and supporting it was an implementation headache).
+
+Grouping with ordered factors
+-------------------------------
+qcut -
+df = pd.DataFrame({
+    'a':[.2,.1,.5,.9]
+})
+
+pd.qcut(df.a, [0,.25,.5,.75, 1])
+
+Categorical variables represented as instance of pandas’s Categorical class can be used as group keys. If so, the order of the levels will be preserved:
+data = pd.Series(np.random.randn(100))
+factor = pd.qcut(data, [0,.25,.5,.75, 1])
+data.groupby(factor).mean()
+
+Grouping with a grouper specification
+--------------------------------------
+You may need to specify a bit more data to properly group. You can use the pd.Grouper to provide this local control
+Groupby a specific column with the desired frequency. This is like resampling.
+import datetime
+df = pd.DataFrame({
+     "Branch": "A A A A A A A B".split(),
+     "Buyer": "Carl Mark Carl Carl Joe Joe Joe Carl".split(),
+     "Quantity": [1, 3, 5, 1, 8, 1, 9, 3],
+     "Date": [
+         datetime.datetime(2013, 1, 1, 13, 0),
+         datetime.datetime(2013, 1, 1, 13, 5),
+         datetime.datetime(2013, 10, 1, 20, 0),
+         datetime.datetime(2013, 10, 2, 10, 0),
+         datetime.datetime(2013, 10, 1, 20, 0),
+         datetime.datetime(2013, 10, 2, 10, 0),
+         datetime.datetime(2013, 12, 2, 12, 0),
+         datetime.datetime(2013, 12, 2, 14, 0),
+     ]
+ })
+df.groupby([pd.Grouper(freq='1M', key='Date'), "Buyer"]).sum()
+
+You have an ambiguous specification in that you have a named index and a column that could be potential groupers.
+df = df.set_index('Date')
+df['Date'] = df.index + pd.offsets.MonthEnd(2)
+
+## Column and Index have same name
+
+## when we want to group by column
+df.groupby([pd.Grouper(freq='6M', key='Date'), "Buyer"]).sum()
+
+## when we want to group by index
+df.groupby([pd.Grouper(freq='6M', level='Date'), "Buyer"]).sum()
+
+Taking the first rows of each group
+------------------------------------
+
+
+
+
 
 
 
