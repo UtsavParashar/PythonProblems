@@ -10239,6 +10239,62 @@ df.groupby([pd.Grouper(freq='6M', level='Date'), "Buyer"]).sum()
 
 Taking the first rows of each group
 ------------------------------------
+Just like for a DataFrame or Series you can call head and tail on a groupby:
+df = pd.DataFrame([[1, 2], [1, 4], [5, 6]], columns=["A", "B"])
+df.groupby('A').head(1)
+df.groupby('A').tail(1)
+This shows the first or last n rows from each group.
+
+Taking the nth row of each group
+--------------------------------
+To select from a DataFrame or Series the nth item, use nth(). This is a reduction method, and will return a single row (or no row) per group if you pass an int for n:
+df = pd.DataFrame([[1, np.nan], [1, 4], [5, 6]], columns=["A", "B"])
+df.groupby('A', as_index=False).nth(0)
+df.groupby('A', as_index=False).nth(-1)
+df.groupby('A', as_index=False).nth(1)
+
+If you want to select the nth not-null item, use the dropna kwarg. For a DataFrame this should be either 'any' or 'all' just like you would pass to dropna:
+df.groupby('A').nth(0, dropna='any')
+
+# nth(0) is the same as g.first()
+g = df.groupby('A')
+g.first()
+
+# nth(-1) is the same as g.last()
+g.nth(-1, dropna="any") # NaNs denote group exhausted when using dropna
+g.last()
+
+g.B.nth(0, dropna='all')
+
+As with other methods, passing as_index=False, will achieve a filtration, which returns the grouped row.
+df = pd.DataFrame([[1, np.nan], [1, 4], [5, 6]], columns=["A", "B"])
+print(df)
+g = df.groupby("A", as_index=False)
+g.nth(0)
+g.nth(-1)
+
+You can also select multiple rows from each group by specifying multiple nth values as a list of ints.
+business_dates = pd.date_range(start="5/1/2021", end="6/30/2021", freq="B")
+df = pd.DataFrame(1, index=business_dates, columns=["a", "b"])
+# get the first, 4th, and last date index for each month
+df.groupby([df.index.year, df.index.month]).nth([0,3,-1])
+
+Enumerate group items
+----------------------
+To see the order in which each row appears within its group, use the cumcount method:
+dfg = pd.DataFrame(list("aaabba"), columns=["A"])
+dfg.groupby('A').cumcount()
+dfg.groupby("A").cumcount(ascending=False)
+
+Enumerate groups
+-----------------
+To see the ordering of the groups (as opposed to the order of rows within a group given by cumcount) you can use ngroup().
+Note that the numbers given to the groups match the order in which the groups would be seen when iterating over the groupby object, not the order they are first observed.
+dfg = pd.DataFrame(list("aaabba"), columns=["A"])
+dfg.groupby('A').ngroup()
+dfg.groupby("A").ngroup(ascending=False)
+
+
 
 
 
