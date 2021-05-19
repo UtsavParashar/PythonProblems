@@ -10348,6 +10348,101 @@ where mean takes a GroupBy object and finds the mean of the Revenue and Quantity
 2.17.11 Examples
 Regrouping by factor
 ----------------------
+Regroup columns of a DataFrame according to their sum, and sum the aggregated ones.
+df = pd.DataFrame({"a": [1, 0, 0], "b": [0, 1, 0],
+                   "c": [1, 0, 0], "d": [2, 3, 4]})
+df.groupby(df.sum(), axis=1).sum()
+
+Multi-column factorization
+--------------------------
+By using ngroup(), we can extract information about the groups in a way similar to factorize() (as described further in the reshaping API) but which applies naturally to multiple columns of mixed type and different sources. This can be useful as an intermediate categorical-like step in processing, when the relationships between the group rows are more important than their content, or as input to an algorithm which only accepts the integer encoding
+
+dfg = pd.DataFrame({"A": [1, 1, 2, 3, 2], "B": list("aaaba")})
+print(dfg)
+dfg.groupby(['A','B']).ngroup()
+dfg.groupby(["A", [0, 0, 0, 1, 1]]).ngroup()
+
+Groupby by indexer to ‘resample’ data
+--------------------------------------
+Resampling produces new hypothetical samples (resamples) from already existing observed data or from a model that generates data. These new samples are similar to the pre-existing samples.
+In order to resample to work on indices that are non-datetimelike, the following procedure can be utilized.
+In the following examples, df.index // 5 returns a binary array which is used to determine what gets selected for the groupby operation.
+Note: The below example shows how we can down sample by consolidation of samples into fewer samples.Hereby using df.index // 5, we are aggregating the samples in bins. By applying std() function, we aggregate the information contained in many samples into a small subset of values which is their standard deviation thereby reducing the number of samples.
+df = pd.DataFrame(np.random.randn(10, 2))
+df.index // 5
+df.groupby(df.index // 5).std()
+
+Returning a Series to propagate names
+--------------------------------------
+Group DataFrame columns, compute a set of metrics and return a named Series. The Series name is used as the name for the column index. This is especially useful in conjunction with reshaping operations such as stacking in which the column index name will be used as the name of the inserted column:
+df = pd.DataFrame({
+    "a": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2],
+    "b": [0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+    "c": [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    "d": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+
+ })
+df
+
+def compute_metrics(x):
+    result = {"b_sum": x["b"].sum(), "c_mean": x["c"].mean()}
+    return pd.Series(result, name="metrics")
+
+result = df.groupby("a").apply(compute_metrics)
+result.stack()
+
+2.18 Windowing Operations
+pandas contains a compact set of APIs for performing windowing operations - an operation that performs an aggregation over a sliding partition of values. The API functions similarly to the groupby API in that Series and DataFrame call the windowing method with necessary parameters and then subsequently call the aggregation function.
+s = pd.Series(range(5))
+print(s)
+s.rolling(window=2).sum()
+
+The windows are comprised by looking back the length of the window from the current observation. The result above can be derived by taking the sum of the following windowed partitions of data:
+for window in s.rolling(2):
+    print(window)
+
+Overview
+---------
+pandas supports 4 types of windowing operations:
+Rolling window: Generic fixed or variable sliding window over the values.
+Weighted window: Weighted, non-rectangular window supplied by the scipy.signal library.
+Expanding window: Accumulating window over the values.
+Exponentially Weighted window: Accumulating and exponentially weighted window over the values.
+
+Concept             Method        Returned Object     Supports time-based windows     Supports chained groupby
+Rolling window      rolling       Rolling             Yes                             Yes
+Weighted window     rolling       Window                No                              No
+Expanding window    expanding       Expanding           No                              Yes
+Exponentially
+Weighted window    ewm              ExponentialMovingWindow  No                         Yes (as of version 1.2)
+
+As noted above, some operations support specifying a window based on a time offset:
+s = pd.Series(np.arange(5), index=pd.date_range('2020.01.01', periods=5))
+s.rolling(2).sum()
+
+Additionally, some methods support chaining a groupby operation with a windowing operation which will first group the data by the specified keys and then perform a windowing operation per group.
+df = DataFrame({
+    'A':list('ababa'),
+    'B':range(5)
+})
+df.groupby('A').expanding().sum().droplevel(1).reset_index()
+Note: Windowing operations currently only support numeric data (integer and float) and will always return float64 values.
+
+Warning: Some windowing aggregation, mean, sum, var and std methods may suffer from numerical im- precision due to the underlying windowing algorithms accumulating sums. When values differ with magnitude 1/𝑛𝑝.𝑓𝑖𝑛𝑓𝑜(𝑛𝑝.𝑑𝑜𝑢𝑏𝑙𝑒).𝑒𝑝𝑠 this results in truncation. It must be noted, that large values may have an impact on windows, which do not include these values. Kahan summation is used to compute the rolling sums to preserve accuracy as much as possible.
+
+All windowing operations support a min_periods argument that dictates the minimum amount of non-np.nan values a window must have; otherwise, the resulting value is np.nan. min_peridos defaults to 1 for time-based windows and window for fixed windows
+s = pd.Series([np.nan, 1, 2, np.nan, np.nan, 3])
+s.rolling(3, min_periods=1).sum()
+s.rolling(3, min_periods=1).sum()
+s.rolling(3).sum()
+s.rolling(window=3, min_periods=2).sum()
+
+# Equivalent to min_periods=3
+s.rolling(window=3, min_periods=None).sum()
+
+Additionally, all windowing operations supports the aggregate method for returning a result of multiple aggrega- tions applied to a window.
+
+
 
 
 
@@ -10546,66 +10641,6 @@ head()
 tail()
 describe()
 info()
-
-
-================2.18 Windowing Operations ================================
-pandas contains a compact set of APIs for performing windowing operations - an operation that performs an aggregation over a sliding partition of values. The API functions similarly to the groupby API in that Series and DataFrame call the windowing method with necessary parameters and then subsequently call the aggregation function.
-s = pd.Series(range(5))
-print(s)
-s.rolling(window=2).sum()
-
-The windows are comprised by looking back the length of the window from the current observation. The result above can be derived by taking the sum of the following windowed partitions of data:
-for window in s.rolling(2):
-    print(window)
-
-Overview
----------
-pandas supports 4 types of windowing operations:
-Rolling window: Generic fixed or variable sliding window over the values.
-Weighted window: Weighted, non-rectangular window supplied by the scipy.signal library.
-Expanding window: Accumulating window over the values.
-Exponentially Weighted window: Accumulating and exponentially weighted window over the values.
-
-Concept             Method        Returned Object     Supports time-based windows     Supports chained groupby
-Rolling window      rolling       Rolling             Yes                             Yes
-Weighted window     rolling       Window                No                              No
-Expanding window    expanding       Expanding           No                              Yes
-Exponentially
-Weighted window    ewm              ExponentialMovingWindow  No                         Yes (as of version 1.2)
-
-As noted above, some operations support specifying a window based on a time offset:
-s = pd.Series(np.arange(5), index=pd.date_range('2020.01.01', periods=5))
-s.rolling(2).sum()
-
-Additionally, some methods support chaining a groupby operation with a windowing operation which will first group the data by the specified keys and then perform a windowing operation per group.
-df = DataFrame({
-    'A':list('ababa'),
-    'B':range(5)
-})
-df.groupby('A').expanding().sum().droplevel(1).reset_index()
-Note: Windowing operations currently only support numeric data (integer and float) and will always return float64 values.
-
-Warning: Some windowing aggregation, mean, sum, var and std methods may suffer from numerical im- precision due to the underlying windowing algorithms accumulating sums. When values differ with magnitude 1/𝑛𝑝.𝑓𝑖𝑛𝑓𝑜(𝑛𝑝.𝑑𝑜𝑢𝑏𝑙𝑒).𝑒𝑝𝑠 this results in truncation. It must be noted, that large values may have an impact on windows, which do not include these values. Kahan summation is used to compute the rolling sums to preserve accuracy as much as possible.
-
-All windowing operations support a min_periods argument that dictates the minimum amount of non-np.nan values a window must have; otherwise, the resulting value is np.nan. min_peridos defaults to 1 for time-based windows and window for fixed windows
-s = pd.Series([np.nan, 1, 2, np.nan, np.nan, 3])
-s.rolling(3, min_periods=1).sum()
-s.rolling(3, min_periods=1).sum()
-s.rolling(3).sum()
-s.rolling(window=3, min_periods=2).sum()
-
-# Equivalent to min_periods=3
-s.rolling(window=3, min_periods=None).sum()
-
-Additionally, all windowing operations supports the aggregate method for returning a result of multiple aggrega- tions applied to a window.
-
-
-
-
-
-
-
-
 
 
 

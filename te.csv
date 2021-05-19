@@ -1,5 +1,5 @@
-"""Column_A
-11.2 some text 17 some text 21
-some text 25.2 4.1 some text 53 17 78
-121.1 bla bla bla 14 some text
-12 some text"""
+"""Name,Date,Time
+A,02/20/2021,12:30:06
+A,02/20/2021,12:30:20
+A,02/21/2021,12:30:20
+A,02/22/2021,02:30:30"""
