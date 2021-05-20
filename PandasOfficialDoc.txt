@@ -10391,7 +10391,9 @@ def compute_metrics(x):
 result = df.groupby("a").apply(compute_metrics)
 result.stack()
 
-2.18 Windowing Operations
+=============================
+2.18 Windowing Operations====
+=============================
 pandas contains a compact set of APIs for performing windowing operations - an operation that performs an aggregation over a sliding partition of values. The API functions similarly to the groupby API in that Series and DataFrame call the windowing method with necessary parameters and then subsequently call the aggregation function.
 s = pd.Series(range(5))
 print(s)
@@ -10428,7 +10430,7 @@ df = DataFrame({
 df.groupby('A').expanding().sum().droplevel(1).reset_index()
 Note: Windowing operations currently only support numeric data (integer and float) and will always return float64 values.
 
-Warning: Some windowing aggregation, mean, sum, var and std methods may suffer from numerical im- precision due to the underlying windowing algorithms accumulating sums. When values differ with magnitude 1/𝑛𝑝.𝑓𝑖𝑛𝑓𝑜(𝑛𝑝.𝑑𝑜𝑢𝑏𝑙𝑒).𝑒𝑝𝑠 this results in truncation. It must be noted, that large values may have an impact on windows, which do not include these values. Kahan summation is used to compute the rolling sums to preserve accuracy as much as possible.
+Warning: Some windowing aggregation, mean, sum, var and std methods may suffer from numerical imprecision due to the underlying windowing algorithms accumulating sums. When values differ with magnitude 1/𝑛𝑝.𝑓𝑖𝑛𝑓𝑜(𝑛𝑝.𝑑𝑜𝑢𝑏𝑙𝑒).𝑒𝑝𝑠 this results in truncation. It must be noted, that large values may have an impact on windows, which do not include these values. Kahan summation is used to compute the rolling sums to preserve accuracy as much as possible.
 
 All windowing operations support a min_periods argument that dictates the minimum amount of non-np.nan values a window must have; otherwise, the resulting value is np.nan. min_peridos defaults to 1 for time-based windows and window for fixed windows
 s = pd.Series([np.nan, 1, 2, np.nan, np.nan, 3])
@@ -10441,7 +10443,61 @@ s.rolling(window=3, min_periods=2).sum()
 s.rolling(window=3, min_periods=None).sum()
 
 Additionally, all windowing operations supports the aggregate method for returning a result of multiple aggrega- tions applied to a window.
+df = pd.DataFrame({"A": range(5), "B": range(10, 15)})
+df.expanding().agg([np.sum, np.mean, np.std])
+df.A.expanding(3).corr(df.B)
 
+2.18.2 Rolling window
+---------------------
+Generic rolling windows support specifying windows as a fixed number of observations or variable number of obser- vations based on an offset. If a time based offset is provided, the corresponding time based index must be monotonic.
+times = ['2020-01-01', '2020-01-03', '2020-01-04', '2020-01-05', '2020-01-29']
+s = pd.Series(range(5), index=pd.DatetimeIndex(times))
+# Window with 2 observations
+print(s)
+s.rolling(2).sum()
+
+# Window with 2 days worth of observations
+s.rolling('2D').sum()
+
+For all supported aggregation functions, see - https://pandas.pydata.org/pandas-docs/stable/reference/window.html#api-functions-rolling
+
+Centering windows
+------------------
+By default the labels are set to the right edge of the window, but a center keyword is available so the labels can be set at the center.
+s = pd.Series(range(10))
+s.rolling(5).mean()
+s.rolling(5, center=True).mean()
+
+Rolling window endpoints
+------------------------
+The inclusion of the interval endpoints in rolling window calculations can be specified with the closed parameter:
+Value       Behavior
+right'      close right endpoint
+'left'      close left endpoint
+'both'      close both endpoints
+'neither'   open endpoints
+
+df = pd.DataFrame({"x": 1},index=[
+    pd.Timestamp("20130101 09:00:01"),
+    pd.Timestamp("20130101 09:00:02"),
+    pd.Timestamp("20130101 09:00:03"),
+    pd.Timestamp("20130101 09:00:04"),
+    pd.Timestamp("20130101 09:00:06"),
+])
+df['default']=df.rolling("2s").x.sum() # default
+df["right"] = df.rolling("2s", closed="right").x.sum() # default
+df["left"] = df.rolling("2s", closed="left").x.sum()
+df["both"] = df.rolling("2s", closed="both").x.sum()
+df["neither"] = df.rolling("2s", closed="neither").x.sum()
+df
+
+Custom window rolling
+---------------------
+In addition to accepting an integer or offset as a window argument, rolling also accepts a BaseIndexer subclass that allows a user to define a custom method for calculating window bounds. The BaseIndexer subclass will need to define a get_window_bounds method that returns a tuple of two arrays, the first being the starting indices of the windows and second being the ending indices of the windows. Additionally, num_values, min_periods, center, closed and will automatically be passed to get_window_bounds and the defined method must always accept these arguments.
+For example, if we have the following :class:DataFrame:
+use_expanding = [True, False, True, False, True]
+df = pd.DataFrame({"values": range(5)})
+and we want to use an expanding window where use_expanding is True otherwise a window of size 1, we can create the following BaseIndexer subclass:
 
 
 
