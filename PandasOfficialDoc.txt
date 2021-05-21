@@ -10498,6 +10498,102 @@ For example, if we have the following :class:DataFrame:
 use_expanding = [True, False, True, False, True]
 df = pd.DataFrame({"values": range(5)})
 and we want to use an expanding window where use_expanding is True otherwise a window of size 1, we can create the following BaseIndexer subclass:
+use_expanding = [True, False, True, False, True]
+df = pd.DataFrame({"values": range(5)})
+df
+
+and we want to use an expanding window where use_expanding is True otherwise a window of size 1, we can create the following BaseIndexer subclass:
+
+from pandas.api.indexers import BaseIndexer
+class CustomIndexer(BaseIndexer):
+    def get_window_bounds(self, num_values, min_periods, center, closed):
+        start = np.empty(num_values, dtype=np.int64)
+        end = np.empty(num_values, dtype=np.int64)
+        for i in range(num_values):
+            if self.use_expanding[i]:
+                start[i] = 0
+                end[i] = i + 1
+            else:
+                start[i] = i
+                end[i] = i + self.window_size
+        return start, end
+
+indexer = CustomIndexer(window_size=1, use_expanding=use_expanding)
+df.rolling(indexer).sum()
+
+You can view other examples of BaseIndexer subclasses https://github.com/pandas-dev/pandas/blob/master/pandas/core/window/indexers.py
+    New in version 1.1.
+
+One subclass of note within those examples is the VariableOffsetWindowIndexer that allows rolling opera- tions over a non-fixed offset like a BusinessDay.
+from pandas.api.indexers import VariableOffsetWindowIndexer
+
+df = pd.DataFrame(range(15), index=pd.date_range('2021-05-19', periods=15))
+df
+
+offset = pd.offsets.BDay(1)
+indexer = VariableOffsetWindowIndexer(index=df.index, offset=offset)
+
+print(df)
+df.rolling(indexer).sum()
+
+For some problems knowledge of the future is available for analysis. For example, this occurs when each data point is a full time series read from an experiment, and the task is to extract underlying conditions. In these cases it can be useful to perform forward-looking rolling window computations. FixedForwardWindowIndexer class is available for this purpose. This BaseIndexer subclass implements a closed fixed-width forward-looking rolling window, and we can use it as follows:
+
+Rolling apply
+--------------
+The apply() function takes an extra func argument and performs generic rolling computations. The func ar- gument should be a single function that produces a single value from an ndarray input. raw specifies whether the windows are cast as Series objects (raw=False) or ndarray objects (raw=True).
+
+def mad(x):
+    return np.fabs(x - x.mean()).mean()
+
+s = pd.Series(range(10))
+s.rolling(4).apply(mad, raw=True)
+
+Binary window functions
+-----------------------
+cov() and corr() can compute moving window statistics about two Series or any combination of DataFrame/Series or DataFrame/DataFrame. Here is the behavior in each case:
+• two Series: compute the statistic for the pairing.
+• DataFrame/Series: compute the statistics for each column of the DataFrame with the passed Series, thus
+returning a DataFrame.
+• DataFrame/DataFrame: by default compute the statistic for matching column names, returning a DataFrame. If the keyword argument pairwise=True is passed then computes the statistic for each pair of columns, returning a MultiIndexed DataFrame whose index are the dates in question
+
+df = pd.DataFrame(
+....: np.random.randn(10, 4),
+....: index=pd.date_range("2020-01-01", periods=10),
+....: columns=["A", "B", "C", "D"], ....: )
+....:
+In [42]: df = df.cumsum() In [43]: df2 = df[:4]
+In [44]: df2.rolling(window=2).corr(df2["B"])
+
+Computing rolling pairwise covariances and correlations
+In financial data analysis and other fields it’s common to compute covariance and correlation matrices for a collection of time series. Often one is also interested in moving-window covariance and correlation matrices. This can be done by passing the pairwise keyword argument, which in the case of DataFrame inputs will yield a MultiIndexed DataFrame whose index are the dates in question. In the case of a single DataFrame argument the pairwise argument can even be omitted:
+Note: Missing values are ignored and each entry is computed using the pairwise complete observations. Please see the covariance section for caveats associated with this method of calculating covariance and correlation matrices.
+
+df = pd.DataFrame(
+    np.random.randn(10, 4),
+    index=pd.date_range("2020-01-01", periods=10),
+    columns=["A", "B", "C", "D"],)
+
+df[["B", "C", "D"]].rolling(window=4).cov(df[["A", "B", "C"]], pairwise=True).dropna()
+
+2.18.3 Weighted window
+-----------------------
+The win_type argument in .rolling generates a weighted windows that are commonly used in filtering and spectral estimation. win_type must be string that corresponds to a scipy.signal window function. Scipy must be installed in order to use these windows, and supplementary arguments that the Scipy window methods take must be specified in the aggregation function.
+s = pd.Series(range(10))
+s.rolling(window=5).mean()
+s.rolling(window=5, win_type="triang").mean()
+
+# Supplementary Scipy arguments passed in the aggregation function
+In [50]: s.rolling(window=5, win_type="gaussian").mean(std=0.1)
+
+https://pandas.pydata.org/pandas-docs/stable/reference/window.html#api-functions-window
+
+Expanding window
+An expanding window yields the value of an aggregation statistic with all the data available up to that point in time. Since these calculations are a special case of rolling statistics, they are implemented in pandas such that the following two calls are equivalent:
+
+In [51]: df = pd.DataFrame(range(5))
+In [52]: df.rolling(window=len(df), min_periods=1).mean()
+In [53]: df.expanding(min_periods=1).mean()
+https://pandas.pydata.org/pandas-docs/stable/reference/window.html#api-functions-expanding
 
 
 
