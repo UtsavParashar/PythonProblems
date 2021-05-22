@@ -1,4 +1,6 @@
-"""Aerogenerador,Cause,DateOn,DateOFF
-A0201,Windturbine Pause,02/01/2021 10:00,02/01/2021 10:05
-A0202,Windturbine STOP,02/01/2021 10:00,02/01/2021 10:05
-A0202,High Temperature DE,02/01/2021 10:00,02/01/2021 10:05"""
+"""Id|Villas|Price_nospace
+3|Peace|350,000
+3|Peace|350,000
+2|Rosa|270,000
+1|Beach|250,000
+0|Palm|220,000"""
