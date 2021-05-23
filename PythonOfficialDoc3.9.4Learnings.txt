@@ -34,6 +34,34 @@ def fib(n):
 
 fib(10)
 
+4. More Control Flow Tools
+---------------------------
+else with loop and try:
+When used with a loop, the else clause has more in common with the else clause of a try statement than it does with that of if statements: a try statement’s else clause runs when no exception occurs, and a loop’s else clause runs when no break occurs.
+for i in range(2,10):
+    for j in range(2, i):
+        if i%j==0:
+            print (i, "equals", j, '*', i//j)
+            break
+    else:
+        print(i,  " is a prime number")
+
+Check if the number, list of numbers or tuple of numbers what all are prime
+## Check if a list/tuple numbers is prime
+def check_prime(x):
+    if not isinstance(x, list):
+        if isinstance(x, tuple):
+            x=list(x)
+        else:
+            x=[x]
+    for v in x:
+        for i in range(2,v//2+1):
+            if v % i == 0:
+                print(v, ' Not prime')
+                break
+        else:
+            print(v, ' Prime')
+
 
 
 
