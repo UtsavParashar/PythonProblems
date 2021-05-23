@@ -46,7 +46,7 @@ for i in range(2,10):
     else:
         print(i,  " is a prime number")
 
-Check if the number, list of numbers or tuple of numbers what all are prime
+Check if the number, list of numbers or tuple of numbers, what all are prime
 ## Check if a list/tuple numbers is prime
 def check_prime(x):
     if not isinstance(x, list):
@@ -61,6 +61,99 @@ def check_prime(x):
                 break
         else:
             print(v, ' Prime')
+
+4.7. More on Defining Functions
+It is also possible to define functions with a variable number of arguments. There are three forms, which can be combined.
+4.7.1. Default Argument Values
+The most useful form is to specify a default value for one or more arguments. This creates a function that can be called with fewer arguments than it is defined to allow. For example:
+def ask_ok(prompt, retries=4, reminder='Please try again!'):
+    while True:
+        ok = input(prompt)
+        if ok in ('y', 'ye', 'yes'):
+            return True
+        if ok in ('n', 'no', 'nop', 'nope'):
+            return False
+        retries = retries - 1
+        if retries < 0:
+            raise ValueError('invalid user response')
+        print(reminder)
+
+This function can be called in several ways:
+giving only the mandatory argument: ask_ok('Do you really want to quit?')
+giving one of the optional arguments: ask_ok('OK to overwrite the file?', 2)
+or even giving all arguments: ask_ok('OK to overwrite the file?', 2, 'Come on, only yes or no!')
+
+The default values are evaluated at the point of function definition in the defining scope, so that
+i = 5
+def f(arg=i):
+    print(arg)
+i = 6
+f() # 5
+
+Important warning: The default value is evaluated only once. This makes a difference when the default is a mutable object such as a list, dictionary, or instances of most classes. For example, the following function accumulates the arguments passed to it on subsequent calls:
+
+def f(a, L=[]):
+    L.append(a)
+    return L
+
+print(f(1))
+print(f(2))
+print(f(3))
+This will print
+
+[1]
+[1, 2]
+[1, 2, 3]
+
+If you don’t want the default to be shared between subsequent calls, you can write the function like this instead:
+def f(a, L=None):
+    if L is None:
+        L = []
+    L.append(a)
+    return L
+
+4.7.2. Keyword Arguments [AND Positional Argument]
+--------------------------------------------------
+argument
+A value passed to a function (or method) when calling the function. There are two kinds of argument:
+keyword argument: an argument preceded by an identifier (e.g. name=) in a function call or passed as a value in a dictionary preceded by **. For example, 3 and 5 are both keyword arguments in the following calls to complex():
+complex(real=3, imag=5)
+complex(**{'real': 3, 'imag': 5})
+positional argument: an argument that is not a keyword argument. Positional arguments can appear at the beginning of an argument list and/or be passed as elements of an iterable preceded by *. For example, 3 and 5 are both positional arguments in the following calls:
+complex(3, 5)
+complex(*(3, 5))
+Arguments are assigned to the named local variables in a function body. See the Calls section for the rules governing this assignment. Syntactically, any expression can be used to represent an argument; the evaluated value is assigned to the local variable.
+
+Functions can also be called using keyword arguments of the form kwarg=value. For instance, the following function:
+
+def parrot(voltage, state='a stiff', action='voom', type='Norwegian Blue'):
+    print("-- This parrot wouldn't", action, end=' ')
+    print("if you put", voltage, "volts through it.")
+    print("-- Lovely plumage, the", type)
+    print("-- It's", state, "!")
+accepts one required argument (voltage) and three optional arguments (state, action, and type). This function can be called in any of the following ways:
+
+parrot(1000)                                          # 1 positional argument
+parrot(voltage=1000)                                  # 1 keyword argument
+parrot(voltage=1000000, action='VOOOOOM')             # 2 keyword arguments
+parrot(action='VOOOOOM', voltage=1000000)             # 2 keyword arguments
+parrot('a million', 'bereft of life', 'jump')         # 3 positional arguments
+parrot('a thousand', state='pushing up the daisies')  # 1 positional, 1 keyword
+but all the following calls would be invalid:
+
+parrot()                     # required argument missing
+parrot(voltage=5.0, 'dead')  # non-keyword argument after a keyword argument
+parrot(110, voltage=220)     # duplicate value for the same argument
+parrot(actor='John Cleese')  # unknown keyword argument
+In a function call, keyword arguments must follow positional arguments. All the keyword arguments passed must match one of the arguments accepted by the function (e.g. actor is not a valid argument for the parrot function), and their order is not important. This also includes non-optional arguments (e.g. parrot(voltage=1000) is valid too). No argument may receive a value more than once. Here’s an example that fails due to this restriction:
+
+>>> def function(a):
+...     pass
+...
+>>> function(0, a=0)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: function() got multiple values for keyword argument 'a'
 
 
 
