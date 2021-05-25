@@ -12553,4 +12553,11 @@ s.resample("D").mean()
 
 
 --------------------------------------------------------
+
+
+
+
+
+
+
 Please include a small subset of your data as a copyable piece of code that can be used for testing as well as your expected output for the provided data. See [MRE - Minimal, Reproducible, Example](https://stackoverflow.com/help/minimal-reproducible-example), and [How to make good reproducible pandas examples](https://stackoverflow.com/questions/20109391/how-to-make-good-reproducible-pandas-examples).

@@ -1,9 +1,3 @@
-
-
-
-
-
-
 jezrael
 pivot dupe
 https://stackoverflow.com/q/47152691/
@@ -48,3 +42,21 @@ wide_to_long dupe
 https://stackoverflow.com/q/55766565
 reset_index dupe
 https://stackoverflow.com/q/36932759
+
+
+================================================================================
+Solutions:
+Read all csv from  a dir and append to a df
+
+import glob
+dfdetails = pd.DataFrame(columns=['dataframe','start_date','end_date'])
+for file in glob.glob("./*.csv"):
+     df = pd.read_csv(file, header=None, names=['date'])
+    df.date = pd.to_datetime(df.date)
+    temp_df = pd.DataFrame({
+        'dataframe': 'df'+str(count),
+        'start_date': df.date.min(),
+        'end_date': df.date.max()
+    }, index=[0])
+    dfdetails = dfdetails.append(temp_df)
+    count += 1
