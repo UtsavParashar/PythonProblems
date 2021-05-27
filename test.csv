@@ -1,15 +1,6 @@
-"""Date,price,5_Days_Up
-20-May-21,1,
-21-May-21,2,
-22-May-21,4,
-23-May-21,5,
-24-May-21,6,5
-25-May-21,7,6
-26-May-21,8,7
-27-May-21,9,8
-28-May-21,10,9
-29-May-21,11,10
-30-May-21,12,11
-31-May-21,13,12
-1-Jun-21,14,13
-2-Jun-21,15,14"""
+"""a,b,class amount
+orange,ichi, 1,10
+apple,ni,2,20
+peach,san,3,30
+banana,shi,2,40
+lemon,go,1,50"""
