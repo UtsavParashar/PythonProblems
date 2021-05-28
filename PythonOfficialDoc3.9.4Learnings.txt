@@ -1010,8 +1010,6 @@ Return True if all characters in the string are alphabetic and there is at least
 str.isascii()
 Return True if the string is empty or all characters in the string are ASCII, False otherwise. ASCII characters have code points in the range U+0000-U+007F.
 
-New in version 3.7.
-
 str.isdecimal()
 Return True if all characters in the string are decimal characters and there is at least one character, False otherwise. Decimal characters are those that can be used to form numbers in base 10, e.g. U+0660, ARABIC-INDIC DIGIT ZERO. Formally a decimal character is a character in the Unicode General Category “Nd”.
 
@@ -1020,12 +1018,8 @@ Return True if all characters in the string are digits and there is at least one
 
 str.isidentifier()
 Return True if the string is a valid identifier according to the language definition, section Identifiers and keywords.
-
 Call keyword.iskeyword() to test whether string s is a reserved identifier, such as def and class.
-
 Example:
-
->>>
 >>> from keyword import iskeyword
 
 >>> 'hello'.isidentifier(), iskeyword('hello')
@@ -1247,8 +1241,79 @@ str.zfill(width)
 ----------------
 Return a copy of the string left filled with ASCII '0' digits to make a string of length width. A leading sign prefix ('+'/'-') is handled by inserting the padding after the sign character rather than before. The original string is returned if width is less than or equal to len(s).
 
+Formatted string literals - f-string
+==========================
+Commonly known as f-string.
+If we need curly brackets in a string then
+r='Ram'
+print(f"{ {r} } is shyam") # {'Ram'} is shyam
 
+A formatted string literal or f-string is a string literal that is prefixed with 'f' or 'F'. These strings may contain replacement fields, which are expressions delimited by curly braces {}. While other string literals always have a constant value, formatted strings are really expressions evaluated at run time.
 
+A single opening curly bracket '{' marks a replacement field, which starts with a Python expression. To display both the expression text and its value after evaluation, (useful in debugging), an equal sign '=' may be added after the expression. A conversion field, introduced by an exclamation point '!' may follow. A format specifier may also be appended, introduced by a colon ':'. A replacement field ends with a closing curly bracket '}'.
+
+## Debugging
+r='Ram'
+print(f'{r=} is shyam') # r='Ram' is shyam
+
+Expressions in formatted string literals are treated like regular Python expressions surrounded by parentheses, with a few exceptions. An empty expression is not allowed, and both lambda and assignment expressions := must be surrounded by explicit parentheses. Replacement expressions can contain line breaks (e.g. in triple-quoted strings), but they cannot contain comments. Each expression is evaluated in the context where the formatted string literal appears, in order from left to right.
+
+print(f'{} is shyam') # SyntaxError: f-string: empty expression not allowed
+r='Ram'
+print(f'{(lambda x,y: x+y)} is shyam') # <function <lambda> at 0x1095b0ee0> is shyam
+
+When the equal sign '=' is provided, the output will have the expression text, the '=' and the evaluated value. Spaces after the opening brace '{', within the expression and after the '=' are all retained in the output. By default, the '=' causes the repr() of the expression to be provided, unless there is a format specified. When a format is specified it defaults to the str() of the expression unless a conversion '!r' is declared.
+
+Some examples of formatted string literals:
+>>> name = "Fred"
+>>> f"He said his name is {name!r}."
+"He said his name is 'Fred'."
+>>> f"He said his name is {repr(name)}."  # repr() is equivalent to !r
+"He said his name is 'Fred'."
+>>> width = 10
+>>> precision = 4
+>>> value = decimal.Decimal("12.34567")
+>>> f"result: {value:{width}.{precision}}"  # nested fields
+'result:      12.35'
+>>> today = datetime(year=2017, month=1, day=27)
+>>> f"{today:%B %d, %Y}"  # using date format specifier
+'January 27, 2017'
+>>> f"{today=:%B %d, %Y}" # using date format specifier and debugging
+'today=January 27, 2017'
+>>> number = 1024
+>>> f"{number:#0x}"  # using integer format specifier
+'0x400'
+>>> foo = "bar"
+>>> f"{ foo = }" # preserves whitespace
+" foo = 'bar'"
+>>> line = "The mill's closed"
+>>> f"{line = }"
+'line = "The mill\'s closed"'
+>>> f"{line = :20}"
+"line = The mill's closed   "
+>>> f"{line = !r:20}"
+'line = "The mill\'s closed" '
+A consequence of sharing the same syntax as regular string literals is that characters in the replacement fields must not conflict with the quoting used in the outer formatted string literal:
+
+f"abc {a["x"]} def"    # error: outer string literal ended prematurely
+f"abc {a['x']} def"    # workaround: use different quoting
+Backslashes are not allowed in format expressions and will raise an error:
+
+f"newline: {ord('\n')}"  # raises SyntaxError
+To include a value in which a backslash escape is required, create a temporary variable.
+
+>>>
+>>> newline = ord('\n')
+>>> f"newline: {newline}"
+'newline: 10'
+Formatted string literals cannot be used as docstrings, even if they do not include expressions.
+
+>>>
+>>> def foo():
+...     f"Not a docstring"
+
+>>> foo.__doc__ is None
+True
 
 string — Common string operations
 =================================
