@@ -1,4 +1,2 @@
-"""A,B
-Bb00,100080
-Aa00,<NA>
-Cc10,450089"""
+"""item1,item2,item1_Support,item2_Support,Support,Confidence,Lift
+ALARM CLOCK BAKELIKE GREEN,ALARM CLOCK BAKELIKE PINK,0.09,0.102,0.07,0.76"""
