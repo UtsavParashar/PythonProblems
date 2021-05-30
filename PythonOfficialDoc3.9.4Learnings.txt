@@ -2328,3 +2328,343 @@ Helper functions
 string.capwords(s, sep=None)
 Split the argument into words using str.split(), capitalize each word using str.capitalize(), and join the capitalized words using str.join(). If the optional second argument sep is absent or None, runs of whitespace characters are replaced by a single space and leading and trailing whitespace are removed, otherwise sep is used to split and join the words.
 
+5. Data Structures
+====================
+This chapter describes some things you’ve learned about already in more detail, and adds some new things as well.
+5.1. More on Lists
+-------------------
+The list data type has some more methods. Here are all of the methods of list objects:
+list.append(x)
+--------------
+Add an item to the end of the list. Equivalent to a[len(a):] = [x].
+list.extend(iterable)
+---------------------
+Extend the list by appending all the items from the iterable. Equivalent to a[len(a):] = iterable.
+list.insert(i, x)
+----------------
+Insert an item at a given position. The first argument is the index of the element before which to insert, so a.insert(0, x) inserts at the front of the list, and a.insert(len(a), x) is equivalent to a.append(x).
+list.remove(x)
+--------------
+Remove the first item from the list whose value is equal to x. It raises a ValueError if there is no such item.
+list.pop([i])
+-------------
+Remove the item at the given position in the list, and return it. If no index is specified, a.pop() removes and returns the last item in the list. (The square brackets around the i in the method signature denote that the parameter is optional, not that you should type square brackets at that position. You will see this notation frequently in the Python Library Reference.)
+list.clear()
+------------
+Remove all items from the list. Equivalent to del a[:].
+list.index(x[, start[, end]])
+Return zero-based index in the list of the first item whose value is equal to x. Raises a ValueError if there is no such item.
+
+The optional arguments start and end are interpreted as in the slice notation and are used to limit the search to a particular subsequence of the list. The returned index is computed relative to the beginning of the full sequence rather than the start argument.
+
+list.count(x)
+-------------
+Return the number of times x appears in the list.
+
+list.sort(*, key=None, reverse=False)
+--------------------------------------
+Sort the items of the list in place (the arguments can be used for sort customization, see sorted() for their explanation).
+
+list.reverse()
+----------------
+Reverse the elements of the list in place.
+
+list.copy()
+-------------
+Return a shallow copy of the list. Equivalent to a[:].
+
+An example that uses most of the list methods:
+>>> fruits = ['orange', 'apple', 'pear', 'banana', 'kiwi', 'apple', 'banana']
+>>> fruits.count('apple') # 2
+>>> fruits.count('tangerine') # 0
+>>> fruits.index('banana') # 3
+>>> fruits.index('banana', 4)  # Find next banana starting a position 4 ## 6
+>>> fruits.reverse()
+>>> fruits ## ['banana', 'apple', 'kiwi', 'banana', 'pear', 'apple', 'orange']
+>>> fruits.append('grape')
+>>> fruits ## ['banana', 'apple', 'kiwi', 'banana', 'pear', 'apple', 'orange', 'grape']
+>>> fruits.sort()
+>>> fruits ## ['apple', 'apple', 'banana', 'banana', 'grape', 'kiwi', 'orange', 'pear']
+>>> fruits.pop() ## 'pear'
+
+fruits = ['orange', 'apple', 'pear', 'banana', 'kiwi', 'apple', 'banana']
+fruits.pop() # 'banana'
+print(fruits) # ['orange', 'apple', 'pear', 'banana', 'kiwi', 'apple']
+
+You might have noticed that methods like insert, remove or sort that only modify the list have no return value printed – they return the default None. 1 This is a design principle for all mutable data structures in Python.
+fruits = ['orange', 'apple', 'pear', 'banana', 'kiwi', 'apple', 'banana']
+fruits.sort() ## Sorting is inplace
+
+This mean that above methods insert, remove or sort act in place.
+Another thing you might notice is that not all data can be sorted or compared. For instance, [None, 'hello', 10] doesn’t sort because integers can’t be compared to strings and None can’t be compared to other types. Also, there are some types that don’t have a defined ordering relation. For example, 3+4j < 5+7j isn’t a valid comparison.
+
+l = [10, None, 'Ramesh']
+l.sort() # TypeError: '<' not supported between instances of 'NoneType' and 'int'
+
+l = [10, 'Ramesh']
+l.sort() # TypeError: '<' not supported between instances of 'str' and 'int'
+
+5.1.1. Using Lists as Stacks
+=============================
+The list methods make it very easy to use a list as a stack, where the last element added is the first element retrieved (“last-in, first-out”). To add an item to the top of the stack, use append(). To retrieve an item from the top of the stack, use pop() without an explicit index. For example:
+>>> stack = [3, 4, 5]
+>>> stack.append(6)
+>>> stack.append(7)
+>>> stack ## [3, 4, 5, 6, 7]
+>>> stack.pop() ## 7
+>>> stack ## [3, 4, 5, 6]
+>>> stack.pop() ## 6
+>>> stack.pop() ## 5
+>>> stack ## [3, 4]
+
+deque objects
+=============
+class collections.deque([iterable[, maxlen]])
+----------------------------------------------
+Returns a new deque object initialized left-to-right (using append()) with data from iterable. If iterable is not specified, the new deque is empty.
+Deques are a generalization of stacks and queues (the name is pronounced “deck” and is short for “double-ended queue”). Deques support thread-safe, memory efficient appends and pops from either side of the deque with approximately the same O(1) performance in either direction.
+Though list objects support similar operations, they are optimized for fast fixed-length operations and incur O(n) memory movement costs for pop(0) and insert(0, v) operations which change both the size and position of the underlying data representation.
+If maxlen is not specified or is None, deques may grow to an arbitrary length. Otherwise, the deque is bounded to the specified maximum length. Once a bounded length deque is full, when new items are added, a corresponding number of items are discarded from the opposite end. Bounded length deques provide functionality similar to the tail filter in Unix. They are also useful for tracking transactions and other pools of data where only the most recent activity is of interest.
+Deque objects support the following methods:
+append(x)
+Add x to the right side of the deque.
+
+appendleft(x)
+Add x to the left side of the deque.
+
+clear()
+Remove all elements from the deque leaving it with length 0.
+
+copy()
+Create a shallow copy of the deque.
+
+count(x)
+Count the number of deque elements equal to x.
+
+extend(iterable)
+Extend the right side of the deque by appending elements from the iterable argument.
+
+extendleft(iterable)
+Extend the left side of the deque by appending elements from iterable. Note, the series of left appends results in reversing the order of elements in the iterable argument.
+
+index(x[, start[, stop]])
+Return the position of x in the deque (at or after index start and before index stop). Returns the first match or raises ValueError if not found.
+
+insert(i, x)
+Insert x into the deque at position i.
+If the insertion would cause a bounded deque to grow beyond maxlen, an IndexError is raised.
+
+pop()
+Remove and return an element from the right side of the deque. If no elements are present, raises an IndexError.
+
+popleft()
+Remove and return an element from the left side of the deque. If no elements are present, raises an IndexError.
+
+remove(value)
+Remove the first occurrence of value. If not found, raises a ValueError.
+
+reverse()
+Reverse the elements of the deque in-place and then return None.
+
+rotate(n=1)
+Rotate the deque n steps to the right. If n is negative, rotate to the left.
+When the deque is not empty, rotating one step to the right is equivalent to d.appendleft(d.pop()), and rotating one step to the left is equivalent to d.append(d.popleft()).
+Deque objects also provide one read-only attribute:
+
+maxlen
+Maximum size of a deque or None if unbounded.
+
+In addition to the above, deques support iteration, pickling, len(d), reversed(d), copy.copy(d), copy.deepcopy(d), membership testing with the in operator, and subscript references such as d[0] to access the first element. Indexed access is O(1) at both ends but slows to O(n) in the middle. For fast random access, use lists instead.
+Starting in version 3.5, deques support __add__(), __mul__(), and __imul__().
+Example:
+>>> from collections import deque
+>>> d = deque('ghi')                 # make a new deque with three items
+>>> for elem in d:                   # iterate over the deque's elements
+...     print(elem.upper())
+
+>>> d.append('j')                    # add a new entry to the right side
+>>> d.appendleft('f')                # add a new entry to the left side
+>>> d                                # show the representation of the deque
+deque(['f', 'g', 'h', 'i', 'j'])
+
+>>> d.pop()                          # return and remove the rightmost item
+'j'
+>>> d.popleft()                      # return and remove the leftmost item
+'f'
+>>> list(d)                          # list the contents of the deque
+['g', 'h', 'i']
+>>> d[0]                             # peek at leftmost item
+'g'
+>>> d[-1]                            # peek at rightmost item
+'i'
+
+>>> list(reversed(d))                # list the contents of a deque in reverse
+['i', 'h', 'g']
+>>> 'h' in d                         # search the deque
+True
+>>> d.extend('jkl')                  # add multiple elements at once
+>>> d
+deque(['g', 'h', 'i', 'j', 'k', 'l'])
+>>> d.rotate(1)                      # right rotation
+>>> d
+deque(['l', 'g', 'h', 'i', 'j', 'k'])
+>>> d.rotate(-1)                     # left rotation
+>>> d
+deque(['g', 'h', 'i', 'j', 'k', 'l'])
+
+>>> deque(reversed(d))               # make a new deque in reverse order
+deque(['l', 'k', 'j', 'i', 'h', 'g'])
+>>> d.clear()                        # empty the deque
+>>> d.pop()                          # cannot pop from an empty deque
+Traceback (most recent call last):
+    File "<pyshell#6>", line 1, in -toplevel-
+        d.pop()
+IndexError: pop from an empty deque
+
+>>> d.extendleft('abc')              # extendleft() reverses the input order
+>>> d
+deque(['c', 'b', 'a'])
+
+deque Recipes
+-------------
+This section shows various approaches to working with deques.
+Bounded length deques provide functionality similar to the tail filter in Unix:
+def tail(filename, n=10):
+    """Return the last n lines from a file"""
+    with open(filename) as f:
+        return deque(f, n)
+
+tail('te.csv', 5)
+
+# deque list, set, tuple, dict
+deque([1,2,3,4,5], 2) # deque([4, 5])
+deque({1,2,3,4,5}, 2) # deque([4, 5])
+deque((1,2,3,4,5), 2) # deque([4, 5])
+deque({1:'a', 2:'b', 3:'c'}, 2) # deque([2, 3])
+
+Another approach to using deques is to maintain a sequence of recently added elements by appending to the right and popping to the left:
+
+iter() function
+--------------
+The Python iter() function returns an iterator for the given object.
+The iter() function creates an object which can be iterated one element at a time.
+These objects are useful when coupled with loops like for loop, while loop.
+The syntax of the iter() function is:
+iter(object, sentinel)
+
+iter() Parameters
+The iter() function takes two parameters:
+object - object whose iterator has to be created (can be sets, tuples, etc.)
+sentinel (optional) - special value that is used to represent the end of a sequence
+
+Return value from iter()
+The iter() function returns an iterator object for the given object.
+If the user-defined object doesn't implement __iter__(), and __next__() or __getitem()__, the TypeError exception is raised.
+If the sentinel parameter is also provided, iter() returns an iterator until the sentinel character isn't found.
+
+# list of vowels
+vowels = ['a', 'e', 'i', 'o', 'u']
+vowels_iter = iter(vowels)
+print(next(vowels_iter))    # 'a'
+print(next(vowels_iter))    # 'e'
+print(next(vowels_iter))    # 'i'
+print(next(vowels_iter))    # 'o'
+print(next(vowels_iter))    # 'u'
+
+Example 2: iter() for custom objects
+
+class PrintNumber:
+    def __init__(self, max):
+        self.max = max
+
+    def __iter__(self):
+        self.num = 0
+        return self
+
+    def __next__(self):
+        if(self.num >= self.max):
+            raise StopIteration
+        self.num += 1
+        return self.num
+
+print_num = PrintNumber(3)
+print_num_iter = iter(print_num)
+print(next(print_num_iter))  # 1
+print(next(print_num_iter))  # 2
+print(next(print_num_iter))  # 3
+# raises StopIteration
+print(next(print_num_iter))
+
+Example 3: iter() with sentinel parameter
+
+class DoubleIt:
+
+    def __init__(self):
+        self.start = 1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.start *= 2
+        return self.start
+
+    __call__ = __next__
+
+my_iter = iter(DoubleIt(), 16)
+
+for x in my_iter:
+    print(x)
+Here, we have implemented a custom iterable object without a StopIteration condition.
+However, we can use the iter() method with the sentinel parameter to stop the iteration. If the value returned from __next__() is equal to sentinel, StopIteration will be raised, otherwise, the value will be returned.
+
+itertools.islice(iterable, stop)
+itertools.islice(iterable, start, stop[, step])
+===============================================
+Make an iterator that returns selected elements from the iterable. If start is non-zero, then elements from the iterable are skipped until start is reached. Afterward, elements are returned consecutively unless step is set higher than one which results in items being skipped. If stop is None, then iteration continues until the iterator is exhausted, if at all; otherwise, it stops at the specified position. Unlike regular slicing, islice() does not support negative values for start, stop, or step. Can be used to extract related fields from data where the internal structure has been flattened (for example, a multi-line report may list a name field on every third line). Roughly equivalent to:
+
+def islice(iterable, *args):
+    # islice('ABCDEFG', 2) --> A B
+    # islice('ABCDEFG', 2, 4) --> C D
+    # islice('ABCDEFG', 2, None) --> C D E F G
+    # islice('ABCDEFG', 0, None, 2) --> A C E G
+    s = slice(*args)
+    start, stop, step = s.start or 0, s.stop or sys.maxsize, s.step or 1
+    it = iter(range(start, stop, step))
+    try:
+        nexti = next(it)
+    except StopIteration:
+        # Consume *iterable* up to the *start* position.
+        for i, element in zip(range(start), iterable):
+            pass
+        return
+    try:
+        for i, element in enumerate(iterable):
+            if i == nexti:
+                yield element
+                nexti = next(it)
+    except StopIteration:
+        # Consume to *stop*.
+        for i, element in zip(range(i + 1, stop), iterable):
+            pass
+If start is None, then iteration starts at zero. If step is None, then the step defaults to one.
+
+Another approach to using deques is to maintain a sequence of recently added elements by appending to the right and popping to the left:
+import itertools
+def moving_averages(iterable, n=3):
+    it = iter(iterable)
+    d = deque(itertools.islice(it, n-1))
+    d.appendleft(0)
+    s=sum(d)
+    print(d, s)
+    for elem in it:
+        print('elem', elem)
+        s += elem - d.popleft()
+        d.append(elem)
+        print('deq', d)
+        yield s / n
+
+for i in moving_averages([10,20,30,40,50,60], 3):
+    print(i)
+
+
