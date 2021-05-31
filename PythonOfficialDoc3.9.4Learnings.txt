@@ -2667,4 +2667,117 @@ def moving_averages(iterable, n=3):
 for i in moving_averages([10,20,30,40,50,60], 3):
     print(i)
 
+A round-robin scheduler can be implemented with input iterators stored in a deque. Values are yielded from the active iterator in position zero. If that iterator is exhausted, it can be removed with popleft(); otherwise, it can be cycled back to the end with the rotate() method:
+
+def roundrobin(*iterables):
+    iterators = deque(map(iter, iterables))
+    print(iterators)
+    while iterators:
+        try:
+            while True:
+                yield next(iterators[0])
+                iterators.rotate(-1)
+        except StopIteration:
+            # Remove an exhausted iterator
+            iterators.popleft()
+
+for elem in roundrobin('ABC', 'D', 'EF'):
+    print(elem)
+
+The rotate() method provides a way to implement deque slicing and deletion. For example, a pure Python implementation of del d[n] relies on the rotate() method to position elements to be popped:
+
+def delete_nth(d, n):
+    d.rotate(-n)
+    d.popleft()
+    d.rotate(n)
+To implement deque slicing, use a similar approach applying rotate() to bring a target element to the left side of the deque. Remove old entries with popleft(), add new entries with extend(), and then reverse the rotation. With minor variations on that approach, it is easy to implement Forth style stack manipulations such as dup, drop, swap, over, pick, rot, and roll.
+
+###### map, filter, reduce
+list(map(lambda x: x**2, [1,2,3,4])) # [1, 4, 9, 16]
+list(filter(lambda x: x%2==0, [1,2,3,4])) # [2, 4]
+reduce(lambda x,y: x*y, range(1,5)) # 24
+
+
+5.1.2. Using Lists as Queues
+=============================
+It is also possible to use a list as a queue, where the first element added is the first element retrieved (“first-in, first-out”); however, lists are not efficient for this purpose. While appends and pops from the end of list are fast, doing inserts or pops from the beginning of a list is slow (because all of the other elements have to be shifted by one).
+
+To implement a queue, use collections.deque which was designed to have fast appends and pops from both ends. For example:
+>>> from collections import deque
+>>> queue = deque(["Eric", "John", "Michael"])
+>>> queue.append("Terry")           # Terry arrives
+>>> queue.append("Graham")          # Graham arrives
+>>> queue.popleft()                 # The first to arrive now leaves
+'Eric'
+>>> queue.popleft()                 # The second to arrive now leaves
+'John'
+>>> queue                           # Remaining queue in order of arrival
+deque(['Michael', 'Terry', 'Graham']
+
+5.1.3. List Comprehensions
+===========================
+List comprehensions provide a concise way to create lists. Common applications are to make new lists where each element is the result of some operations applied to each member of another sequence or iterable, or to create a subsequence of those elements that satisfy a certain condition.
+For example, assume we want to create a list of squares, like:
+>>> squares = []
+>>> for x in range(10):
+...     squares.append(x**2)
+>>> squares
+[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+Note that this creates (or overwrites) a variable named x that still exists after the loop completes. We can calculate the list of squares without any side effects using:
+
+squares = list(map(lambda x: x**2, range(10)))
+or, equivalently:
+
+squares = [x**2 for x in range(10)]
+which is more concise and readable.
+
+A list comprehension consists of brackets containing an expression followed by a for clause, then zero or more for or if clauses. The result will be a new list resulting from evaluating the expression in the context of the for and if clauses which follow it. For example, this listcomp combines the elements of two lists if they are not equal:
+
+>>> [(x, y) for x in [1,2,3] for y in [3,1,4] if x != y]
+[(1, 3), (1, 4), (2, 3), (2, 1), (2, 4), (3, 1), (3, 4)]
+and it’s equivalent to:
+>>> combs = []
+>>> for x in [1,2,3]:
+...     for y in [3,1,4]:
+...         if x != y:
+...             combs.append((x, y))
+...
+>>> combs
+[(1, 3), (1, 4), (2, 3), (2, 1), (2, 4), (3, 1), (3, 4)]
+Note how the order of the for and if statements is the same in both these snippets.
+If the expression is a tuple (e.g. the (x, y) in the previous example), it must be parenthesized.
+>>> vec = [-4, -2, 0, 2, 4]
+>>> # create a new list with the values doubled
+>>> [x*2 for x in vec]
+[-8, -4, 0, 4, 8]
+>>> # filter the list to exclude negative numbers
+>>> [x for x in vec if x >= 0]
+[0, 2, 4]
+>>> # apply a function to all the elements
+>>> [abs(x) for x in vec]
+[4, 2, 0, 2, 4]
+>>> # call a method on each element
+>>> freshfruit = ['  banana', '  loganberry ', 'passion fruit  ']
+>>> [weapon.strip() for weapon in freshfruit]
+['banana', 'loganberry', 'passion fruit']
+>>> # create a list of 2-tuples like (number, square)
+>>> [(x, x**2) for x in range(6)]
+[(0, 0), (1, 1), (2, 4), (3, 9), (4, 16), (5, 25)]
+>>> # the tuple must be parenthesized, otherwise an error is raised
+>>> [x, x**2 for x in range(6)]
+  File "<stdin>", line 1, in <module>
+    [x, x**2 for x in range(6)]
+               ^
+SyntaxError: invalid syntax
+>>> # flatten a list using a listcomp with two 'for'
+>>> vec = [[1,2,3], [4,5,6], [7,8,9]]
+np.ravel(vec) # array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+[j for i in vec for j in i] # [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+List comprehensions can contain complex expressions and nested functions:
+>>> from math import pi
+[round(pi, i) for i in range(1, 6)] # [3.1, 3.14, 3.142, 3.1416, 3.14159]
+>>> [str(round(pi, i)) for i in range(1, 6)] ## ['3.1', '3.14', '3.142', '3.1416', '3.14159']
+
+
 
