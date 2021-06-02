@@ -3076,3 +3076,140 @@ Docstrings can be customized by making direct assignments to the __doc__ fields:
 >>> Book.title.__doc__ = 'Title of first printing'
 >>> Book.authors.__doc__ = 'List of authors sorted by last name'
 
+Sequence Types — list, tuple, range
+====================================
+There are three basic sequence types: lists, tuples, and range objects.
+
+Common Sequence Operations
+--------------------------
+The operations in the following table are supported by most sequence types, both mutable and immutable. The collections.abc.Sequence ABC is provided to make it easier to correctly implement these operations on custom sequence types.
+This table lists the sequence operations sorted in ascending priority. In the table, s and t are sequences of the same type, n, i, j and k are integers and x is an arbitrary object that meets any type and value restrictions imposed by s.
+The in and not in operations have the same priorities as the comparison operations. The + (concatenation) and * (repetition) operations have the same priority as the corresponding numeric operations.
+
+Operation           Result
+x in s              True if an item of s is equal to x, else False
+x not in s          False if an item of s is equal to x, else True
+s + t               the concatenation of s and t
+s * n or n * s      equivalent to adding s to itself n times
+s[i]                ith item of s, origin 0
+s[i:j]              slice of s from i to j
+s[i:j:k]            slice of s from i to j with step k
+len(s)              length of s
+min(s)              smallest item of s
+max(s)              largest item of s
+s.index(x[, i[, j]])    index of the first occurrence of x in s (at or after index i and before index j)
+s.count(x)          total number of occurrences of x in s
+
+Sequences of the same type also support comparisons. In particular, tuples and lists are compared lexicographically by comparing corresponding elements. This means that to compare equal, every element must compare equal and the two sequences must be of the same type and have the same length. (For full details see Comparisons in the language reference.)
+
+While the in and not in operations are used only for simple containment testing in the general case, some specialised sequences (such as str, bytes and bytearray) also use them for subsequence testing:
+
+>>>
+>>> "gg" in "eggs"
+True
+Values of n less than 0 are treated as 0 (which yields an empty sequence of the same type as s). Note that items in the sequence s are not copied; they are referenced multiple times. This often haunts new Python programmers; consider:
+
+>>>
+>>> lists = [[]] * 3
+>>> lists
+[[], [], []]
+>>> lists[0].append(3)
+>>> lists
+[[3], [3], [3]]
+What has happened is that [[]] is a one-element list containing an empty list, so all three elements of [[]] * 3 are references to this single empty list. Modifying any of the elements of lists modifies this single list. You can create a list of different lists this way:
+
+>>>
+>>> lists = [[] for i in range(3)]
+>>> lists[0].append(3)
+>>> lists[1].append(5)
+>>> lists[2].append(7)
+>>> lists
+[[3], [5], [7]]
+Further explanation is available in the FAQ entry How do I create a multidimensional list(https://docs.python.org/3/faq/programming.html#faq-multidimensional-list)?.
+
+If i or j is negative, the index is relative to the end of sequence s: len(s) + i or len(s) + j is substituted. But note that -0 is still 0.
+The slice of s from i to j is defined as the sequence of items with index k such that i <= k < j. If i or j is greater than len(s), use len(s). If i is omitted or None, use 0. If j is omitted or None, use len(s). If i is greater than or equal to j, the slice is empty.
+The slice of s from i to j with step k is defined as the sequence of items with index x = i + n*k such that 0 <= n < (j-i)/k. In other words, the indices are i, i+k, i+2*k, i+3*k and so on, stopping when j is reached (but never including j). When k is positive, i and j are reduced to len(s) if they are greater. When k is negative, i and j are reduced to len(s) - 1 if they are greater. If i or j are omitted or None, they become “end” values (which end depends on the sign of k). Note, k cannot be zero. If k is None, it is treated like 1.
+Concatenating immutable sequences always results in a new object. This means that building up a sequence by repeated concatenation will have a quadratic runtime cost in the total sequence length. To get a linear runtime cost, you must switch to one of the alternatives below:
+if concatenating str objects, you can build a list and use str.join() at the end or else write to an io.StringIO instance and retrieve its value when complete
+if concatenating bytes objects, you can similarly use bytes.join() or io.BytesIO, or you can do in-place concatenation with a bytearray object. bytearray objects are mutable and have an efficient overallocation mechanism
+if concatenating tuple objects, extend a list instead
+for other types, investigate the relevant class documentation
+Some sequence types (such as range) only support item sequences that follow specific patterns, and hence don’t support sequence concatenation or repetition.
+index raises ValueError when x is not found in s. Not all implementations support passing the additional arguments i and j. These arguments allow efficient searching of subsections of the sequence. Passing the extra arguments is roughly equivalent to using s[i:j].index(x), only without copying any data and with the returned index being relative to the start of the sequence rather than the start of the slice.
+
+hash(object)
+-------------
+Return the hash value of the object (if it has one). Hash values are integers. They are used to quickly compare dictionary keys during a dictionary lookup. Numeric values that compare equal have the same hash value (even if they are of different types, as is the case for 1 and 1.0).
+Note For objects with custom __hash__() methods, note that hash() truncates the return value based on the bit width of the host machine. See __hash__() for details.
+
+hash((1,2,3)) # 529344067295497451
+hash((1,[2],3)) # TypeError: unhashable type: 'list'
+
+__hash__ -- https://docs.python.org/3/reference/datamodel.html#object.__hash__
+-----------
+object.__hash__(self)
+Called by built-in function hash() and for operations on members of hashed collections including set, frozenset, and dict. __hash__() should return an integer. The only required property is that objects which compare equal have the same hash value; it is advised to mix together the hash values of the components of the object that also play a part in comparison of objects by packing them into a tuple and hashing the tuple. Example:
+
+def __hash__(self):
+    return hash((self.name, self.nick, self.color))
+Note hash() truncates the value returned from an object’s custom __hash__() method to the size of a Py_ssize_t. This is typically 8 bytes on 64-bit builds and 4 bytes on 32-bit builds. If an object’s __hash__() must interoperate on builds of different bit sizes, be sure to check the width on all supported builds. An easy way to do this is with python -c "import sys; print(sys.hash_info.width)".
+If a class does not define an __eq__() method it should not define a __hash__() operation either; if it defines __eq__() but not __hash__(), its instances will not be usable as items in hashable collections. If a class defines mutable objects and implements an __eq__() method, it should not implement __hash__(), since the implementation of hashable collections requires that a key’s hash value is immutable (if the object’s hash value changes, it will be in the wrong hash bucket).
+
+User-defined classes have __eq__() and __hash__() methods by default; with them, all objects compare unequal (except with themselves) and x.__hash__() returns an appropriate value such that x == y implies both that x is y and hash(x) == hash(y).
+
+A class that overrides __eq__() and does not define __hash__() will have its __hash__() implicitly set to None. When the __hash__() method of a class is None, instances of the class will raise an appropriate TypeError when a program attempts to retrieve their hash value, and will also be correctly identified as unhashable when checking isinstance(obj, collections.abc.Hashable).
+
+If a class that overrides __eq__() needs to retain the implementation of __hash__() from a parent class, the interpreter must be told this explicitly by setting __hash__ = <ParentClass>.__hash__.
+
+If a class that does not override __eq__() wishes to suppress hash support, it should include __hash__ = None in the class definition. A class which defines its own __hash__() that explicitly raises a TypeError would be incorrectly identified as hashable by an isinstance(obj, collections.abc.Hashable) call.
+
+Note By default, the __hash__() values of str and bytes objects are “salted” with an unpredictable random value. Although they remain constant within an individual Python process, they are not predictable between repeated invocations of Python.
+This is intended to provide protection against a denial-of-service caused by carefully-chosen inputs that exploit the worst case performance of a dict insertion, O(n^2) complexity. See http://www.ocert.org/advisories/ocert-2011-003.html for details.
+Changing hash values affects the iteration order of sets. Python has never made guarantees about this ordering (and it typically varies between 32-bit and 64-bit builds).
+See also PYTHONHASHSEED.
+
+Immutable Sequence Types
+-------------------------
+The only operation that immutable sequence types generally implement that is not also implemented by mutable sequence types is support for the hash() built-in.
+This support allows immutable sequences, such as tuple instances, to be used as dict keys and stored in set and frozenset instances.
+Attempting to hash an immutable sequence that contains unhashable values will result in TypeError.
+
+Mutable Sequence Types
+----------------------
+The operations in the following table are defined on mutable sequence types. The collections.abc.MutableSequence ABC is provided to make it easier to correctly implement these operations on custom sequence types.
+In the table s is an instance of a mutable sequence type, t is any iterable object and x is an arbitrary object that meets any type and value restrictions imposed by s (for example, bytearray only accepts integers that meet the value restriction 0 <= x <= 255).
+
+Operation           Result
+s[i] = x            item i of s is replaced by x
+s[i:j] = t          slice of s from i to j is replaced by the contents of the iterable t
+del s[i:j]          same as s[i:j] = []
+s[i:j:k] = t        the elements of s[i:j:k] are replaced by those of t
+del s[i:j:k]        removes the elements of s[i:j:k] from the list
+s.append(x)         appends x to the end of the sequence (same as s[len(s):len(s)] = [x])
+s.clear()           removes all items from s (same as del s[:])
+s.copy()            creates a shallow copy of s (same as s[:])
+s.extend(t) or s += t   extends s with the contents of t (for the most part the same as s[len(s):len(s)] = t)
+s *= n              updates s with its contents repeated n times
+s.insert(i, x)      inserts x into s at the index given by i (same as s[i:i] = [x])
+s.pop([i])          retrieves the item at i and also removes it from s
+s.remove(x)         remove the first item from s where s[i] is equal to x
+s.reverse()         reverses the items of s in place
+
+Notes:
+
+t must have the same length as the slice it is replacing.
+The optional argument i defaults to -1, so that by default the last item is removed and returned.
+remove() raises ValueError when x is not found in s.
+The reverse() method modifies the sequence in place for economy of space when reversing a large sequence. To remind users that it operates by side effect, it does not return the reversed sequence.
+clear() and copy() are included for consistency with the interfaces of mutable containers that don’t support slicing operations (such as dict and set). copy() is not part of the collections.abc.MutableSequence ABC, but most concrete mutable sequence classes provide it.
+
+New in version 3.3: clear() and copy() methods.
+
+The value n is an integer, or an object implementing __index__(). Zero and negative values of n clear the sequence. Items in the sequence are not copied; they are referenced multiple times, as explained for s * n under Common Sequence Operations.
+
+l *= -1
+l #  []
+l *= 0
+l #  []
+
