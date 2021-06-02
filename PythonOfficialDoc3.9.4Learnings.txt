@@ -3213,3 +3213,196 @@ l #  []
 l *= 0
 l #  []
 
+Lists
+======
+Lists are mutable sequences, typically used to store collections of homogeneous items (where the precise degree of similarity will vary by application).
+class list([iterable])
+Lists may be constructed in several ways:
+Using a pair of square brackets to denote the empty list: []
+Using square brackets, separating items with commas: [a], [a, b, c]
+Using a list comprehension: [x for x in iterable]
+Using the type constructor: list() or list(iterable)
+The constructor builds a list whose items are the same and in the same order as iterable’s items. iterable may be either a sequence, a container that supports iteration, or an iterator object. If iterable is already a list, a copy is made and returned, similar to iterable[:]. For example, list('abc') returns ['a', 'b', 'c'] and list( (1, 2, 3) ) returns [1, 2, 3]. If no argument is given, the constructor creates a new empty list, [].
+Many other operations also produce lists, including the sorted() built-in.
+Lists implement all of the common and mutable sequence operations. Lists also provide the following additional method:
+
+sort(*, key=None, reverse=False)
+--------------------------------
+This method sorts the list in place, using only < comparisons between items. Exceptions are not suppressed - if any comparison operations fail, the entire sort operation will fail (and the list will likely be left in a partially modified state).
+sort() accepts two arguments that can only be passed by keyword (keyword-only arguments):
+key specifies a function of one argument that is used to extract a comparison key from each list element (for example, key=str.lower). The key corresponding to each item in the list is calculated once and then used for the entire sorting process. The default value of None means that list items are sorted directly without calculating a separate key value.
+The functools.cmp_to_key() utility is available to convert a 2.x style cmp function to a key function.
+reverse is a boolean value. If set to True, then the list elements are sorted as if each comparison were reversed.
+This method modifies the sequence in place for economy of space when sorting a large sequence. To remind users that it operates by side effect, it does not return the sorted sequence (use sorted() to explicitly request a new sorted list instance).
+The sort() method is guaranteed to be stable. A sort is stable if it guarantees not to change the relative order of elements that compare equal — this is helpful for sorting in multiple passes (for example, sort by department, then by salary grade).
+For sorting examples and a brief sorting tutorial, see [Sorting HOW TO](https://docs.python.org/3/howto/sorting.html#sortinghowto)
+CPython implementation detail: While a list is being sorted, the effect of attempting to mutate, or even inspect, the list is undefined. The C implementation of Python makes the list appear empty for the duration, and raises ValueError if it can detect that the list has been mutated during a sort.
+
+Various Sorting options:
+import string
+l = ['b','c','C','B','a', 'A']
+l.sort(key=string.ascii_letters.index) # ['a', 'b', 'c', 'A', 'B', 'C']
+
+l.sort(key=lambda x: (x.isupper(), x)) # ['a', 'b', 'c', 'A', 'B', 'C']
+l.sort(key=lambda x: (x.isupper())) # ['b', 'c', 'a', 'C', 'B', 'A']
+
+l.sort(key=lambda x: (x.islower(), x)) # ['A', 'B', 'C', 'a', 'b', 'c'], same as without key default behaviour
+l.sort(key=lambda x: (x.islower())) # ['C', 'B', 'A', 'b', 'c', 'a']
+
+Tuples
+======
+Tuples are immutable sequences, typically used to store collections of heterogeneous data (such as the 2-tuples produced by the enumerate() built-in). Tuples are also used for cases where an immutable sequence of homogeneous data is needed (such as allowing storage in a set or dict instance).
+
+class tuple([iterable])
+Tuples may be constructed in a number of ways:
+
+Using a pair of parentheses to denote the empty tuple: ()
+Using a trailing comma for a singleton tuple: a, or (a,)
+Separating items with commas: a, b, c or (a, b, c)
+Using the tuple() built-in: tuple() or tuple(iterable)
+The constructor builds a tuple whose items are the same and in the same order as iterable’s items. iterable may be either a sequence, a container that supports iteration, or an iterator object. If iterable is already a tuple, it is returned unchanged. For example, tuple('abc') returns ('a', 'b', 'c') and tuple( [1, 2, 3] ) returns (1, 2, 3). If no argument is given, the constructor creates a new empty tuple, ().
+
+Note that it is actually the comma which makes a tuple, not the parentheses. The parentheses are optional, except in the empty tuple case, or when they are needed to avoid syntactic ambiguity. For example, f(a, b, c) is a function call with three arguments, while f((a, b, c)) is a function call with a 3-tuple as the sole argument.
+
+Tuples implement all of the common sequence operations.
+
+For heterogeneous collections of data where access by name is clearer than access by index, collections.namedtuple() may be a more appropriate choice than a simple tuple object.
+
+Ranges
+=======
+The range type represents an immutable sequence of numbers and is commonly used for looping a specific number of times in for loops.
+
+class range(stop)
+class range(start, stop[, step])
+The arguments to the range constructor must be integers (either built-in int or any object that implements the __index__ special method). If the step argument is omitted, it defaults to 1. If the start argument is omitted, it defaults to 0. If step is zero, ValueError is raised.
+
+For a positive step, the contents of a range r are determined by the formula r[i] = start + step*i where i >= 0 and r[i] < stop.
+
+For a negative step, the contents of the range are still determined by the formula r[i] = start + step*i, but the constraints are i >= 0 and r[i] > stop.
+
+A range object will be empty if r[0] does not meet the value constraint. Ranges do support negative indices, but these are interpreted as indexing from the end of the sequence determined by the positive indices.
+
+Ranges containing absolute values larger than sys.maxsize are permitted but some features (such as len()) may raise OverflowError.
+
+Range examples:
+>>> list(range(10))
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+>>> list(range(1, 11))
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+>>> list(range(0, 30, 5))
+[0, 5, 10, 15, 20, 25]
+>>> list(range(0, 10, 3))
+[0, 3, 6, 9]
+>>> list(range(0, -10, -1))
+[0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
+>>> list(range(0))
+[]
+>>> list(range(1, 0))
+[]
+Ranges implement all of the common sequence operations except concatenation and repetition (due to the fact that range objects can only represent sequences that follow a strict pattern and repetition and concatenation will usually violate that pattern).
+
+start
+The value of the start parameter (or 0 if the parameter was not supplied)
+
+stop
+The value of the stop parameter
+
+step
+The value of the step parameter (or 1 if the parameter was not supplied)
+
+The advantage of the range type over a regular list or tuple is that a range object will always take the same (small) amount of memory, no matter the size of the range it represents (as it only stores the start, stop and step values, calculating individual items and subranges as needed).
+
+Range objects implement the collections.abc.Sequence ABC, and provide features such as containment tests, element index lookup, slicing and support for negative indices (see Sequence Types — list, tuple, range):
+>>> r = range(0, 20, 2)
+>>> r
+range(0, 20, 2)
+>>> 11 in r
+False
+>>> 10 in r
+True
+>>> r.index(10)
+5
+>>> r[5]
+10
+>>> r[:5]
+range(0, 10, 2)
+>>> r[-1]
+18
+Testing range objects for equality with == and != compares them as sequences. That is, two range objects are considered equal if they represent the same sequence of values. (Note that two range objects that compare equal might have different start, stop and step attributes, for example range(0) == range(2, 1, 3) or range(0, 3, 2) == range(0, 4, 2).)
+
+5.4. Sets
+---------
+Python also includes a data type for sets. A set is an unordered collection with no duplicate elements. Basic uses include membership testing and eliminating duplicate entries. Set objects also support mathematical operations like union, intersection, difference, and symmetric difference.
+
+Curly braces or the set() function can be used to create sets. Note: to create an empty set you have to use set(), not {}; the latter creates an empty dictionary, a data structure that we discuss in the next section.
+
+Here is a brief demonstration:
+>>> basket = {'apple', 'orange', 'apple', 'pear', 'orange', 'banana'}
+>>> print(basket)                      # show that duplicates have been removed
+{'orange', 'banana', 'pear', 'apple'}
+>>> 'orange' in basket                 # fast membership testing
+True
+>>> 'crabgrass' in basket
+False
+
+>>> # Demonstrate set operations on unique letters from two words
+>>> a = set('abracadabra')
+>>> b = set('alacazam')
+>>> a                                  # unique letters in a
+{'a', 'r', 'b', 'c', 'd'}
+>>> a - b                              # letters in a but not in b
+{'r', 'd', 'b'}
+>>> a | b                              # letters in a or b or both
+{'a', 'c', 'r', 'd', 'b', 'm', 'z', 'l'}
+>>> a & b                              # letters in both a and b
+{'a', 'c'}
+>>> a ^ b                              # letters in a or b but not both
+{'r', 'd', 'b', 'm', 'z', 'l'}
+Similarly to list comprehensions, set comprehensions are also supported:
+>>> a = {x for x in 'abracadabra' if x not in 'abc'}
+>>> a
+{'r', 'd'}
+
+5.5. Dictionaries
+==================
+Another useful data type built into Python is the dictionary (see Mapping Types — dict). Dictionaries are sometimes found in other languages as “associative memories” or “associative arrays”. Unlike sequences, which are indexed by a range of numbers, dictionaries are indexed by keys, which can be any immutable type; strings and numbers can always be keys. Tuples can be used as keys if they contain only strings, numbers, or tuples; if a tuple contains any mutable object either directly or indirectly, it cannot be used as a key. You can’t use lists as keys, since lists can be modified in place using index assignments, slice assignments, or methods like append() and extend().
+
+It is best to think of a dictionary as a set of key: value pairs, with the requirement that the keys are unique (within one dictionary). A pair of braces creates an empty dictionary: {}. Placing a comma-separated list of key:value pairs within the braces adds initial key:value pairs to the dictionary; this is also the way dictionaries are written on output.
+
+The main operations on a dictionary are storing a value with some key and extracting the value given the key. It is also possible to delete a key:value pair with del. If you store using a key that is already in use, the old value associated with that key is forgotten. It is an error to extract a value using a non-existent key.
+
+Performing list(d) on a dictionary returns a list of all the keys used in the dictionary, in insertion order (if you want it sorted, just use sorted(d) instead). To check whether a single key is in the dictionary, use the in keyword.
+
+Here is a small example using a dictionary:
+>>> tel = {'jack': 4098, 'sape': 4139}
+>>> tel['guido'] = 4127
+>>> tel
+{'jack': 4098, 'sape': 4139, 'guido': 4127}
+>>> tel['jack']
+4098
+>>> del tel['sape']
+>>> tel['irv'] = 4127
+>>> tel
+{'jack': 4098, 'guido': 4127, 'irv': 4127}
+>>> list(tel)
+['jack', 'guido', 'irv']
+>>> sorted(tel)
+['guido', 'irv', 'jack']
+>>> 'guido' in tel
+True
+>>> 'jack' not in tel
+False
+The dict() constructor builds dictionaries directly from sequences of key-value pairs:
+>>> dict([('sape', 4139), ('guido', 4127), ('jack', 4098)])
+{'sape': 4139, 'guido': 4127, 'jack': 4098}
+In addition, dict comprehensions can be used to create dictionaries from arbitrary key and value expressions:
+>>> {x: x**2 for x in (2, 4, 6)}
+{2: 4, 4: 16, 6: 36}
+When the keys are simple strings, it is sometimes easier to specify pairs using keyword arguments:
+>>> dict(sape=4139, guido=4127, jack=4098)
+{'sape': 4139, 'guido': 4127, 'jack': 4098}
+
+Set Types — set, frozenset
+===========================
+
+
