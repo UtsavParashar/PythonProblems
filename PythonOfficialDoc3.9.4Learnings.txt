@@ -3404,5 +3404,282 @@ When the keys are simple strings, it is sometimes easier to specify pairs using 
 
 Set Types — set, frozenset
 ===========================
+A set object is an unordered collection of distinct hashable objects. Common uses include membership testing, removing duplicates from a sequence, and computing mathematical operations such as intersection, union, difference, and symmetric difference. (For other containers see the built-in dict, list, and tuple classes, and the collections module.)
 
+Like other collections, sets support x in set, len(set), and for x in set. Being an unordered collection, sets do not record element position or order of insertion. Accordingly, sets do not support indexing, slicing, or other sequence-like behavior.
 
+There are currently two built-in set types, set and frozenset. The set type is mutable — the contents can be changed using methods like add() and remove(). Since it is mutable, it has no hash value and cannot be used as either a dictionary key or as an element of another set. The frozenset type is immutable and hashable — its contents cannot be altered after it is created; it can therefore be used as a dictionary key or as an element of another set.
+
+Non-empty sets (not frozensets) can be created by placing a comma-separated list of elements within braces, for example: {'jack', 'sjoerd'}, in addition to the set constructor.
+
+The constructors for both classes work the same:
+
+class set([iterable])
+class frozenset([iterable])
+Return a new set or frozenset object whose elements are taken from iterable. The elements of a set must be hashable. To represent sets of sets, the inner sets must be frozenset objects. If iterable is not specified, a new empty set is returned.
+
+Sets can be created by several means:
+
+Use a comma-separated list of elements within braces: {'jack', 'sjoerd'}
+Use a set comprehension: {c for c in 'abracadabra' if c not in 'abc'}
+Use the type constructor: set(), set('foobar'), set(['a', 'b', 'foo'])
+Instances of set and frozenset provide the following operations:
+
+len(s)
+Return the number of elements in set s (cardinality of s).
+
+x in s
+Test x for membership in s.
+
+x not in s
+Test x for non-membership in s.
+
+isdisjoint(other)
+Return True if the set has no elements in common with other. Sets are disjoint if and only if their intersection is the empty set.
+
+issubset(other)
+set <= other
+Test whether every element in the set is in other.
+
+set < other
+Test whether the set is a proper subset of other, that is, set <= other and set != other.
+
+issuperset(other)
+set >= other
+Test whether every element in other is in the set.
+
+set > other
+Test whether the set is a proper superset of other, that is, set >= other and set != other.
+
+union(*others)
+set | other | ...
+Return a new set with elements from the set and all others.
+
+intersection(*others)
+set & other & ...
+Return a new set with elements common to the set and all others.
+
+difference(*others)
+set - other - ...
+Return a new set with elements in the set that are not in the others.
+
+symmetric_difference(other)
+set ^ other
+Return a new set with elements in either the set or other but not both.
+
+copy()
+Return a shallow copy of the set.
+
+Note, the non-operator versions of union(), intersection(), difference(), and symmetric_difference(), issubset(), and issuperset() methods will accept any iterable as an argument. In contrast, their operator based counterparts require their arguments to be sets. This precludes error-prone constructions like set('abc') & 'cbs' in favor of the more readable set('abc').intersection('cbs').
+
+Both set and frozenset support set to set comparisons. Two sets are equal if and only if every element of each set is contained in the other (each is a subset of the other). A set is less than another set if and only if the first set is a proper subset of the second set (is a subset, but is not equal). A set is greater than another set if and only if the first set is a proper superset of the second set (is a superset, but is not equal).
+
+Instances of set are compared to instances of frozenset based on their members. For example, set('abc') == frozenset('abc') returns True and so does set('abc') in set([frozenset('abc')]).
+
+The subset and equality comparisons do not generalize to a total ordering function. For example, any two nonempty disjoint sets are not equal and are not subsets of each other, so all of the following return False: a<b, a==b, or a>b.
+
+Since sets only define partial ordering (subset relationships), the output of the list.sort() method is undefined for lists of sets.
+
+Set elements, like dictionary keys, must be hashable.
+
+Binary operations that mix set instances with frozenset return the type of the first operand. For example: frozenset('ab') | set('bc') returns an instance of frozenset.
+
+The following table lists operations available for set that do not apply to immutable instances of frozenset:
+
+update(*others)
+set |= other | ...
+Update the set, adding elements from all others.
+
+intersection_update(*others)
+set &= other & ...
+Update the set, keeping only elements found in it and all others.
+
+difference_update(*others)
+set -= other | ...
+Update the set, removing elements found in others.
+
+symmetric_difference_update(other)
+set ^= other
+Update the set, keeping only elements found in either set, but not in both.
+
+add(elem)
+Add element elem to the set.
+
+remove(elem)
+Remove element elem from the set. Raises KeyError if elem is not contained in the set.
+
+discard(elem)
+Remove element elem from the set if it is present.
+
+pop()
+Remove and return an arbitrary element from the set. Raises KeyError if the set is empty.
+
+clear()
+Remove all elements from the set.
+
+Note, the non-operator versions of the update(), intersection_update(), difference_update(), and symmetric_difference_update() methods will accept any iterable as an argument.
+
+Note, the elem argument to the __contains__(), remove(), and discard() methods may be a set. To support searching for an equivalent frozenset, a temporary one is created from elem.
+
+Mapping Types — dict
+=====================
+A mapping object maps hashable values to arbitrary objects. Mappings are mutable objects. There is currently only one standard mapping type, the dictionary. (For other containers see the built-in list, set, and tuple classes, and the collections module.)
+
+A dictionary’s keys are almost arbitrary values. Values that are not hashable, that is, values containing lists, dictionaries or other mutable types (that are compared by value rather than by object identity) may not be used as keys. Numeric types used for keys obey the normal rules for numeric comparison: if two numbers compare equal (such as 1 and 1.0) then they can be used interchangeably to index the same dictionary entry. (Note however, that since computers store floating-point numbers as approximations it is usually unwise to use them as dictionary keys.)
+
+Dictionaries can be created by placing a comma-separated list of key: value pairs within braces, for example: {'jack': 4098, 'sjoerd': 4127} or {4098: 'jack', 4127: 'sjoerd'}, or by the dict constructor.
+
+class dict(**kwarg)
+class dict(mapping, **kwarg)
+class dict(iterable, **kwarg)
+Return a new dictionary initialized from an optional positional argument and a possibly empty set of keyword arguments.
+
+Dictionaries can be created by several means:
+
+Use a comma-separated list of key: value pairs within braces: {'jack': 4098, 'sjoerd': 4127} or {4098: 'jack', 4127: 'sjoerd'}
+Use a dict comprehension: {}, {x: x ** 2 for x in range(10)}
+Use the type constructor: dict(), dict([('foo', 100), ('bar', 200)]), dict(foo=100, bar=200)
+If no positional argument is given, an empty dictionary is created. If a positional argument is given and it is a mapping object, a dictionary is created with the same key-value pairs as the mapping object. Otherwise, the positional argument must be an iterable object. Each item in the iterable must itself be an iterable with exactly two objects. The first object of each item becomes a key in the new dictionary, and the second object the corresponding value. If a key occurs more than once, the last value for that key becomes the corresponding value in the new dictionary.
+
+If keyword arguments are given, the keyword arguments and their values are added to the dictionary created from the positional argument. If a key being added is already present, the value from the keyword argument replaces the value from the positional argument.
+
+To illustrate, the following examples all return a dictionary equal to {"one": 1, "two": 2, "three": 3}:
+
+>>>
+>>> a = dict(one=1, two=2, three=3)
+>>> b = {'one': 1, 'two': 2, 'three': 3}
+>>> c = dict(zip(['one', 'two', 'three'], [1, 2, 3]))
+>>> d = dict([('two', 2), ('one', 1), ('three', 3)])
+>>> e = dict({'three': 3, 'one': 1, 'two': 2})
+>>> f = dict({'one': 1, 'three': 3}, two=2)
+>>> a == b == c == d == e == f
+True
+Providing keyword arguments as in the first example only works for keys that are valid Python identifiers. Otherwise, any valid keys can be used.
+
+These are the operations that dictionaries support (and therefore, custom mapping types should support too):
+
+list(d)
+Return a list of all the keys used in the dictionary d.
+
+len(d)
+Return the number of items in the dictionary d.
+
+d[key]
+Return the item of d with key key. Raises a KeyError if key is not in the map.
+
+If a subclass of dict defines a method __missing__() and key is not present, the d[key] operation calls that method with the key key as argument. The d[key] operation then returns or raises whatever is returned or raised by the __missing__(key) call. No other operations or methods invoke __missing__(). If __missing__() is not defined, KeyError is raised. __missing__() must be a method; it cannot be an instance variable:
+
+>>>
+>>> class Counter(dict):
+...     def __missing__(self, key):
+...         return 0
+>>> c = Counter()
+>>> c['red']
+0
+>>> c['red'] += 1
+>>> c['red']
+1
+The example above shows part of the implementation of collections.Counter. A different __missing__ method is used by collections.defaultdict.
+
+d[key] = value
+Set d[key] to value.
+
+del d[key]
+Remove d[key] from d. Raises a KeyError if key is not in the map.
+
+key in d
+Return True if d has a key key, else False.
+
+key not in d
+Equivalent to not key in d.
+
+iter(d)
+Return an iterator over the keys of the dictionary. This is a shortcut for iter(d.keys()).
+
+clear()
+Remove all items from the dictionary.
+
+copy()
+Return a shallow copy of the dictionary.
+
+classmethod fromkeys(iterable[, value])
+Create a new dictionary with keys from iterable and values set to value.
+
+fromkeys() is a class method that returns a new dictionary. value defaults to None. All of the values refer to just a single instance, so it generally doesn’t make sense for value to be a mutable object such as an empty list. To get distinct values, use a dict comprehension instead.
+
+get(key[, default])
+Return the value for key if key is in the dictionary, else default. If default is not given, it defaults to None, so that this method never raises a KeyError.
+
+items()
+Return a new view of the dictionary’s items ((key, value) pairs). See the documentation of view objects.
+
+keys()
+Return a new view of the dictionary’s keys. See the documentation of view objects.
+
+pop(key[, default])
+If key is in the dictionary, remove it and return its value, else return default. If default is not given and key is not in the dictionary, a KeyError is raised.
+
+popitem()
+Remove and return a (key, value) pair from the dictionary. Pairs are returned in LIFO order.
+
+popitem() is useful to destructively iterate over a dictionary, as often used in set algorithms. If the dictionary is empty, calling popitem() raises a KeyError.
+
+Changed in version 3.7: LIFO order is now guaranteed. In prior versions, popitem() would return an arbitrary key/value pair.
+
+reversed(d)
+Return a reverse iterator over the keys of the dictionary. This is a shortcut for reversed(d.keys()).
+setdefault(key[, default])
+If key is in the dictionary, return its value. If not, insert key with a value of default and return default. default defaults to None.
+
+update([other])
+Update the dictionary with the key/value pairs from other, overwriting existing keys. Return None.
+
+update() accepts either another dictionary object or an iterable of key/value pairs (as tuples or other iterables of length two). If keyword arguments are specified, the dictionary is then updated with those key/value pairs: d.update(red=1, blue=2).
+
+values()
+Return a new view of the dictionary’s values. See the documentation of view objects.
+
+An equality comparison between one dict.values() view and another will always return False. This also applies when comparing dict.values() to itself:
+>>> d = {'a': 1}
+>>> d.values() == d.values()
+False
+d | other
+Create a new dictionary with the merged keys and values of d and other, which must both be dictionaries. The values of other take priority when d and other share keys.
+
+d |= other
+Update the dictionary d with keys and values from other, which may be either a mapping or an iterable of key/value pairs. The values of other take priority when d and other share keys.
+
+Dictionaries compare equal if and only if they have the same (key, value) pairs (regardless of ordering). Order comparisons (‘<’, ‘<=’, ‘>=’, ‘>’) raise TypeError.
+
+Dictionaries preserve insertion order. Note that updating a key does not affect the order. Keys added after deletion are inserted at the end.
+>>> d = {"one": 1, "two": 2, "three": 3, "four": 4}
+>>> d
+{'one': 1, 'two': 2, 'three': 3, 'four': 4}
+>>> list(d)
+['one', 'two', 'three', 'four']
+>>> list(d.values())
+[1, 2, 3, 4]
+>>> d["one"] = 42
+>>> d
+{'one': 42, 'two': 2, 'three': 3, 'four': 4}
+>>> del d["two"]
+>>> d["two"] = None
+>>> d
+{'one': 42, 'three': 3, 'four': 4, 'two': None}
+Changed in version 3.7: Dictionary order is guaranteed to be insertion order. This behavior was an implementation detail of CPython from 3.6.
+
+Dictionaries and dictionary views are reversible.
+>>> d = {"one": 1, "two": 2, "three": 3, "four": 4}
+>>> d
+{'one': 1, 'two': 2, 'three': 3, 'four': 4}
+>>> list(reversed(d))
+['four', 'three', 'two', 'one']
+>>> list(reversed(d.values()))
+[4, 3, 2, 1]
+>>> list(reversed(d.items()))
+[('four', 4), ('three', 3), ('two', 2), ('one', 1)]
+Changed in version 3.8: Dictionaries are now reversible.
+
+See also types.MappingProxyType can be used to create a read-only view of a dict.
+https://docs.python.org/3/library/types.html#types.MappingProxyType
+--------------------------------------------------------------------
