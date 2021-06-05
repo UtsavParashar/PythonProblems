@@ -1,10 +1,7 @@
-"""A,B,C,D
-a,OK,one,col1
-b,OK,two,col1
-c,OK,two,col2
-d,OK,Four,NaN
-e,OK,Five,NaN
-f,OK,Six,NaN
-g,NaN,NaN,Col3
-h,NaN,NaN,Col4
-i,NaN,NaN,Col5"""
+"""P1[kW],P2[kW],Pn[kW]
+2,2,2
+3,3,3
+3,3,3
+4,4,4
+2,2,2
+2,2,2"""
