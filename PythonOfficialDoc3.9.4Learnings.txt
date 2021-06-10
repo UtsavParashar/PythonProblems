@@ -1,3 +1,12 @@
+Learn about
+import dis
+dis.dis(function)
+itertools
+functools
+
+import this
+pbd
+
 Regular Expression HOWTO
 ------------------------
 Regular expressions (called REs, or regexes, or regex patterns) are essentially a tiny, highly specialized programming language embedded inside Python and made available through the re module. Using this little language, you specify the rules for the set of possible strings that you want to match; this set might contain English sentences, or e-mail addresses, or TeX commands, or anything you like. You can then ask questions such as “Does this string match the pattern?”, or “Is there a match for the pattern anywhere in this string?”. You can also use REs to modify a string or to split it apart in various ways.
@@ -4353,3 +4362,162 @@ This simple serialization technique can handle lists and dictionaries, but seria
 
 See also pickle - the pickle module
 Contrary to JSON, pickle is a protocol which allows the serialization of arbitrarily complex Python objects. As such, it is specific to Python and cannot be used to communicate with applications written in other languages. It is also insecure by default: deserializing pickle data coming from an untrusted source can execute arbitrary code, if the data was crafted by a skilled attacker.
+
+
+Subprocess Management -
+=======================
+The subprocess module allows you to spawn new processes, connect to their input/output/error pipes, and obtain their return codes. This module intends to replace several older modules and functions:
+
+os.system
+os.spawn*
+Information about how the subprocess module can be used to replace these modules and functions can be found in the following sections.
+
+See also PEP 324 – PEP proposing the subprocess module
+Using the subprocess Module
+The recommended approach to invoking subprocesses is to use the run() function for all use cases it can handle. For more advanced use cases, the underlying Popen interface can be used directly.
+
+The run() function was added in Python 3.5; if you need to retain compatibility with older versions, see the Older high-level API section.
+
+subprocess.run(args, *, stdin=None, input=None, stdout=None, stderr=None, capture_output=False, shell=False, cwd=None, timeout=None, check=False, encoding=None, errors=None, text=None, env=None, universal_newlines=None, **other_popen_kwargs)
+Run the command described by args. Wait for command to complete, then return a CompletedProcess instance.
+
+The arguments shown above are merely the most common ones, described below in Frequently Used Arguments (hence the use of keyword-only notation in the abbreviated signature). The full function signature is largely the same as that of the Popen constructor - most of the arguments to this function are passed through to that interface. (timeout, input, check, and capture_output are not.)
+
+If capture_output is true, stdout and stderr will be captured. When used, the internal Popen object is automatically created with stdout=PIPE and stderr=PIPE. The stdout and stderr arguments may not be supplied at the same time as capture_output. If you wish to capture and combine both streams into one, use stdout=PIPE and stderr=STDOUT instead of capture_output.
+
+The timeout argument is passed to Popen.communicate(). If the timeout expires, the child process will be killed and waited for. The TimeoutExpired exception will be re-raised after the child process has terminated.
+
+The input argument is passed to Popen.communicate() and thus to the subprocess’s stdin. If used it must be a byte sequence, or a string if encoding or errors is specified or text is true. When used, the internal Popen object is automatically created with stdin=PIPE, and the stdin argument may not be used as well.
+
+If check is true, and the process exits with a non-zero exit code, a CalledProcessError exception will be raised. Attributes of that exception hold the arguments, the exit code, and stdout and stderr if they were captured.
+
+If encoding or errors are specified, or text is true, file objects for stdin, stdout and stderr are opened in text mode using the specified encoding and errors or the io.TextIOWrapper default. The universal_newlines argument is equivalent to text and is provided for backwards compatibility. By default, file objects are opened in binary mode.
+
+If env is not None, it must be a mapping that defines the environment variables for the new process; these are used instead of the default behavior of inheriting the current process’ environment. It is passed directly to Popen.
+
+Examples:
+
+>>>
+>>> subprocess.run(["ls", "-l"])  # doesn't capture output
+CompletedProcess(args=['ls', '-l'], returncode=0)
+
+>>> subprocess.run("exit 1", shell=True, check=True)
+Traceback (most recent call last):
+  ...
+subprocess.CalledProcessError: Command 'exit 1' returned non-zero exit status 1
+
+>>> subprocess.run(["ls", "-l", "/dev/null"], capture_output=True)
+CompletedProcess(args=['ls', '-l', '/dev/null'], returncode=0,
+stdout=b'crw-rw-rw- 1 root root 1, 3 Jan 23 16:23 /dev/null\n', stderr=b'')
+New in version 3.5.
+
+Changed in version 3.6: Added encoding and errors parameters
+
+Changed in version 3.7: Added the text parameter, as a more understandable alias of universal_newlines. Added the capture_output parameter.
+
+class subprocess.CompletedProcess
+The return value from run(), representing a process that has finished.
+
+args
+The arguments used to launch the process. This may be a list or a string.
+
+returncode
+Exit status of the child process. Typically, an exit status of 0 indicates that it ran successfully.
+
+A negative value -N indicates that the child was terminated by signal N (POSIX only).
+
+stdout
+Captured stdout from the child process. A bytes sequence, or a string if run() was called with an encoding, errors, or text=True. None if stdout was not captured.
+
+If you ran the process with stderr=subprocess.STDOUT, stdout and stderr will be combined in this attribute, and stderr will be None.
+
+stderr
+Captured stderr from the child process. A bytes sequence, or a string if run() was called with an encoding, errors, or text=True. None if stderr was not captured.
+
+check_returncode()
+If returncode is non-zero, raise a CalledProcessError.
+
+New in version 3.5.
+
+subprocess.DEVNULL
+Special value that can be used as the stdin, stdout or stderr argument to Popen and indicates that the special file os.devnull will be used.
+
+New in version 3.3.
+
+subprocess.PIPE
+Special value that can be used as the stdin, stdout or stderr argument to Popen and indicates that a pipe to the standard stream should be opened. Most useful with Popen.communicate().
+
+subprocess.STDOUT
+Special value that can be used as the stderr argument to Popen and indicates that standard error should go into the same handle as standard output.
+
+exception subprocess.SubprocessError
+Base class for all other exceptions from this module.
+
+New in version 3.3.
+
+exception subprocess.TimeoutExpired
+Subclass of SubprocessError, raised when a timeout expires while waiting for a child process.
+
+cmd
+Command that was used to spawn the child process.
+
+timeout
+Timeout in seconds.
+
+output
+Output of the child process if it was captured by run() or check_output(). Otherwise, None.
+
+stdout
+Alias for output, for symmetry with stderr.
+
+stderr
+Stderr output of the child process if it was captured by run(). Otherwise, None.
+
+New in version 3.3.
+
+Changed in version 3.5: stdout and stderr attributes added
+
+exception subprocess.CalledProcessError
+Subclass of SubprocessError, raised when a process run by check_call() or check_output() returns a non-zero exit status.
+
+returncode
+Exit status of the child process. If the process exited due to a signal, this will be the negative signal number.
+
+cmd
+Command that was used to spawn the child process.
+
+output
+Output of the child process if it was captured by run() or check_output(). Otherwise, None.
+
+stdout
+Alias for output, for symmetry with stderr.
+
+stderr
+Stderr output of the child process if it was captured by run(). Otherwise, None.
+
+Changed in version 3.5: stdout and stderr attributes added
+
+Frequently Used Arguments
+To support a wide variety of use cases, the Popen constructor (and the convenience functions) accept a large number of optional arguments. For most typical use cases, many of these arguments can be safely left at their default values. The arguments that are most commonly needed are:
+
+args is required for all calls and should be a string, or a sequence of program arguments. Providing a sequence of arguments is generally preferred, as it allows the module to take care of any required escaping and quoting of arguments (e.g. to permit spaces in file names). If passing a single string, either shell must be True (see below) or else the string must simply name the program to be executed without specifying any arguments.
+
+stdin, stdout and stderr specify the executed program’s standard input, standard output and standard error file handles, respectively. Valid values are PIPE, DEVNULL, an existing file descriptor (a positive integer), an existing file object, and None. PIPE indicates that a new pipe to the child should be created. DEVNULL indicates that the special file os.devnull will be used. With the default settings of None, no redirection will occur; the child’s file handles will be inherited from the parent. Additionally, stderr can be STDOUT, which indicates that the stderr data from the child process should be captured into the same file handle as for stdout.
+
+If encoding or errors are specified, or text (also known as universal_newlines) is true, the file objects stdin, stdout and stderr will be opened in text mode using the encoding and errors specified in the call or the defaults for io.TextIOWrapper.
+
+For stdin, line ending characters '\n' in the input will be converted to the default line separator os.linesep. For stdout and stderr, all line endings in the output will be converted to '\n'. For more information see the documentation of the io.TextIOWrapper class when the newline argument to its constructor is None.
+
+If text mode is not used, stdin, stdout and stderr will be opened as binary streams. No encoding or line ending conversion is performed.
+
+New in version 3.6: Added encoding and errors parameters.
+
+New in version 3.7: Added the text parameter as an alias for universal_newlines.
+
+Note The newlines attribute of the file objects Popen.stdin, Popen.stdout and Popen.stderr are not updated by the Popen.communicate() method.
+If shell is True, the specified command will be executed through the shell. This can be useful if you are using Python primarily for the enhanced control flow it offers over most system shells and still want convenient access to other shell features such as shell pipes, filename wildcards, environment variable expansion, and expansion of ~ to a user’s home directory. However, note that Python itself offers implementations of many shell-like features (in particular, glob, fnmatch, os.walk(), os.path.expandvars(), os.path.expanduser(), and shutil).
+
+Changed in version 3.3: When universal_newlines is True, the class uses the encoding locale.getpreferredencoding(False) instead of locale.getpreferredencoding(). See the io.TextIOWrapper class for more information on this change.
+
+Note Read the Security Considerations section before using shell=True.
+These options, along with all of the other options, are described in more detail in the Popen constructor documentation.
