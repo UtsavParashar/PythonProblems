@@ -4728,3 +4728,104 @@ classes that are defined at the top level of a module
 instances of such classes whose __dict__ or the result of calling __getstate__() is picklable (see section Pickling Class Instances for details).
 
 Attempts to pickle unpicklable objects will raise the PicklingError exception; when this happens, an unspecified number of bytes may have already been written to the underlying file. Trying to pickle a highly recursive data structure may exceed the maximum recursion depth, a RecursionError will be raised in this case. You can carefully raise this limit with sys.setrecursionlimit().
+
+JSON - JSON encoder and decoder
+-----
+JSON (JavaScript Object Notation), specified by RFC 7159 (which obsoletes RFC 4627) and by ECMA-404, is a lightweight data interchange format inspired by JavaScript object literal syntax (although it is not a strict subset of JavaScript 1 ).
+
+json exposes an API familiar to users of the standard library marshal and pickle modules.
+
+Encoding basic Python object hierarchies:
+
+>>>
+>>> import json
+>>> json.dumps(['foo', {'bar': ('baz', None, 1.0, 2)}])
+'["foo", {"bar": ["baz", null, 1.0, 2]}]'
+>>> print(json.dumps("\"foo\bar"))
+"\"foo\bar"
+>>> print(json.dumps('\u1234'))
+"\u1234"
+>>> print(json.dumps('\\'))
+"\\"
+>>> print(json.dumps({"c": 0, "b": 0, "a": 0}, sort_keys=True))
+{"a": 0, "b": 0, "c": 0}
+>>> from io import StringIO
+>>> io = StringIO()
+>>> json.dump(['streaming API'], io)
+>>> io.getvalue()
+'["streaming API"]'
+Compact encoding:
+
+>>>
+>>> import json
+>>> json.dumps([1, 2, 3, {'4': 5, '6': 7}], separators=(',', ':'))
+'[1,2,3,{"4":5,"6":7}]'
+Pretty printing:
+
+>>>
+>>> import json
+>>> print(json.dumps({'4': 5, '6': 7}, sort_keys=True, indent=4))
+{
+    "4": 5,
+    "6": 7
+}
+Decoding JSON:
+
+>>>
+>>> import json
+>>> json.loads('["foo", {"bar":["baz", null, 1.0, 2]}]')
+['foo', {'bar': ['baz', None, 1.0, 2]}]
+>>> json.loads('"\\"foo\\bar"')
+'"foo\x08ar'
+>>> from io import StringIO
+>>> io = StringIO('["streaming API"]')
+>>> json.load(io)
+['streaming API']
+Specializing JSON object decoding:
+
+>>>
+>>> import json
+>>> def as_complex(dct):
+...     if '__complex__' in dct:
+...         return complex(dct['real'], dct['imag'])
+...     return dct
+...
+>>> json.loads('{"__complex__": true, "real": 1, "imag": 2}',
+...     object_hook=as_complex)
+(1+2j)
+>>> import decimal
+>>> json.loads('1.1', parse_float=decimal.Decimal)
+Decimal('1.1')
+Extending JSONEncoder:
+
+>>>
+>>> import json
+>>> class ComplexEncoder(json.JSONEncoder):
+...     def default(self, obj):
+...         if isinstance(obj, complex):
+...             return [obj.real, obj.imag]
+...         # Let the base class default method raise the TypeError
+...         return json.JSONEncoder.default(self, obj)
+...
+>>> json.dumps(2 + 1j, cls=ComplexEncoder)
+'[2.0, 1.0]'
+>>> ComplexEncoder().encode(2 + 1j)
+'[2.0, 1.0]'
+>>> list(ComplexEncoder().iterencode(2 + 1j))
+['[2.0', ', 1.0', ']']
+Using json.tool from the shell to validate and pretty-print:
+
+$ echo '{"json":"obj"}' | python -m json.tool
+{
+    "json": "obj"
+}
+$ echo '{1.2:3.4}' | python -m json.tool
+Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+
+8. Errors and Exceptions
+=========================
+
+
+
+
+
