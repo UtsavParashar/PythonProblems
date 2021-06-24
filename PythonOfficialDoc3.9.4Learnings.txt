@@ -4995,4 +4995,120 @@ Traceback (most recent call last):
   File "<stdin>", line 2, in <module>
 NameError: HiThere
 
+8.5. Exception Chaining
+The raise statement allows an optional from which enables chaining exceptions. For example:
 
+# exc must be exception instance or None.
+raise RuntimeError from exc
+
+def func():
+    raise IOError
+try:
+    func()
+except IOError as exc:
+    raise RuntimeError('Failed to open db')
+
+---------------------------------------------------------------------------
+OSError                                   Traceback (most recent call last)
+<ipython-input-4-55b0f25097a4> in <module>
+      4 try:
+----> 5     func()
+      6 except IOError as exc:
+
+<ipython-input-4-55b0f25097a4> in func()
+      1 def func():
+----> 2     raise IOError
+      3
+
+OSError:
+During handling of the above exception, another exception occurred:
+RuntimeError                              Traceback (most recent call last)
+<ipython-input-4-55b0f25097a4> in <module>
+      5     func()
+      6 except IOError as exc:
+----> 7     raise RuntimeError('Failed to open db')
+RuntimeError: Failed to open db
+
+When Exceptions are chained:
+def func():
+    raise IOError
+try:
+    func()
+except IOError as exc:
+    raise RuntimeError('Failed to open db') from exc
+---------------------------------------------------------------------------
+OSError                                   Traceback (most recent call last)
+<ipython-input-5-feb14c558b41> in <module>
+      4 try:
+----> 5     func()
+      6 except IOError as exc:
+
+<ipython-input-5-feb14c558b41> in func()
+      1 def func():
+----> 2     raise IOError
+      3
+
+OSError:
+The above exception was the direct cause of the following exception:
+RuntimeError                              Traceback (most recent call last)
+<ipython-input-5-feb14c558b41> in <module>
+      5     func()
+      6 except IOError as exc:
+----> 7     raise RuntimeError('Failed to open db') from exc
+RuntimeError: Failed to open db
+
+Note the diff between:
+The above exception was the direct cause of the following exception: # and
+During handling of the above exception, another exception occurred:
+
+Exception chaining happens automatically when an exception is raised inside an except or finally section. Exception chaining can be disabled by using from None idiom:
+>>> try:
+...     open('database.sqlite')
+... except OSError:
+...     raise RuntimeError from None
+...
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+RuntimeError
+
+8.6. User-defined Exceptions
+Programs may name their own exceptions by creating a new exception class (see Classes for more about Python classes). Exceptions should typically be derived from the Exception class, either directly or indirectly.
+
+Exception classes can be defined which do anything any other class can do, but are usually kept simple, often only offering a number of attributes that allow information about the error to be extracted by handlers for the exception. When creating a module that can raise several distinct errors, a common practice is to create a base class for exceptions defined by that module, and subclass that to create specific exception classes for different error conditions:
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class InputError(Error):
+    """Exception raised for errors in the input.
+
+    Attributes:
+        expression -- input expression in which the error occurred
+        message -- explanation of the error
+    """
+
+    def __init__(self, expression, message):
+        self.expression = expression
+        self.message = message
+
+class TransitionError(Error):
+    """Raised when an operation attempts a state transition that's not
+    allowed.
+
+    Attributes:
+        previous -- state at beginning of transition
+        next -- attempted new state
+        message -- explanation of why the specific transition is not allowed
+    """
+
+    def __init__(self, previous, next, message):
+        self.previous = previous
+        self.next = next
+        self.message = message
+Most exceptions are defined with names that end in “Error”, similar to the naming of the standard exceptions.
+
+Many standard modules define their own exceptions to report errors that may occur in functions they define. More information on classes is presented in chapter Classes.
+
+Defining Clean up Actions:
+--------------------------
