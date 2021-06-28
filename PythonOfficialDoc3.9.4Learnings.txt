@@ -5344,6 +5344,296 @@ Raised when indentation contains an inconsistent use of tabs and spaces. This is
 exception SystemError
 Raised when the interpreter finds an internal error, but the situation does not look so serious to cause it to abandon all hope. The associated value is a string indicating what went wrong (in low-level terms).
 
+exception SystemExit
+This exception is raised by the sys.exit() function. It inherits from BaseException instead of Exception so that it is not accidentally caught by code that catches Exception. This allows the exception to properly propagate up and cause the interpreter to exit. When it is not handled, the Python interpreter exits; no stack traceback is printed. The constructor accepts the same optional argument passed to sys.exit(). If the value is an integer, it specifies the system exit status (passed to C’s exit() function); if it is None, the exit status is zero; if it has another type (such as a string), the object’s value is printed and the exit status is one.
+
+A call to sys.exit() is translated into an exception so that clean-up handlers (finally clauses of try statements) can be executed, and so that a debugger can execute a script without running the risk of losing control. The os._exit() function can be used if it is absolutely positively necessary to exit immediately (for example, in the child process after a call to os.fork()).
+
+exception TypeError
+Raised when an operation or function is applied to an object of inappropriate type. The associated value is a string giving details about the type mismatch.
+
+This exception may be raised by user code to indicate that an attempted operation on an object is not supported, and is not meant to be. If an object is meant to support a given operation but has not yet provided an implementation, NotImplementedError is the proper exception to raise.
+
+Passing arguments of the wrong type (e.g. passing a list when an int is expected) should result in a TypeError, but passing arguments with the wrong value (e.g. a number outside expected boundaries) should result in a ValueError.
+
+exception UnboundLocalError
+Raised when a reference is made to a local variable in a function or method, but no value has been bound to that variable. This is a subclass of NameError.
+
+exception UnicodeError
+Raised when a Unicode-related encoding or decoding error occurs. It is a subclass of ValueError.
+
+UnicodeError has attributes that describe the encoding or decoding error. For example, err.object[err.start:err.end] gives the particular invalid input that the codec failed on.
+
+encoding
+The name of the encoding that raised the error.
+
+reason
+A string describing the specific codec error.
+
+object
+The object the codec was attempting to encode or decode.
+
+start
+The first index of invalid data in object.
+
+end
+The index after the last invalid data in object.
+
+exception UnicodeEncodeError
+Raised when a Unicode-related error occurs during encoding. It is a subclass of UnicodeError.
+
+exception UnicodeDecodeError
+Raised when a Unicode-related error occurs during decoding. It is a subclass of UnicodeError.
+
+exception UnicodeTranslateError
+Raised when a Unicode-related error occurs during translating. It is a subclass of UnicodeError.
+
+exception ValueError
+Raised when an operation or function receives an argument that has the right type but an inappropriate value, and the situation is not described by a more precise exception such as IndexError.
+
+exception ZeroDivisionError
+Raised when the second argument of a division or modulo operation is zero. The associated value is a string indicating the type of the operands and the operation.
+
+The following exceptions are kept for compatibility with previous versions; starting from Python 3.3, they are aliases of OSError.
+
+exception EnvironmentError
+exception IOError
+exception WindowsError
+Only available on Windows.
+
+OS exceptions
+The following exceptions are subclasses of OSError, they get raised depending on the system error code.
+
+exception BlockingIOError
+Raised when an operation would block on an object (e.g. socket) set for non-blocking operation. Corresponds to errno EAGAIN, EALREADY, EWOULDBLOCK and EINPROGRESS.
+
+In addition to those of OSError, BlockingIOError can have one more attribute:
+
+characters_written
+An integer containing the number of characters written to the stream before it blocked. This attribute is available when using the buffered I/O classes from the io module.
+
+exception ChildProcessError
+Raised when an operation on a child process failed. Corresponds to errno ECHILD.
+
+exception ConnectionError
+A base class for connection-related issues.
+
+Subclasses are BrokenPipeError, ConnectionAbortedError, ConnectionRefusedError and ConnectionResetError.
+
+exception BrokenPipeError
+A subclass of ConnectionError, raised when trying to write on a pipe while the other end has been closed, or trying to write on a socket which has been shutdown for writing. Corresponds to errno EPIPE and ESHUTDOWN.
+
+exception ConnectionAbortedError
+A subclass of ConnectionError, raised when a connection attempt is aborted by the peer. Corresponds to errno ECONNABORTED.
+
+exception ConnectionRefusedError
+A subclass of ConnectionError, raised when a connection attempt is refused by the peer. Corresponds to errno ECONNREFUSED.
+
+exception ConnectionResetError
+A subclass of ConnectionError, raised when a connection is reset by the peer. Corresponds to errno ECONNRESET.
+
+exception FileExistsError
+Raised when trying to create a file or directory which already exists. Corresponds to errno EEXIST.
+
+exception FileNotFoundError
+Raised when a file or directory is requested but doesn’t exist. Corresponds to errno ENOENT.
+
+exception InterruptedError
+Raised when a system call is interrupted by an incoming signal. Corresponds to errno EINTR.
+
+Changed in version 3.5: Python now retries system calls when a syscall is interrupted by a signal, except if the signal handler raises an exception (see PEP 475 for the rationale), instead of raising InterruptedError.
+
+exception IsADirectoryError
+Raised when a file operation (such as os.remove()) is requested on a directory. Corresponds to errno EISDIR.
+
+exception NotADirectoryError
+Raised when a directory operation (such as os.listdir()) is requested on something which is not a directory. Corresponds to errno ENOTDIR.
+
+exception PermissionError
+Raised when trying to run an operation without the adequate access rights - for example filesystem permissions. Corresponds to errno EACCES and EPERM.
+
+exception ProcessLookupError
+Raised when a given process doesn’t exist. Corresponds to errno ESRCH.
+
+exception TimeoutError
+Raised when a system function timed out at the system level. Corresponds to errno ETIMEDOUT.
+
+New in version 3.3: All the above OSError subclasses were added.
+
+Warnings
+The following exceptions are used as warning categories; see the Warning Categories documentation for more details.
+
+exception Warning
+Base class for warning categories.
+
+exception UserWarning
+Base class for warnings generated by user code.
+
+exception DeprecationWarning
+Base class for warnings about deprecated features when those warnings are intended for other Python developers.
+
+Ignored by the default warning filters, except in the __main__ module (PEP 565). Enabling the Python Development Mode shows this warning.
+
+exception PendingDeprecationWarning
+Base class for warnings about features which are obsolete and expected to be deprecated in the future, but are not deprecated at the moment.
+
+This class is rarely used as emitting a warning about a possible upcoming deprecation is unusual, and DeprecationWarning is preferred for already active deprecations.
+
+Ignored by the default warning filters. Enabling the Python Development Mode shows this warning.
+
+exception SyntaxWarning
+Base class for warnings about dubious syntax.
+
+exception RuntimeWarning
+Base class for warnings about dubious runtime behavior.
+
+exception FutureWarning
+Base class for warnings about deprecated features when those warnings are intended for end users of applications that are written in Python.
+
+exception ImportWarning
+Base class for warnings about probable mistakes in module imports.
+
+Ignored by the default warning filters. Enabling the Python Development Mode shows this warning.
+
+exception UnicodeWarning
+Base class for warnings related to Unicode.
+
+exception BytesWarning
+Base class for warnings related to bytes and bytearray.
+
+exception ResourceWarning
+Base class for warnings related to resource usage.
+
+Ignored by the default warning filters. Enabling the Python Development Mode shows this warning.
+
+New in version 3.2.
+
+Exception hierarchy
+The class hierarchy for built-in exceptions is:
+
+BaseException
+ +-- SystemExit
+ +-- KeyboardInterrupt
+ +-- GeneratorExit
+ +-- Exception
+      +-- StopIteration
+      +-- StopAsyncIteration
+      +-- ArithmeticError
+      |    +-- FloatingPointError
+      |    +-- OverflowError
+      |    +-- ZeroDivisionError
+      +-- AssertionError
+      +-- AttributeError
+      +-- BufferError
+      +-- EOFError
+      +-- ImportError
+      |    +-- ModuleNotFoundError
+      +-- LookupError
+      |    +-- IndexError
+      |    +-- KeyError
+      +-- MemoryError
+      +-- NameError
+      |    +-- UnboundLocalError
+      +-- OSError
+      |    +-- BlockingIOError
+      |    +-- ChildProcessError
+      |    +-- ConnectionError
+      |    |    +-- BrokenPipeError
+      |    |    +-- ConnectionAbortedError
+      |    |    +-- ConnectionRefusedError
+      |    |    +-- ConnectionResetError
+      |    +-- FileExistsError
+      |    +-- FileNotFoundError
+      |    +-- InterruptedError
+      |    +-- IsADirectoryError
+      |    +-- NotADirectoryError
+      |    +-- PermissionError
+      |    +-- ProcessLookupError
+      |    +-- TimeoutError
+      +-- ReferenceError
+      +-- RuntimeError
+      |    +-- NotImplementedError
+      |    +-- RecursionError
+      +-- SyntaxError
+      |    +-- IndentationError
+      |         +-- TabError
+      +-- SystemError
+      +-- TypeError
+      +-- ValueError
+      |    +-- UnicodeError
+      |         +-- UnicodeDecodeError
+      |         +-- UnicodeEncodeError
+      |         +-- UnicodeTranslateError
+      +-- Warning
+           +-- DeprecationWarning
+           +-- PendingDeprecationWarning
+           +-- RuntimeWarning
+           +-- SyntaxWarning
+           +-- UserWarning
+           +-- FutureWarning
+           +-- ImportWarning
+           +-- UnicodeWarning
+           +-- BytesWarning
+           +-- ResourceWarning
+7.8. The raise statement
+raise_stmt ::=  "raise" [expression ["from" expression]]
+If no expressions are present, raise re-raises the last exception that was active in the current scope. If no exception is active in the current scope, a RuntimeError exception is raised indicating that this is an error.
+
+Otherwise, raise evaluates the first expression as the exception object. It must be either a subclass or an instance of BaseException. If it is a class, the exception instance will be obtained when needed by instantiating the class with no arguments.
+
+The type of the exception is the exception instance’s class, the value is the instance itself.
+
+A traceback object is normally created automatically when an exception is raised and attached to it as the __traceback__ attribute, which is writable. You can create an exception and set your own traceback in one step using the with_traceback() exception method (which returns the same exception instance, with its traceback set to its argument), like so:
+
+raise Exception("foo occurred").with_traceback(tracebackobj)
+The from clause is used for exception chaining: if given, the second expression must be another exception class or instance. If the second expression is an exception instance, it will be attached to the raised exception as the __cause__ attribute (which is writable). If the expression is an exception class, the class will be instantiated and the resulting exception instance will be attached to the raised exception as the __cause__ attribute. If the raised exception is not handled, both exceptions will be printed:
+
+>>>
+>>> try:
+...     print(1 / 0)
+... except Exception as exc:
+...     raise RuntimeError("Something bad happened") from exc
+...
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+ZeroDivisionError: division by zero
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+RuntimeError: Something bad happened
+A similar mechanism works implicitly if an exception is raised inside an exception handler or a finally clause: the previous exception is then attached as the new exception’s __context__ attribute:
+
+>>>
+>>> try:
+...     print(1 / 0)
+... except:
+...     raise RuntimeError("Something bad happened")
+...
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+ZeroDivisionError: division by zero
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+RuntimeError: Something bad happened
+Exception chaining can be explicitly suppressed by specifying None in the from clause:
+
+>>>
+>>> try:
+...     print(1 / 0)
+... except:
+...     raise RuntimeError("Something bad happened") from None
+...
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+RuntimeError: Something bad happened
+Additional information on exceptions can be found in section Exceptions, and information about handling exceptions is in section The try statement.
+
+Changed in version 3.3: None is now permitted as Y in raise X from Y.
 
 Classes
 --------
