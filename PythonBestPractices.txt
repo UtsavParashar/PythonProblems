@@ -1,0 +1,30 @@
+Cohesion and Coupling
+---------------------
+These both tell how easily you code can be maintained i.e changed or extended.
+Cohesion:- Cohesion is the degree to which elements of a certain class or function belong together.
+Eg: Take a look at this function
+def handle_stuff(d:Data, quantity:int, screen:int, screen:int, status:int, c:Color):
+    update_corporate_database(d, q, status)
+    for i in range(0, quantity):
+        profit[i] = revenue[i] - expense[i] * status
+    new_color = c
+    status = SUCCESS
+    display_profits(screenX, screenY, status, d, c)
+    ...
+Issues with above code:
+1. Function name is a red flag
+2. It has weak cohesion i.e it does a lot of different that do not really belong together, a function with strong cohesion has a clear responsibility, it has only one task an example of a function with strong cohesion is the cosine fn in python's math lib. It does only one thing, compute the cosine of a number and that's it.
+Having strong cohesion is imp, it makes your code easier to maintain and understand, code that does one thing only is lost easier to reuse than a giant function doing lots of different unrelated things.
+IN MY WORDS - STRONG COHESION IS EQUIVALENT TO A SINGLE RESPONSIBILITY PRINCIPLE.
+
+COUPLING -
+Coupling means how dependent are two parts of the code on each other.
+Let's take a look at this example:
+def checkEmailSecurity(email):
+    if email.header.bearer.invalid():
+        raise Exception("Email header bearer is invalid")
+    elif email.header.received != email.header.received_spf:
+        raise Exception("Received Mismatch")
+    else:
+        print("Email header is secure")
+

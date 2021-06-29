@@ -5635,5 +5635,6 @@ Additional information on exceptions can be found in section Exceptions, and inf
 
 Changed in version 3.3: None is now permitted as Y in raise X from Y.
 
+
 Classes
 --------
