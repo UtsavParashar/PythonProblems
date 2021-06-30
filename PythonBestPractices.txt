@@ -28,3 +28,18 @@ def checkEmailSecurity(email):
     else:
         print("Email header is secure")
 
+In above function, we can say that this function (checkEmailSecurity) is highly coupled with email object.
+Since the code in the above function directly accesses data that's deep in the structure of email object.
+High couping is not good because making changes in one place might require changes at many places.
+
+In practise there might be some couping in your code because the various parts of the code needs to work together somehow but the more coupling you introduce the more difficult it becomes to maintain your code. In order to solve the coupling issues in this case you can either pass along only the data that the function needs instead of the entire email object or you can move this function inside the email object since its so directly related to the data in the object.
+
+Coupling and cohesion are important metrics for software quality. Unfortunately you can't simply compute a number that tells you how cohesive or how coupled your code is, it comes down to you as a developer to understand the structure of your code well. Being able to analyze your code in terms of cohesion and coupling and improve it.
+
+In general we need to learn to make right decision when we are designing a piece of software, you will become better at this when you become a senior software developer but it's a skill you need to train yourself in.
+
+Example:
+
+
+
+
