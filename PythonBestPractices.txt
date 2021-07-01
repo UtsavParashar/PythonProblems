@@ -38,6 +38,8 @@ Coupling and cohesion are important metrics for software quality. Unfortunately 
 
 In general we need to learn to make right decision when we are designing a piece of software, you will become better at this when you become a senior software developer but it's a skill you need to train yourself in.
 
+General Rule - Provide methods in the class where mostly the data/information is present.
+
 Example:
 
 
