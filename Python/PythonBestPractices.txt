@@ -40,7 +40,9 @@ In general we need to learn to make right decision when we are designing a piece
 
 General Rule - Provide methods in the class where mostly the data/information is present.
 
-Example:
+Exception Handling Tips in Python:
+----------------------------------
+
 
 
 
