@@ -1,3 +1,207 @@
 This part of the Scipy lecture notes is a self-contained introduction to everything that is needed to use Python for science, from the language itself, to numerical computing or plotting.
 
 Python scientific computing ecosystem
+--------------------------------------
+1.1.1 The scientist’s needs
+• Get data (simulation, experiment control),
+• Manipulate and process data,
+• Visualize results, quickly to understand, but also with high quality figures, for reports or publica- tions.
+1.1.2 Python’s strengths
+• Batteries included Rich collection of already existing bricks of classic numerical methods, plot- ting or data processing tools. We don’t want to re-program the plotting of a curve, a Fourier transform or a fitting algorithm. Don’t reinvent the wheel!
+• Easy to learn Most scientists are not payed as programmers, neither have they been trained so. They need to be able to draw a curve, smooth a signal, do a Fourier transform in a few minutes.
+• Easy communication To keep code alive within a lab or a company it should be as readable as a book by collaborators, students, or maybe customers. Python syntax is simple, avoiding strange symbols or lengthy routine specifications that would divert the reader from mathematical or scientific understanding of the code.
+• Efficient code Python numerical modules are computationally efficient. But needless to say that a very fast code becomes useless if too much time is spent writing it. Python aims for quick development times and quick execution times.
+• Universal Python is a language used for many different problems. Learning Python avoids learning a new software for each new problem.
+
+1.1.3 How does Python compare to other solutions? Compiled languages: C, C++, Fortran. . .
+Pros
+• Very fast. For heavy computations, it’s difficult to outperform these languages.
+Cons
+ Painful usage: no interactivity during development, mandatory compilation steps, verbose syntax, manual memory management. These are difficult languages for non programmers.
+
+Matlab scripting language
+Pros
+• Very rich collection of libraries with numerous algorithms, for many different do- mains. Fast execution because these libraries are often written in a compiled lan- guage.
+• Pleasant development environment: comprehensive and help, integrated editor, etc.
+• Commercial support is available.
+Cons
+• Base language is quite poor and can become restrictive for advanced users.
+• Not free.
+
+Julia
+Pros
+• Fast code, yet interactive and simple.
+• Easily connects to Python or C.
+Cons
+• Ecosystem limited to numerical computing.
+• Still young.
+
+Other scripting languages: Scilab, Octave, R, IDL, etc.
+Pros
+• Open-source, free, or at least cheaper than Matlab.
+• Some features can be very advanced (statistics in R, etc.)
+Cons
+• Fewer available algorithms than in Matlab, and the language is not more advanced.
+• Some software are dedicated to one domain. Ex: Gnuplot to draw curves. These programs are very powerful, but they are restricted to a single type of usage, such as plotting.
+
+Python
+Pros
+• Very rich scientific computing libraries
+• Well thought out language, allowing to write very readable and well structured code: we “code what we think”.
+• Many libraries beyond scientific computing (web server, serial port access, etc.)
+• Free and open-source software, widely spread, with a vibrant community.
+• A variety of powerful environments to work in, such as IPython, Spyder, Jupyter notebooks, Pycharm, Visual Studio Code
+Cons
+• Not all the algorithms that can be found in more specialized software or toolboxes.
+
+1.2 The Scientific Python ecosystem
+Unlike Matlab, or R, Python does not come with a pre-bundled set of modules for scientific computing. Below are the basic building blocks that can be combined to obtain a scientific computing environment:
+Python, a generic and modern computing language
+• The language: flow control, data types (string, int), data collections (lists, dictionaries), etc.
+• Modules of the standard library: string processing, file management, simple network protocols.
+• A large number of specialized modules or applications written in Python: web framework, etc. . . . and scientific computing.
+• Development tools (automatic testing, documentation generation)
+
+Core numeric libraries
+• Numpy: numerical computing with powerful numerical arrays objects, and routines to manip-
+ulate them. http://www.numpy.org/
+
+• Scipy : high-level numerical routines. Optimization, regression, interpolation, etc http://www. scipy.org/
+• Matplotlib : 2-D visualization, “publication-ready” plots http://matplotlib.org/ See also:
+
+Domain-specific packages,
+• Mayavi for 3-D visualization
+• pandas, statsmodels, seaborn for statistics
+
+• sympy for symbolic computing
+• scikit-image for image processing • scikit-learn for machine learning
+and much more packages not documented in the scipy lectures.
+
+1.4 The workflow: interactive environments and text editors
+Interactive work to test and understand algorithms: In this section, we describe a workflow combining interactive work and consolidation.
+Python is a general-purpose language. As such, there is not one blessed environment to work in, and not only one way of using it. Although this makes it harder for beginners to find their way, it makes it possible for Python to be used for programs, in web servers, or embedded devices.
+1.4.1 Interactive work
+We recommend an interactive work with the IPython console, or its offspring, the Jupyter notebook. They are handy to explore and understand algorithms.
+
+To get the api details(docstring) using ?
+pd.DataFrame?
+
+NOTEBOOK Shortcuts - https://towardsdatascience.com/jypyter-notebook-shortcuts-bf0101a98330
+What is Jupyter Notebook?
+Jupyter Notebook is widely used for data analysis. I started to learn Data Science 2–3 months ago and I used this tool to explore some datasets (a collection of data). It’s awesome!
+Let’s see the definition from the docs.
+The notebooks documents are documents produced by the Jupyter Notebook App, which can contain both code (e.g. Python) and rich text elements (paragraphs, equations, links, etc..).
+The Jupyter Notebook App is a client-server application that allows editing and running notebook documents by a browser.
+Here you can find more detailed information if you want to.
+Shortcuts
+As a developer, I like to use shortcuts and snippets as much as I can. They just make writing code a lot easier and faster. I like to follow one rule:
+If you start doing some action with the mouse, stop and think if there is a shortcut. If there is a one - use it.
+When I started using Jupyter Notebook I didn’t know that there are shortcuts for this tool. Several times, I changed my cell type from code to markdown and I didn’t know how. As you can guess this caused me a lot of headache. One day I just saw that there is a Help > Keyboard Shortcuts link in the menu bar. To my surprise, it turned out that Jupyter Notebook has a ton of shortcuts.
+In this article, I’ll show you my favorite ones. Note that the shortcuts are for Windows and Linux users. Anyway, for the Mac users, they’re different buttons for Ctrl, Shift, and Alt:
+Ctrl: command key ⌘
+Shift: Shift ⇧
+Alt: option ⌥
+First, we need to know that they are 2 modes in the Jupyter Notebook App: command mode and edit mode. I’ll start with the shortcuts shared between the two modes.
+Shortcuts in both modes:
+Shift + Enter run the current cell, select below
+Ctrl + Enter run selected cells
+Alt + Enter run the current cell, insert below
+Ctrl + S save and checkpoint
+While in command mode (press Esc to activate):
+Enter take you into edit mode
+H show all shortcuts
+Up select cell above
+Down select cell below
+Shift + Up extend selected cells above
+Shift + Down extend selected cells below
+A insert cell above
+B insert cell below
+X cut selected cells
+C copy selected cells
+V paste cells below
+Shift + V paste cells above
+D, D (press the key twice) delete selected cells
+Z undo cell deletion
+S Save and Checkpoint
+Y change the cell type to Code
+M change the cell type to Markdown
+P open the command palette.
+This dialog helps you run any command by name. It’s really useful if you don’t know some shortcut or when you don’t have a shortcut for the wanted command.
+
+Command Palette
+Shift + Space scroll notebook up
+Space scroll notebook down
+While in edit mode (pressEnter to activate)
+Esc take you into command mode
+Tab code completion or indent
+Shift + Tab tooltip
+Ctrl + ] indent
+Ctrl + [ dedent
+Ctrl + A select all
+Ctrl + Z undo
+Ctrl + Shift + Z or Ctrl + Y redo
+Ctrl + Home go to cell start
+Ctrl + End go to cell end
+Ctrl + Left go one word left
+Ctrl + Right go one word right
+Ctrl + Shift + P open the command palette
+Down move cursor down
+Up move cursor up
+These are the shortcuts I use in my daily work. If you still need something that is not mentioned here you can find it in the keyboard shortcuts dialog (H). You can also edit existing or add more shortcuts from the Help > Edit Keyboard Shortcuts link in the menu bar. Clicking the link will open a dialog. At the bottom of it there are rules for adding or editing shortcuts. You need to use hyphens - to represent keys that should be pressed at the same time.
+For example, I added a shortcut Ctrl-R for the restart kernel and run all cells command.
+
+Magic functions The console and the notebooks support so-called magic functions by prefixing a command with the % character. For example, the run and whos functions from the previous section are magic functions. Note that, the setting automagic, which is enabled by default, allows you to omit the preceding % sign. Thus, you can just type the magic function and it will work.
+Other useful magic functions are:
+• %cd to change the current directory.
+• %cpaste allows you to paste code, especially code from websites which has been prefixed with the standard Python prompt (e.g. >>>) or with an ipython prompt, (e.g. in [3]):
+
+In [2]: %cpaste
+Pasting code; enter '--' alone on the line to stop or use Ctrl-D. :>>> for i in range(3):
+:... print(i)
+:--
+0
+1
+2
+
+• %timeit allows you to time the execution of short snippets using the timeit module from the standard library:
+   In [3]: %timeit x = 10
+10000000 loops, best of 3: 39 ns per loop
+
+• %debug allows you to enter post-mortem debugging. That is to say, if the code you try to execute, raises an exception, using %debug will enter the debugger at the point where the exception was thrown.
+
+Aliases Furthermore IPython ships with various aliases which emulate common UNIX command line tools such as ls to list files, cp to copy files and rm to remove files (a full list of aliases is shown when typing alias).
+
+Getting help
+• The built-in cheat-sheet is accessible via the %quickref magic function. • A list of all available magic functions is shown when typing %magic.
+
+CHAPTER 2 - The Python language
+-------------------------------
+Tip: Python is a programming language, as are C, Fortran, BASIC, PHP, etc. Some specific features of Python are as follows:
+• an interpreted (as opposed to compiled) language. Contrary to e.g. C or Fortran, one does not compile Python code before executing it. In addition, Python can be used interactively: many Python interpreters are available, from which commands and scripts can be executed.
+• a free software released under an open-source license: Python can be used and distributed free of charge, even for building commercial software.
+• multi-platform: Python is available for all major operating systems, Windows, Linux/Unix, MacOS X, most likely your mobile phone OS, etc.
+• a very readable language with clear non-verbose syntax
+
+• a language for which a large variety of high-quality packages are available for various applications, from web frameworks to scientific computing.
+• a language very easy to interface with other languages, in particular C and C++.
+• Some other features of the language are illustrated just below. For example, Python is an object- oriented language, with dynamic typing (the same variable can contain objects of different types during the course of a program).
+
+2.1 First steps
+Start the Ipython shell (an enhanced interactive Python shell):
+• by typing “ipython” from a Linux/Mac terminal, or from the Windows cmd shell,
+• or by starting the program from a menu, e.g. in the Python(x,y) or EPD menu if you have installed one of these scientific-Python suites.
+• or by starting the program from a menu, e.g. the Anaconda Navigator, the Python(x,y) menu or the EPD menu if you have installed one of these scientific-Python suites.
+Tip: If you don’t have Ipython installed on your computer, other Python shells are available, such as the plain Python shell started by typing “python” in a terminal, or the Idle interpreter. However, we advise to use the Ipython shell because of its enhanced features, especially for interactive scientific computing.
+Once you have started the interpreter, type
+
+Tip: For collections of numerical data that all have the same type, it is often more efficient to use the array type provided by the numpy module. A NumPy array is a chunk of memory containing fixed-sized items. With NumPy arrays, operations on elements can be faster because elements are regularly spaced in memory and more operations are performed through specialized C functions instead of Python loops.
+
+Difference between sorted and sort() in a list and same is the case with reverse and reversed().
+sort() provides inplace sorting.
+reverse() provides inplace sorting.
+l = ['ram','sur','chan']
+print(list(reversed(l)))
+print(l)
+print(l.reverse())
+print(l)
+
