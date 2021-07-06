@@ -205,3 +205,71 @@ print(l)
 print(l.reverse())
 print(l)
 
+Methods and Object-Oriented Programming
+The notation rcolors.method() (e.g. rcolors.append(3) and colors.pop()) is our first example of object-oriented programming (OOP). Being a list, the object rcolors owns the method function that is called using the notation .. No further knowledge of OOP than understanding the notation . is necessary for going through this tutorial.
+
+Tip: Strings are collections like lists. Hence they can be indexed and sliced, using the same syntax and rules.
+
+A string is an immutable object and it is not possible to modify its contents. One may however create new strings from the original one.
+
+Tip: A dictionary is basically an efficient table that maps keys to values. It is an ordered container
+
+Tuples
+Tuples are basically immutable lists. The elements of a tuple are written between parentheses, or just separated by commas:
+
+Sets: unordered, unique items:
+
+Assignment, copying of objects:
+a=[1,2,3]
+b=a
+print(id(a)) # 4868453120
+print(id(b)) # 4868453120
+
+c=a.copy()
+print(id(a)) # 4868453120
+print(id(c)) # 4868454720
+
+print(a is b) # True
+print(a is c) # False
+
+print(a == b) # True
+print(a == c) # True
+
+• the key concept here is mutable vs. immutable
+– mutable objects can be changed in place
+– immutable objects cannot be modified once created
+
+Warning: Default values are evaluated when the function is defined, not when it is called. This can be problematic when using mutable types (e.g. dictionary or list) and modifying them in the function body, since the modifications will be persistent across invocations of the function.
+Using an immutable type in a keyword argument:
+In [124]: bigx = 10
+In [125]: def double_it(x=bigx): .....: return x * 2 .....:
+In [126]: bigx = 1e9 # Now really big
+In [128]: double_it() Out[128]: 20
+Using an mutable type in a keyword argument (and modifying it inside the function body):
+In [2]: def add_to_dict(args={'a': 1, 'b': 2}):
+for i in args.keys(): args[i] += 1
+print(args) In [3]: add_to_dict
+Out[3]: <function __main__.add_to_dict> In [4]: add_to_dict()
+{'a': 2, 'b': 3}
+In [5]: add_to_dict() {'a': 3, 'b': 4}
+In [6]: add_to_dict() {'a': 4, 'b': 5}
+
+Tip: More involved example implementing python’s slicing:
+In [98]: def slicer(seq, start=None, stop=None, step=None):
+....: """Implement basic python slicing."""
+....: return seq[start:stop:step] ....:
+In [101]: rhyme = 'one fish, two fish, red fish, blue fish'.split() In [102]: rhyme
+Out[102]: ['one', 'fish,', 'two', 'fish,', 'red', 'fish,', 'blue', 'fish'] In [103]: slicer(rhyme)
+Out[103]: ['one', 'fish,', 'two', 'fish,', 'red', 'fish,', 'blue', 'fish'] In [104]: slicer(rhyme, step=2)
+Out[104]: ['one', 'two', 'red', 'blue'] In [105]: slicer(rhyme, 1, step=2)
+Out[105]: ['fish,', 'fish,', 'fish,', 'fish']
+In [106]: slicer(rhyme, start=1, stop=4, step=2) Out[106]: ['fish,', 'fish,']
+
+The order of the keyword arguments does not matter:
+ In [107]: slicer(rhyme, step=2, start=1, stop=4) Out[107]: ['fish,', 'fish,']
+
+but it is good practice to use the same ordering as the function’s definition.
+Keyword arguments are a very convenient feature for defining functions with a variable number of argu- ments, especially when default values are to be used in most calls to the function.
+
+2.4.4 Passing by value
+----------------------

@@ -1,3 +1,13 @@
+Before Python
+-------------
+Powerpoint Presentation:
+1. Single responsibility principle - per slide
+2. Bit of Text and an image.
+3. Most imp part of the powerpoint should be the biggest.
+4. Contrast the part which is in focus.
+5. Use signalling colors - Dark background is always better.
+6. Don't number the slides.
+
 Cohesion and Coupling
 ---------------------
 These both tell how easily you code can be maintained i.e changed or extended.
@@ -42,6 +52,9 @@ General Rule - Provide methods in the class where mostly the data/information is
 
 Exception Handling Tips in Python:
 ----------------------------------
+
+
+
 
 
 
