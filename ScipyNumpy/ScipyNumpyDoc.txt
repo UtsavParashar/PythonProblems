@@ -273,3 +273,43 @@ Keyword arguments are a very convenient feature for defining functions with a va
 
 2.4.4 Passing by value
 ----------------------
+Tip: Can you modify the value of a variable inside a function? Most languages (C, Java, . . . ) distinguish “passing by value” and “passing by reference”. In Python, such a distinction is somewhat artificial, and it is a bit subtle whether your variables are going to be modified or not. Fortunately, there exist clear rules.
+Parameters to functions are references to objects, which are passed by value. When you pass a variable to a function, python passes the reference to the object to which the variable refers (the value). Not the variable itself.
+If the value passed in a function is immutable, the function does not modify the caller’s variable. If the value is mutable, the function may modify the caller’s variable in-place:
+(continues on next page)
+Scipy lecture notes, Edition 2020.2
+  Tip: More involved example implementing python’s slicing:
+In [98]: def slicer(seq, start=None, stop=None, step=None):
+....: """Implement basic python slicing."""
+....: return seq[start:stop:step] ....:
+In [101]: rhyme = 'one fish, two fish, red fish, blue fish'.split() In [102]: rhyme
+Out[102]: ['one', 'fish,', 'two', 'fish,', 'red', 'fish,', 'blue', 'fish'] In [103]: slicer(rhyme)
+Out[103]: ['one', 'fish,', 'two', 'fish,', 'red', 'fish,', 'blue', 'fish'] In [104]: slicer(rhyme, step=2)
+Out[104]: ['one', 'two', 'red', 'blue'] In [105]: slicer(rhyme, 1, step=2)
+Out[105]: ['fish,', 'fish,', 'fish,', 'fish']
+In [106]: slicer(rhyme, start=1, stop=4, step=2) Out[106]: ['fish,', 'fish,']
+    In [107]: slicer(rhyme, step=2, start=1, stop=4) Out[107]: ['fish,', 'fish,']
+
+>>> def try_to_modify(x, y, z):
+... x=23
+... y.append(42)
+... z = [99] # new reference
+... print(x)
+... print(y)
+... print(z)
+..
+>>> a = 77 # immutable variable >>> b = [99] # mutable variable >>> c = [28]
+>>> try_to_modify(a, b, c)
+23
+[99, 42]
+[99]
+>>> print(a)
+77
+>>> print(b)
+[99, 42]
+>>> print(c)
+
+Functions have a local variable table called a local namespace. The variable x only exists within the function try_to_modify.
+
+2.4.5 Global variables
+-----------------------
