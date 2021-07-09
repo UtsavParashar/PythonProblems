@@ -276,8 +276,7 @@ Keyword arguments are a very convenient feature for defining functions with a va
 Tip: Can you modify the value of a variable inside a function? Most languages (C, Java, . . . ) distinguish “passing by value” and “passing by reference”. In Python, such a distinction is somewhat artificial, and it is a bit subtle whether your variables are going to be modified or not. Fortunately, there exist clear rules.
 Parameters to functions are references to objects, which are passed by value. When you pass a variable to a function, python passes the reference to the object to which the variable refers (the value). Not the variable itself.
 If the value passed in a function is immutable, the function does not modify the caller’s variable. If the value is mutable, the function may modify the caller’s variable in-place:
-(continues on next page)
-Scipy lecture notes, Edition 2020.2
+
   Tip: More involved example implementing python’s slicing:
 In [98]: def slicer(seq, start=None, stop=None, step=None):
 ....: """Implement basic python slicing."""
@@ -311,5 +310,151 @@ In [106]: slicer(rhyme, start=1, stop=4, step=2) Out[106]: ['fish,', 'fish,']
 
 Functions have a local variable table called a local namespace. The variable x only exists within the function try_to_modify.
 
+IMP:
+If data structure is immutable then original value won't be modified, for mutable objects like lists and df original df will be modified.
+
+def change(ite):
+    print('inside method')
+    ite[1] = 100
+    print(ite)
+    return ite
+
+l = [1,2,3,4]
+print('outside l - ', l) # [1, 2, 3, 4]
+change(l.copy()) - [1, 100, 3, 4]
+print('outside l - ', l) - [1, 2, 3, 4]
+change(l) - [1, 100, 3, 4]
+print('outside without copy l - ', l) - [1, 100, 3, 4]
+
+def test(df):
+    df['te'] += df.te+1000
+    return df
+
+df = pd.DataFrame({
+    'te':[11,12,13,14],
+    'ten':[21,22,23,24]
+})
+
+print(df)
+print('calling test method')
+print(test(df.copy()))
+print(df)
+
+   te  ten
+0  11   21
+1  12   22
+2  13   23
+3  14   24
+calling test method
+     te  ten
+0  1022   21
+1  1024   22
+2  1026   23
+3  1028   24
+   te  ten
+0  11   21
+1  12   22
+2  13   23
+3  14   24
+
 2.4.5 Global variables
 -----------------------
+Variables declared outside the function can be referenced within the function:
+But these “global” variables cannot be modified within the function, unless declared global in the function.
+In [114]: x = 5
+In [115]: def addx(y):
+            return x + y
+In [116]: addx(10)
+Out[116]: 15
+
+This doesn’t work:
+In [117]: def setx(y):
+.....: x=y
+.....: print('x is %d' % x)
+
+In [118]: setx(10) x is 10
+In [120]: x Out[120]: 5
+
+This works:
+In [121]: def setx(y):
+.....: global x
+.....: x=y
+.....: print('x is %d' % x)
+.....:
+In [122]: setx(10) x is 10
+In [123]: x Out[123]: 10
+
+2.4.6 Variable number of parameters
+Special forms of parameters:
+• *args: any number of positional arguments packed into a tuple
+• **kwargs: any number of keyword arguments packed into a dictionary
+
+def variable_args(*args, **kwargs):
+....: print('args is', args)
+....: print('kwargs is', kwargs) ....:
+In [36]: variable_args('one', 'two', x=1, y=2, z=3) args is ('one', 'two')
+kwargs is {'x': 1, 'y': 2, 'z': 3}
+
+2.4.7 Docstrings
+Documentation about what the function does and its parameters. General convention:
+
+In [67]: def funcname(params):
+....: """Concise one-line sentence describing the function. ....:
+....: Extended summary which can contain multiple paragraphs.
+....: """
+....: # function body
+   ....:     pass
+   ....:
+In [68]: funcname?
+ Type:
+Base Class:
+String Form:
+Namespace:
+File:
+Definition:
+Docstring:
+function
+type 'function'>
+<function funcname at 0xeaa0f0>
+Interactive
+<ipython console>
+funcname(params)
+Concise one-line sentence describing the function.
+Extended summary which can contain multiple paragraphs.
+
+Note: Docstring guidelines
+For the sake of standardization, the Docstring Conventions webpage documents the semantics and con- ventions associated with Python docstrings.
+Also, the Numpy and Scipy modules have defined a precise standard for documenting scientific functions, that you may want to follow for your own functions, with a Parameters section, an Examples section, etc.
+See https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
+
+2.4.8 Functions are objects
+Functions are first-class objects, which means they can be:
+• assigned to a variable
+• an item in a list (or any collection)
+• passed as an argument to another function.
+
+In [38]: va = variable_args
+In [39]: va('three', x=1, y=2) args is ('three',)
+kwargs is {'x': 1, 'y': 2}
+
+2.4.9 Methods
+Methods are functions attached to objects. You’ve seen these in our examples on lists, dictionaries, strings, etc. . .
+
+2.4.10 Exercises
+Exercise: Fibonacci sequence
+Write a function that displays the n first terms of the Fibonacci sequence, defined by:
+ 𝑈 0 = 0
+ 𝑈1 = 1
+𝑈𝑛+2 = 𝑈𝑛+1 + 𝑈𝑛
+
+def fib(n):
+    l = [0,1]
+    if n in l:
+        return n
+    for i in range(n-2):
+        l.append(l[-1] + l[-2])
+    return l
+fib(8)
+
+Exercise: Quicksort
+Implement the quicksort algorithm, as defined by wikipedia
