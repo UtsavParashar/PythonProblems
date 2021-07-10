@@ -458,3 +458,78 @@ fib(8)
 
 Exercise: Quicksort
 Implement the quicksort algorithm, as defined by wikipedia
+
+
+Reusing Code: Scripts and Modules:
+----------------------------------
+2.5 Reusing code: scripts and modules
+For now, we have typed all instructions in the interpreter. For longer sets of instructions we need to change track and write the code in text files (using a text editor), that we will call either scripts or modules. Use your favorite text editor (provided it offers syntax highlighting for Python), or the editor that comes with the Scientific Python Suite you may be using.
+
+2.5.1 Scripts
+Tip: Let us first write a script, that is a file with a sequence of instructions that are executed each time the script is called. Instructions may be e.g. copied-and-pasted from the interpreter (but take care to respect indentation rules!).
+The extension for Python files is .py. Write or copy-and-paste the following lines in a file called test.py
+
+msg = 'Hello, how are? Khana khake jaana haan!'
+for i in msg.split():
+    print(i)
+Tip: Let us now execute the script interactively, that is inside the Ipython interpreter. This is maybe the most common use of scripts in scientific computing.
+Note: in Ipython, the syntax to execute a script is %run script.py. For example,
+
+%run test.py
+Hello,
+how
+are?
+Khana
+khake
+jaana
+haan!
+
+The script has been executed. Moreover the variables defined in the script (such as msg) are now available inside the interpreter’s namespace.
+msg # 'Hello, how are? Khana khake jaana haan!'
+
+Tip: Other interpreters also offer the possibility to execute scripts (e.g., execfile in the plain Python interpreter, etc.).
+It is also possible In order to execute this script as a standalone program, by executing the script inside a shell terminal (Linux/Mac console or cmd Windows console). For example, if we are in the same directory as the test.py file, we can execute this in a console:
+$ python test.py
+Hello
+how
+are
+you?
+
+
+Tip: Standalone scripts may also take command-line arguments
+In file.py:
+
+import sys
+print(sys.argv)
+
+$ python file.py test arguments
+['file.py', 'test', 'arguments']
+
+Warning: Don’t implement option parsing yourself. Use a dedicated module such as argparse.
+
+2.5.2 Importing objects from modules
+   In [1]: import os
+os # <module 'os' from '/Users/utsav/.conda/envs/myenv/lib/python3.9/os.py'>
+os.listdir('.') # ['ScipyDoc1.ipynb', 'test.py', '.ipynb_checkpoints', 'ScipyNumpyDoc.txt']
+
+And also:
+from os import listdir
+Importing shorthands:
+import numpy as np
+
+Warning:
+from os import *
+This is called the star import and please, Do not use it
+• Makes the code harder to read and understand: where do symbols come from?
+• Makes it impossible to guess the functionality by the context and the name (hint: os.name is the name of the OS), and to profit usefully from tab completion.
+• Restricts the variable names you can use: os.name might override name, or vise-versa.
+• Creates possible name clashes between modules.
+• Makes the code impossible to statically check for undefined symbols.
+
+Tip: Modules are thus a good way to organize code in a hierarchical way. Actually, all the scientific computing tools we are going to use are modules:
+>>> import numpy as np # data arrays
+>>> np.linspace(0, 10, 6)
+array([ 0., 2., 4., 6., 8., 10.])
+>>> import scipy # scientific computing
+
+2.5.3 Creating modules
