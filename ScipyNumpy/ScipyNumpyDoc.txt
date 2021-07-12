@@ -533,3 +533,6 @@ array([ 0., 2., 4., 6., 8., 10.])
 >>> import scipy # scientific computing
 
 2.5.3 Creating modules
+-----------------------
+Tip: If we want to write larger and better organized programs (compared to simple scripts), where some objects are defined, (variables, functions, classes) and that we want to reuse several times, we have to create our own modules.
+Let us create a module demo contained in the file demo.py:
