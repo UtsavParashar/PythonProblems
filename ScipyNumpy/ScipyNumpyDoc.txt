@@ -536,3 +536,95 @@ array([ 0., 2., 4., 6., 8., 10.])
 -----------------------
 Tip: If we want to write larger and better organized programs (compared to simple scripts), where some objects are defined, (variables, functions, classes) and that we want to reuse several times, we have to create our own modules.
 Let us create a module demo contained in the file demo.py:
+"A demo module."
+def print_b(): "Prints b."
+print('b')
+def print_a(): "Prints a."
+print('a')
+c=2 d=2
+
+ Tip: In this file, we defined two functions print_a and print_b. Suppose we want to call the print_a function from the interpreter. We could execute the file as a script, but since we just want to have access to the function print_a, we are rather going to import it as a module. The syntax is as follows.
+
+In [1]: import demo
+In [2]: demo.print_a() a
+In [3]: demo.print_b() b
+
+Importing the module gives access to its objects, using the module.object syntax. Don’t forget to put the module’s name before the object’s name, otherwise Python won’t recognize the instruction.
+Introspection
+
+In [4]: demo?
+Type: module
+Base Class: <type 'module'>
+String Form: <module 'demo' from 'demo.py'> Namespace: Interactive
+File:
+Docstring:
+    A demo module.
+In [5]: who demo
+/home/varoquau/Projects/Python_talks/scipy_2009_tutorial/source/demo.py
+In [6]: whos
+Variable Type ------------------------------
+demo module
+In [7]: dir(demo) Out[7]: ['__builtins__', '__doc__', '__file__', '__name__', '__package__', 'c',
+'d',
+'print_a',
+Data/Info
+<module 'demo' from 'demo.py'>
+'print_b']
+In [8]: demo.<TAB>
+demo.c demo.print_a demo.py demo.d demo.print_b demo.pyc
+
+Importing objects from modules into the main namespace
+
+In [9]: from demo import print_a, print_b
+In [10]: whos
+Variable Type Data/Info --------------------------------
+demo
+print_a
+print_b
+module
+function
+function
+<module 'demo' from 'demo.py'>
+<function print_a at 0xb7421534>
+<function print_b at 0xb74214c4>
+In [11]: print_a() a
+
+Warning: Module caching
+Modules are cached: if you modify demo.py and re-import it in the old session, you will get the old one.
+Solution:
+In [10]: reload(demo)
+In Python3 instead reload is not builtin, so you have to import the importlib module first and then
+do:
+In [10]: importlib.reload(demo)
+
+2.5.4 ‘__main__’ and module loading
+-------------------------------------
+Tip: Sometimes we want code to be executed when a module is run directly, but not when it is imported by another module. if __name__ == '__main__' allows us to check whether the module is being run directly.
+
+File demo2.py:
+
+def print_b(): "Prints b."
+print('b')
+def print_a(): "Prints a."
+print('a')
+# print_b() runs on import
+print_b()
+if __name__ == '__main__':
+# print_a() is only executed when the module is run directly.
+print_a()
+
+In [11]: import demo2 b
+In [12]: import demo2
+
+Running it:
+ In [13]: %run demo2 b
+a
+
+2.5.5 Scripts or modules? How to organize your code
+----------------------------------------------------
+Note: Rule of thumb
+• Sets of instructions that are called several times should be written inside functions for better code
+reusability.
+• Functions (or other bits of code) that are called from several scripts should be written inside a module, so that only the module is imported in the different scripts (do not copy-and-paste your functions in the different scripts!).
+
+
