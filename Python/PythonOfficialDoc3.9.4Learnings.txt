@@ -5709,6 +5709,44 @@ After doing nonlocal assignment: non local spam
 After doing global assignment: non local spam
 In the global space: global spam
 
+Test:
+def go_glocal():
+    spam = 'Ramesh'
+
+    def inner():
+        spam = 'local'
+
+    def middle():
+        nonlocal spam
+        spam = 'nonlocal'
+
+    def outer():
+        global spam
+        spam = 'global'
+
+    print('calling inner')
+    inner()
+    print('local var', spam)
+
+    print('calling middle')
+    middle()
+    print('nonlocal var', spam)
+
+    print('calling global')
+    outer()
+    print('global var', spam)
+
+go_glocal()
+print('outer most', spam)
+
+calling inner
+local var Ramesh
+calling middle
+nonlocal var nonlocal
+calling global
+global var nonlocal
+outer most global
+
 Note how the local assignment (which is default) didn’t change scope_test’s binding of spam. The nonlocal assignment changed scope_test’s binding of spam, and the global assignment changed the module-level binding.
 
 You can also see that there was no previous binding for spam before the global assignment.
@@ -5734,4 +5772,61 @@ When a class definition is entered, a new namespace is created, and used as the 
 
 When a class definition is left normally (via the end), a class object is created. This is basically a wrapper around the contents of the namespace created by the class definition; we’ll learn more about class objects in the next section. The original local scope (the one in effect just before the class definition was entered) is reinstated, and the class object is bound here to the class name given in the class definition header (ClassName in the example).
 
+Class Objects:
+--------------
+Class objects support two kinds of operations: attribute references and instantiation.
+
+Attribute references use the standard syntax used for all attribute references in Python: obj.name. Valid attribute names are all the names that were in the class’s namespace when the class object was created. So, if the class definition looked like this:
+
+class MyClass:
+    """A simple class example"""
+    i = 12345
+
+    def f(self):
+        return 'anything'
+
+MyClass.i # 12345
+MyClass().f() # anything
+
+then MyClass.i and MyClass.f are valid attribute references, returning an integer and a function object, respectively. Class attributes can also be assigned to, so you can change the value of MyClass.i by assignment. __doc__ is also a valid attribute, returning the docstring belonging to the class: "A simple example class".
+
+Class instantiation uses function notation. Just pretend that the class object is a parameterless function that returns a new instance of the class. For example (assuming the above class):
+x = MyClass()
+creates a new instance of the class and assigns this object to the local variable x.
+
+The instantiation operation (“calling” a class object) creates an empty object. Many classes like to create objects with instances customized to a specific initial state. Therefore a class may define a special method named __init__(), like this:
+def __init__(self):
+    self.data = []
+
+When a class defines an __init__() method, class instantiation automatically invokes __init__() for the newly-created class instance. So in this example, a new, initialized instance can be obtained by:
+x = MyClass()
+
+Of course, the __init__() method may have arguments for greater flexibility. In that case, arguments given to the class instantiation operator are passed on to __init__(). For example,
+class Complex:
+    def __init__(self, realpart, imagpart):
+        self.r = realpart
+        self.i = imagpart
+
+x = Complex(3, 4.5)
+x.r, x.i # (3, 4.5)
+
+9.3.3. Instance Objects
+------------------------
+Now what can we do with instance objects? The only operations understood by instance objects are attribute references. There are two kinds of valid attribute names: data attributes and methods.
+
+data attributes correspond to “instance variables” in Smalltalk, and to “data members” in C++. Data attributes need not be declared; like local variables, they spring into existence when they are first assigned to. For example, if x is the instance of MyClass created above, the following piece of code will print the value 16, without leaving a trace:
+
+x.counter = 1
+while x.counter < 10:
+    x.counter = x.counter * 2
+    print('inner', x.counter)
+print(x.counter)
+del x.counter
+
+The other kind of instance attribute reference is a method. A method is a function that “belongs to” an object. (In Python, the term method is not unique to class instances: other object types can have methods as well. For example, list objects have methods called append, insert, remove, sort, and so on. However, in the following discussion, we’ll use the term method exclusively to mean methods of class instance objects, unless explicitly stated otherwise.)
+
+Valid method names of an instance object depend on its class. By definition, all attributes of a class that are function objects define corresponding methods of its instances. So in our example, x.f is a valid method reference, since MyClass.f is a function, but x.i is not, since MyClass.i is not. But x.f is not the same thing as MyClass.f — it is a method object, not a function object.
+
+9.3.4. Method Objects
+-----------------------
 
