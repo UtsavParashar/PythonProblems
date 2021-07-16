@@ -6527,3 +6527,230 @@ Returns a string in the form [D day[s], ][H]H:MM:SS[.UUUUUU], where D is negativ
 repr(t)
 Returns a string representation of the timedelta object as a constructor call with canonical attribute values.
 
+Notes:
+
+This is exact but may overflow.
+This is exact and cannot overflow.
+Division by 0 raises ZeroDivisionError.
+-timedelta.max is not representable as a timedelta object.
+String representations of timedelta objects are normalized similarly to their internal representation. This leads to somewhat unusual results for negative timedeltas. For example:
+>>> timedelta(hours=-5)
+datetime.timedelta(days=-1, seconds=68400)
+>>> print(_)
+-1 day, 19:00:00
+The expression t2 - t3 will always be equal to the expression t2 + (-t3) except when t3 is equal to timedelta.max; in that case the former will produce a result while the latter will overflow.
+
+datetime.datetime(2021,1,1, 15, 14, 20) + datetime.timedelta(hours=-5) # datetime.datetime(2021, 1, 1, 10, 14, 20)
+
+In addition to the operations listed above, timedelta objects support certain additions and subtractions with date and datetime objects (see below).
+
+Changed in version 3.2: Floor division and true division of a timedelta object by another timedelta object are now supported, as are remainder operations and the divmod() function. True division and multiplication of a timedelta object by a float object are now supported.
+
+t1 = datetime.timedelta(hours=5, minutes=2)
+t2 = datetime.timedelta(hours=2.5, minutes=1)
+t1/t2 # 2.0
+
+Comparisons of timedelta objects are supported, with some caveats.
+The comparisons == or != always return a bool, no matter the type of the compared object:
+from datetime import timedelta
+delta1 = timedelta(seconds=57)
+delta2 = timedelta(hours=25, seconds=2)
+
+delta2 != delta1 # True
+delta2 == 5 # False
+
+For all other comparisons (such as < and >), when a timedelta object is compared to an object of a different type, TypeError is raised:
+delta2 > delta1 # True
+delta2 > 5 # TypeError: '>' not supported between instances of 'datetime.timedelta' and 'int'
+In Boolean contexts, a timedelta object is considered to be true if and only if it isn’t equal to timedelta(0).
+
+Instance methods:
+timedelta.total_seconds()
+Return the total number of seconds contained in the duration. Equivalent to td / timedelta(seconds=1). For interval units other than seconds, use the division form directly (e.g. td / timedelta(microseconds=1)).
+
+Note that for very large time intervals (greater than 270 years on most platforms) this method will lose microsecond accuracy.
+
+>>> # Components of another_year add up to exactly 365 days
+>>> from datetime import timedelta
+>>> year = timedelta(days=365)
+>>> another_year = timedelta(weeks=40, days=84, hours=23,
+...                          minutes=50, seconds=600)
+>>> year == another_year
+True
+>>> year.total_seconds()
+31536000.0
+
+Examples of timedelta arithmetic:
+from datetime import timedelta
+
+year = timedelta(days=365)
+ten_years = 10*year
+ten_years # datetime.timedelta(days=3650)
+
+ten_years.days // 365 # 10
+
+nine_years = ten_years - year
+nine_years # datetime.timedelta(days=3285)
+
+three_years = nine_years // 3
+three_years, three_years.days//365 # (datetime.timedelta(days=1095), 3)
+
+date Objects
+==============
+A date object represents a date (year, month and day) in an idealized calendar, the current Gregorian calendar indefinitely extended in both directions.
+
+January 1 of year 1 is called day number 1, January 2 of year 1 is called day number 2, and so on. 2
+
+class datetime.date(year, month, day)
+All arguments are required. Arguments must be integers, in the following ranges:
+
+MINYEAR <= year <= MAXYEAR
+1 <= month <= 12
+1 <= day <= number of days in the given month and year
+If an argument outside those ranges is given, ValueError is raised.
+
+Other constructors, all class methods:
+
+classmethod date.today()
+Return the current local date.
+
+This is equivalent to date.fromtimestamp(time.time()).
+
+classmethod date.fromtimestamp(timestamp)
+Return the local date corresponding to the POSIX timestamp, such as is returned by time.time().
+
+This may raise OverflowError, if the timestamp is out of the range of values supported by the platform C localtime() function, and OSError on localtime() failure. It’s common for this to be restricted to years from 1970 through 2038. Note that on non-POSIX systems that include leap seconds in their notion of a timestamp, leap seconds are ignored by fromtimestamp().
+
+Changed in version 3.3: Raise OverflowError instead of ValueError if the timestamp is out of the range of values supported by the platform C localtime() function. Raise OSError instead of ValueError on localtime() failure.
+
+classmethod date.fromordinal(ordinal)
+Return the date corresponding to the proleptic Gregorian ordinal, where January 1 of year 1 has ordinal 1.
+
+ValueError is raised unless 1 <= ordinal <= date.max.toordinal(). For any date d, date.fromordinal(d.toordinal()) == d.
+
+classmethod date.fromisoformat(date_string)
+Return a date corresponding to a date_string given in the format YYYY-MM-DD:
+>>> from datetime import date
+>>> date.fromisoformat('2019-12-04')
+datetime.date(2019, 12, 4)
+This is the inverse of date.isoformat(). It only supports the format YYYY-MM-DD.
+
+from datetime import date
+
+date.fromisoformat('2019-12-04')  # datetime.date(2019, 12, 4)
+date.isoformat(date(2021,11,13)) # '2021-11-13'
+
+classmethod date.fromisocalendar(year, week, day)
+Return a date corresponding to the ISO calendar date specified by year, week and day. This is the inverse of the function date.isocalendar().
+
+New in version 3.8.
+
+Class attributes:
+
+date.min
+The earliest representable date, date(MINYEAR, 1, 1).
+
+date.max
+The latest representable date, date(MAXYEAR, 12, 31).
+
+date.resolution
+The smallest possible difference between non-equal date objects, timedelta(days=1).
+
+Instance attributes (read-only):
+
+date.year
+Between MINYEAR and MAXYEAR inclusive.
+
+date.month
+Between 1 and 12 inclusive.
+
+date.day
+Between 1 and the number of days in the given month of the given year.
+
+Supported operations:
+
+Operation
+Result
+date2 = date1 + timedelta
+date2 is timedelta.days days removed from date1.        (1)
+date2 = date1 - timedelta
+Computes date2 such that date2 + timedelta == date1.    (2)
+timedelta = date1 - date2                               (3)
+date1 < date2
+date1 is considered less than date2 when date1 precedes date2 in time. (4)
+Notes:
+date2 is moved forward in time if timedelta.days > 0, or backward if timedelta.days < 0. Afterward date2 - date1 == timedelta.days. timedelta.seconds and timedelta.microseconds are ignored. OverflowError is raised if date2.year would be smaller than MINYEAR or larger than MAXYEAR.
+timedelta.seconds and timedelta.microseconds are ignored.
+This is exact, and cannot overflow. timedelta.seconds and timedelta.microseconds are 0, and date2 + timedelta == date1 after.
+In other words, date1 < date2 if and only if date1.toordinal() < date2.toordinal(). Date comparison raises TypeError if the other comparand isn’t also a date object. However, NotImplemented is returned instead if the other comparand has a timetuple() attribute. This hook gives other kinds of date objects a chance at implementing mixed-type comparison. If not, when a date object is compared to an object of a different type, TypeError is raised unless the comparison is == or !=. The latter cases return False or True, respectively.
+In Boolean contexts, all date objects are considered to be true.
+
+Instance methods:
+date.replace(year=self.year, month=self.month, day=self.day)
+Return a date with the same value, except for those parameters given new values by whichever keyword arguments are specified.
+
+Example:
+d = date(2021, 12, 21)
+d.replace(day=31) # datetime.date(2021, 12, 31)
+
+date.timetuple()
+Return a time.struct_time such as returned by time.localtime().
+
+The hours, minutes and seconds are 0, and the DST flag is -1.
+
+d.timetuple() is equivalent to:
+
+time.struct_time((d.year, d.month, d.day, 0, 0, 0, d.weekday(), yday, -1))
+where yday = d.toordinal() - date(d.year, 1, 1).toordinal() + 1 is the day number within the current year starting with 1 for January 1st.
+
+date.toordinal()
+Return the proleptic Gregorian ordinal of the date, where January 1 of year 1 has ordinal 1. For any date object d, date.fromordinal(d.toordinal()) == d.
+date.today().toordinal() - date(d.year,1,1).toordinal()
+
+date.weekday()
+Return the day of the week as an integer, where Monday is 0 and Sunday is 6. For example, date(2002, 12, 4).weekday() == 2, a Wednesday. See also isoweekday().
+
+date.isoweekday()
+Return the day of the week as an integer, where Monday is 1 and Sunday is 7. For example, date(2002, 12, 4).isoweekday() == 3, a Wednesday. See also weekday(), isocalendar().
+
+date.isocalendar()
+Return a named tuple object with three components: year, week and weekday.
+
+The ISO calendar is a widely used variant of the Gregorian calendar. 3
+
+The ISO year consists of 52 or 53 full weeks, and where a week starts on a Monday and ends on a Sunday. The first week of an ISO year is the first (Gregorian) calendar week of a year containing a Thursday. This is called week number 1, and the ISO year of that Thursday is the same as its Gregorian year.
+
+For example, 2004 begins on a Thursday, so the first week of ISO year 2004 begins on Monday, 29 Dec 2003 and ends on Sunday, 4 Jan 2004:
+date(2003, 12, 29).isocalendar() # datetime.IsoCalendarDate(year=2004, week=1, weekday=1)
+date(2004, 1, 4).isocalendar() # datetime.IsoCalendarDate(year=2004, week=1, weekday=7)
+
+date.isoformat()
+Return a string representing the date in ISO 8601 format, YYYY-MM-DD:
+
+>>>
+>>> from datetime import date
+>>> date(2002, 12, 4).isoformat()
+'2002-12-04'
+This is the inverse of date.fromisoformat().
+
+date.__str__()
+For a date d, str(d) is equivalent to d.isoformat().
+
+date.ctime()
+Return a string representing the date:
+
+>>>
+>>> from datetime import date
+>>> date(2002, 12, 4).ctime()
+'Wed Dec  4 00:00:00 2002'
+d.ctime() is equivalent to:
+
+time.ctime(time.mktime(d.timetuple()))
+on platforms where the native C ctime() function (which time.ctime() invokes, but which date.ctime() does not invoke) conforms to the C standard.
+
+date.strftime(format)
+Return a string representing the date, controlled by an explicit format string. Format codes referring to hours, minutes or seconds will see 0 values. For a complete list of formatting directives, see strftime() and strptime() Behavior.
+
+date.__format__(format)
+Same as date.strftime(). This makes it possible to specify a format string for a date object in formatted string literals and when using str.format(). For a complete list of formatting directives, see strftime() and strptime() Behavior.
+
