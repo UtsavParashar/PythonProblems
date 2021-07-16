@@ -6413,6 +6413,7 @@ date
 time
 tzinfo
     timezone
+timedelta
 
 The date, datetime, time, and timezone types share these common features:
 Objects of these types are immutable.
@@ -6489,4 +6490,40 @@ timedelta.resolution
 The smallest possible difference between non-equal timedelta objects, timedelta(microseconds=1).
 
 Note that, because of normalization, timedelta.max > -timedelta.min. -timedelta.max is not representable as a timedelta object.
+
+Instance attributes (read-only):
+
+Attribute               Value
+days                    Between -999999999 and 999999999 inclusive
+seconds                 Between 0 and 86399 inclusive
+microseconds            Between 0 and 999999 inclusive
+
+Operation
+Result
+t1 = t2 + t3        Sum of t2 and t3. Afterwards t1-t2 == t3 and t1-t3 == t2 are true. (1)
+t1 = t2 - t3        Difference of t2 and t3. Afterwards t1 == t2 - t3 and t2 == t1 + t3 are true. (1)(6)
+t1 = t2 * i         Delta multiplied by an integer. Afterwards t1 // i == t2 is true, provided i != 0.
+or t1 = i * t2
+In general, t1 * i == t1 * (i-1) + t1 is true. (1)
+t1 = t2 * f or t1 = f * t2
+Delta multiplied by a float. The result is rounded to the nearest multiple of timedelta.resolution using round-half-to-even.
+f = t2 / t3         Division (3) of overall duration t2 by interval unit t3. Returns a float object.
+t1 = t2 / f or t1 = t2 / i
+Delta divided by a float or an int. The result is rounded to the nearest multiple of timedelta.resolution using round-half-to-even.
+t1 = t2 // i or t1 = t2 // t3
+The floor is computed and the remainder (if any) is thrown away. In the second case, an integer is returned. (3)
+t1 = t2 % t3
+The remainder is computed as a timedelta object. (3)
+q, r = divmod(t1, t2)
+Computes the quotient and the remainder: q = t1 // t2 (3) and r = t1 % t2. q is an integer and r is a timedelta object.
++t1
+Returns a timedelta object with the same value. (2)
+-t1
+equivalent to timedelta(-t1.days, -t1.seconds, -t1.microseconds), and to t1* -1. (1)(4)
+abs(t)
+equivalent to +t when t.days >= 0, and to -t when t.days < 0. (2)
+str(t)
+Returns a string in the form [D day[s], ][H]H:MM:SS[.UUUUUU], where D is negative for negative t. (5)
+repr(t)
+Returns a string representation of the timedelta object as a constructor call with canonical attribute values.
 
