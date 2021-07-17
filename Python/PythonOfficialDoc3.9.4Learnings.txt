@@ -8160,3 +8160,400 @@ The logging system can be configured directly from Python or can be loaded from 
 
 11.6. Weak References
 ----------------------
+Python does automatic memory management (reference counting for most objects and garbage collection to eliminate cycles). The memory is freed shortly after the last reference to it has been eliminated.
+
+This approach works fine for most applications but occasionally there is a need to track objects only as long as they are being used by something else. Unfortunately, just tracking them creates a reference that makes them permanent. The weakref module provides tools for tracking objects without creating a reference. When the object is no longer needed, it is automatically removed from a weakref table and a callback is triggered for weakref objects. Typical applications include caching objects that are expensive to create:
+import weakref, gc
+
+class A:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return str(self.value)
+
+a = A(20)  # Create a reference
+d = weakref.WeakValueDictionary()
+d['primary'] = a # does not create a reference
+d['primary']
+del a
+gc.collect()
+# d['primary'] # KeyError: 'primary'
+
+11.7. Tools for Working with Lists
+Many data structure needs can be met with the built-in list type. However, sometimes there is a need for alternative implementations with different performance trade-offs.
+
+The array module provides an array() object that is like a list that stores only homogeneous data and stores it more compactly. The following example shows an array of numbers stored as two byte unsigned binary numbers (typecode "H") rather than the usual 16 bytes per entry for regular lists of Python int objects:
+
+>>>
+>>> from array import array
+>>> a = array('H', [4000, 10, 700, 22222])
+>>> sum(a)
+26932
+>>> a[1:3]
+array('H', [10, 700])
+The collections module provides a deque() object that is like a list with faster appends and pops from the left side but slower lookups in the middle. These objects are well suited for implementing queues and breadth first tree searches:
+
+>>>
+>>> from collections import deque
+>>> d = deque(["task1", "task2", "task3"])
+>>> d.append("task4")
+>>> print("Handling", d.popleft())
+Handling task1
+unsearched = deque([starting_node])
+def breadth_first_search(unsearched):
+    node = unsearched.popleft()
+    for m in gen_moves(node):
+        if is_goal(m):
+            return m
+        unsearched.append(m)
+In addition to alternative list implementations, the library also offers other tools such as the bisect module with functions for manipulating sorted lists:
+
+>>>
+>>> import bisect
+>>> scores = [(100, 'perl'), (200, 'tcl'), (400, 'lua'), (500, 'python')]
+>>> bisect.insort(scores, (300, 'ruby'))
+>>> scores
+[(100, 'perl'), (200, 'tcl'), (300, 'ruby'), (400, 'lua'), (500, 'python')]
+The heapq module provides functions for implementing heaps based on regular lists. The lowest valued entry is always kept at position zero. This is useful for applications which repeatedly access the smallest element but do not want to run a full list sort:
+
+>>>
+>>> from heapq import heapify, heappop, heappush
+>>> data = [1, 3, 5, 7, 9, 2, 4, 6, 8, 0]
+>>> heapify(data)                      # rearrange the list into heap order
+>>> heappush(data, -5)                 # add a new entry
+>>> [heappop(data) for i in range(3)]  # fetch the three smallest entries
+[-5, 0, 1]
+
+11.8. Decimal Floating Point Arithmetic
+----------------------------------------
+The decimal module offers a Decimal datatype for decimal floating point arithmetic. Compared to the built-in float implementation of binary floating point, the class is especially helpful for
+
+financial applications and other uses which require exact decimal representation,
+control over precision,
+control over rounding to meet legal or regulatory requirements,
+tracking of significant decimal places, or
+applications where the user expects the results to match calculations done by hand.
+For example, calculating a 5% tax on a 70 cent phone charge gives different results in decimal floating point and binary floating point. The difference becomes significant if the results are rounded to the nearest cent:
+>>> from decimal import *
+>>> round(Decimal('0.70') * Decimal('1.05'), 2)
+Decimal('0.74')
+>>> round(.70 * 1.05, 2)
+0.73
+The Decimal result keeps a trailing zero, automatically inferring four place significance from multiplicands with two place significance. Decimal reproduces mathematics as done by hand and avoids issues that can arise when binary floating point cannot exactly represent decimal quantities.
+
+Exact representation enables the Decimal class to perform modulo calculations and equality tests that are unsuitable for binary floating point:
+
+>>>
+>>> Decimal('1.00') % Decimal('.10')
+Decimal('0.00')
+>>> 1.00 % 0.10
+0.09999999999999995
+
+>>> sum([Decimal('0.1')]*10) == Decimal('1.0')
+True
+>>> sum([0.1]*10) == 1.0
+False
+The decimal module provides arithmetic with as much precision as needed:
+
+>>>
+>>> getcontext().prec = 36
+>>> Decimal(1) / Decimal(7)
+Decimal('0.142857142857142857142857142857142857')
+
+12. Virtual Environments and Packages
+12.1. Introduction
+Python applications will often use packages and modules that don’t come as part of the standard library. Applications will sometimes need a specific version of a library, because the application may require that a particular bug has been fixed or the application may be written using an obsolete version of the library’s interface.
+
+This means it may not be possible for one Python installation to meet the requirements of every application. If application A needs version 1.0 of a particular module but application B needs version 2.0, then the requirements are in conflict and installing either version 1.0 or 2.0 will leave one application unable to run.
+
+The solution for this problem is to create a virtual environment, a self-contained directory tree that contains a Python installation for a particular version of Python, plus a number of additional packages.
+
+Different applications can then use different virtual environments. To resolve the earlier example of conflicting requirements, application A can have its own virtual environment with version 1.0 installed while application B has another virtual environment with version 2.0. If application B requires a library be upgraded to version 3.0, this will not affect application A’s environment.
+
+12.2. Creating Virtual Environments
+The module used to create and manage virtual environments is called venv. venv will usually install the most recent version of Python that you have available. If you have multiple versions of Python on your system, you can select a specific Python version by running python3 or whichever version you want.
+
+To create a virtual environment, decide upon a directory where you want to place it, and run the venv module as a script with the directory path:
+
+python3 -m venv tutorial-env
+This will create the tutorial-env directory if it doesn’t exist, and also create directories inside it containing a copy of the Python interpreter, the standard library, and various supporting files.
+
+A common directory location for a virtual environment is .venv. This name keeps the directory typically hidden in your shell and thus out of the way while giving it a name that explains why the directory exists. It also prevents clashing with .env environment variable definition files that some tooling supports.
+
+Once you’ve created a virtual environment, you may activate it.
+
+On Windows, run:
+
+tutorial-env\Scripts\activate.bat
+On Unix or MacOS, run:
+
+source tutorial-env/bin/activate
+(This script is written for the bash shell. If you use the csh or fish shells, there are alternate activate.csh and activate.fish scripts you should use instead.)
+
+Activating the virtual environment will change your shell’s prompt to show what virtual environment you’re using, and modify the environment so that running python will get you that particular version and installation of Python. For example:
+
+$ source ~/envs/tutorial-env/bin/activate
+(tutorial-env) $ python
+Python 3.5.1 (default, May  6 2016, 10:59:36)
+  ...
+>>> import sys
+>>> sys.path
+['', '/usr/local/lib/python35.zip', ...,
+'~/envs/tutorial-env/lib/python3.5/site-packages']
+>>>
+12.3. Managing Packages with pip
+You can install, upgrade, and remove packages using a program called pip. By default pip will install packages from the Python Package Index, <https://pypi.org>. You can browse the Python Package Index by going to it in your web browser.
+
+pip has a number of subcommands: “install”, “uninstall”, “freeze”, etc. (Consult the Installing Python Modules guide for complete documentation for pip.)
+
+You can install the latest version of a package by specifying a package’s name:
+
+(tutorial-env) $ python -m pip install novas
+Collecting novas
+  Downloading novas-3.1.1.3.tar.gz (136kB)
+Installing collected packages: novas
+  Running setup.py install for novas
+Successfully installed novas-3.1.1.3
+You can also install a specific version of a package by giving the package name followed by == and the version number:
+
+(tutorial-env) $ python -m pip install requests==2.6.0
+Collecting requests==2.6.0
+  Using cached requests-2.6.0-py2.py3-none-any.whl
+Installing collected packages: requests
+Successfully installed requests-2.6.0
+If you re-run this command, pip will notice that the requested version is already installed and do nothing. You can supply a different version number to get that version, or you can run pip install --upgrade to upgrade the package to the latest version:
+
+(tutorial-env) $ python -m pip install --upgrade requests
+Collecting requests
+Installing collected packages: requests
+  Found existing installation: requests 2.6.0
+    Uninstalling requests-2.6.0:
+      Successfully uninstalled requests-2.6.0
+Successfully installed requests-2.7.0
+pip uninstall followed by one or more package names will remove the packages from the virtual environment.
+
+pip show will display information about a particular package:
+
+(tutorial-env) $ pip show requests
+---
+Metadata-Version: 2.0
+Name: requests
+Version: 2.7.0
+Summary: Python HTTP for Humans.
+Home-page: http://python-requests.org
+Author: Kenneth Reitz
+Author-email: me@kennethreitz.com
+License: Apache 2.0
+Location: /Users/akuchling/envs/tutorial-env/lib/python3.4/site-packages
+Requires:
+pip list will display all of the packages installed in the virtual environment:
+
+(tutorial-env) $ pip list
+novas (3.1.1.3)
+numpy (1.9.2)
+pip (7.0.3)
+requests (2.7.0)
+setuptools (16.0)
+pip freeze will produce a similar list of the installed packages, but the output uses the format that pip install expects. A common convention is to put this list in a requirements.txt file:
+
+(tutorial-env) $ pip freeze > requirements.txt
+(tutorial-env) $ cat requirements.txt
+novas==3.1.1.3
+numpy==1.9.2
+requests==2.7.0
+The requirements.txt can then be committed to version control and shipped as part of an application. Users can then install all the necessary packages with install -r:
+
+(tutorial-env) $ python -m pip install -r requirements.txt
+Collecting novas==3.1.1.3 (from -r requirements.txt (line 1))
+  ...
+Collecting numpy==1.9.2 (from -r requirements.txt (line 2))
+  ...
+Collecting requests==2.7.0 (from -r requirements.txt (line 3))
+  ...
+Installing collected packages: novas, numpy, requests
+  Running setup.py install for novas
+Successfully installed novas-3.1.1.3 numpy-1.9.2 requests-2.7.0
+pip has many more options. Consult the Installing Python Modules guide for complete documentation for pip. When you’ve written a package and want to make it available on the Python Package Index, consult the Distributing Python Modules guide.
+
+15. Floating Point Arithmetic: Issues and Limitations
+Floating-point numbers are represented in computer hardware as base 2 (binary) fractions. For example, the decimal fraction
+
+0.125
+has value 1/10 + 2/100 + 5/1000, and in the same way the binary fraction
+
+0.001
+has value 0/2 + 0/4 + 1/8. These two fractions have identical values, the only real difference being that the first is written in base 10 fractional notation, and the second in base 2.
+
+Unfortunately, most decimal fractions cannot be represented exactly as binary fractions. A consequence is that, in general, the decimal floating-point numbers you enter are only approximated by the binary floating-point numbers actually stored in the machine.
+
+The problem is easier to understand at first in base 10. Consider the fraction 1/3. You can approximate that as a base 10 fraction:
+
+0.3
+or, better,
+
+0.33
+or, better,
+
+0.333
+and so on. No matter how many digits you’re willing to write down, the result will never be exactly 1/3, but will be an increasingly better approximation of 1/3.
+
+In the same way, no matter how many base 2 digits you’re willing to use, the decimal value 0.1 cannot be represented exactly as a base 2 fraction. In base 2, 1/10 is the infinitely repeating fraction
+
+0.0001100110011001100110011001100110011001100110011...
+Stop at any finite number of bits, and you get an approximation. On most machines today, floats are approximated using a binary fraction with the numerator using the first 53 bits starting with the most significant bit and with the denominator as a power of two. In the case of 1/10, the binary fraction is 3602879701896397 / 2 ** 55 which is close to but not exactly equal to the true value of 1/10.
+
+Many users are not aware of the approximation because of the way values are displayed. Python only prints a decimal approximation to the true decimal value of the binary approximation stored by the machine. On most machines, if Python were to print the true decimal value of the binary approximation stored for 0.1, it would have to display
+
+>>>
+>>> 0.1
+0.1000000000000000055511151231257827021181583404541015625
+That is more digits than most people find useful, so Python keeps the number of digits manageable by displaying a rounded value instead
+
+>>>
+>>> 1 / 10
+0.1
+Just remember, even though the printed result looks like the exact value of 1/10, the actual stored value is the nearest representable binary fraction.
+
+Interestingly, there are many different decimal numbers that share the same nearest approximate binary fraction. For example, the numbers 0.1 and 0.10000000000000001 and 0.1000000000000000055511151231257827021181583404541015625 are all approximated by 3602879701896397 / 2 ** 55. Since all of these decimal values share the same approximation, any one of them could be displayed while still preserving the invariant eval(repr(x)) == x.
+
+Historically, the Python prompt and built-in repr() function would choose the one with 17 significant digits, 0.10000000000000001. Starting with Python 3.1, Python (on most systems) is now able to choose the shortest of these and simply display 0.1.
+
+Note that this is in the very nature of binary floating-point: this is not a bug in Python, and it is not a bug in your code either. You’ll see the same kind of thing in all languages that support your hardware’s floating-point arithmetic (although some languages may not display the difference by default, or in all output modes).
+
+For more pleasant output, you may wish to use string formatting to produce a limited number of significant digits:
+
+>>>
+>>> format(math.pi, '.12g')  # give 12 significant digits
+'3.14159265359'
+
+>>> format(math.pi, '.2f')   # give 2 digits after the point
+'3.14'
+
+>>> repr(math.pi)
+'3.141592653589793'
+It’s important to realize that this is, in a real sense, an illusion: you’re simply rounding the display of the true machine value.
+
+One illusion may beget another. For example, since 0.1 is not exactly 1/10, summing three values of 0.1 may not yield exactly 0.3, either:
+
+>>>
+>>> .1 + .1 + .1 == .3
+False
+Also, since the 0.1 cannot get any closer to the exact value of 1/10 and 0.3 cannot get any closer to the exact value of 3/10, then pre-rounding with round() function cannot help:
+
+>>>
+>>> round(.1, 1) + round(.1, 1) + round(.1, 1) == round(.3, 1)
+False
+Though the numbers cannot be made closer to their intended exact values, the round() function can be useful for post-rounding so that results with inexact values become comparable to one another:
+
+>>>
+>>> round(.1 + .1 + .1, 10) == round(.3, 10)
+True
+Binary floating-point arithmetic holds many surprises like this. The problem with “0.1” is explained in precise detail below, in the “Representation Error” section. See The Perils of Floating Point for a more complete account of other common surprises.
+
+As that says near the end, “there are no easy answers.” Still, don’t be unduly wary of floating-point! The errors in Python float operations are inherited from the floating-point hardware, and on most machines are on the order of no more than 1 part in 2**53 per operation. That’s more than adequate for most tasks, but you do need to keep in mind that it’s not decimal arithmetic and that every float operation can suffer a new rounding error.
+
+While pathological cases do exist, for most casual use of floating-point arithmetic you’ll see the result you expect in the end if you simply round the display of your final results to the number of decimal digits you expect. str() usually suffices, and for finer control see the str.format() method’s format specifiers in Format String Syntax.
+
+For use cases which require exact decimal representation, try using the decimal module which implements decimal arithmetic suitable for accounting applications and high-precision applications.
+
+Another form of exact arithmetic is supported by the fractions module which implements arithmetic based on rational numbers (so the numbers like 1/3 can be represented exactly).
+
+If you are a heavy user of floating point operations you should take a look at the Numerical Python package and many other packages for mathematical and statistical operations supplied by the SciPy project. See <https://scipy.org>.
+
+Python provides tools that may help on those rare occasions when you really do want to know the exact value of a float. The float.as_integer_ratio() method expresses the value of a float as a fraction:
+
+>>>
+>>> x = 3.14159
+>>> x.as_integer_ratio()
+(3537115888337719, 1125899906842624)
+Since the ratio is exact, it can be used to losslessly recreate the original value:
+
+>>>
+>>> x == 3537115888337719 / 1125899906842624
+True
+The float.hex() method expresses a float in hexadecimal (base 16), again giving the exact value stored by your computer:
+
+>>>
+>>> x.hex()
+'0x1.921f9f01b866ep+1'
+This precise hexadecimal representation can be used to reconstruct the float value exactly:
+
+>>>
+>>> x == float.fromhex('0x1.921f9f01b866ep+1')
+True
+Since the representation is exact, it is useful for reliably porting values across different versions of Python (platform independence) and exchanging data with other languages that support the same format (such as Java and C99).
+
+Another helpful tool is the math.fsum() function which helps mitigate loss-of-precision during summation. It tracks “lost digits” as values are added onto a running total. That can make a difference in overall accuracy so that the errors do not accumulate to the point where they affect the final total:
+
+>>>
+>>> sum([0.1] * 10) == 1.0
+False
+>>> math.fsum([0.1] * 10) == 1.0
+True
+15.1. Representation Error
+This section explains the “0.1” example in detail, and shows how you can perform an exact analysis of cases like this yourself. Basic familiarity with binary floating-point representation is assumed.
+
+Representation error refers to the fact that some (most, actually) decimal fractions cannot be represented exactly as binary (base 2) fractions. This is the chief reason why Python (or Perl, C, C++, Java, Fortran, and many others) often won’t display the exact decimal number you expect.
+
+Why is that? 1/10 is not exactly representable as a binary fraction. Almost all machines today (November 2000) use IEEE-754 floating point arithmetic, and almost all platforms map Python floats to IEEE-754 “double precision”. 754 doubles contain 53 bits of precision, so on input the computer strives to convert 0.1 to the closest fraction it can of the form J/2**N where J is an integer containing exactly 53 bits. Rewriting
+
+1 / 10 ~= J / (2**N)
+as
+
+J ~= 2**N / 10
+and recalling that J has exactly 53 bits (is >= 2**52 but < 2**53), the best value for N is 56:
+
+>>>
+>>> 2**52 <=  2**56 // 10  < 2**53
+True
+That is, 56 is the only value for N that leaves J with exactly 53 bits. The best possible value for J is then that quotient rounded:
+
+>>>
+>>> q, r = divmod(2**56, 10)
+>>> r
+6
+Since the remainder is more than half of 10, the best approximation is obtained by rounding up:
+
+>>>
+>>> q+1
+7205759403792794
+Therefore the best possible approximation to 1/10 in 754 double precision is:
+
+7205759403792794 / 2 ** 56
+Dividing both the numerator and denominator by two reduces the fraction to:
+
+3602879701896397 / 2 ** 55
+Note that since we rounded up, this is actually a little bit larger than 1/10; if we had not rounded up, the quotient would have been a little bit smaller than 1/10. But in no case can it be exactly 1/10!
+
+So the computer never “sees” 1/10: what it sees is the exact fraction given above, the best 754 double approximation it can get:
+
+>>>
+>>> 0.1 * 2 ** 55
+3602879701896397.0
+If we multiply that fraction by 10**55, we can see the value out to 55 decimal digits:
+
+>>>
+>>> 3602879701896397 * 10 ** 55 // 2 ** 55
+1000000000000000055511151231257827021181583404541015625
+meaning that the exact number stored in the computer is equal to the decimal value 0.1000000000000000055511151231257827021181583404541015625. Instead of displaying the full decimal value, many languages (including older versions of Python), round the result to 17 significant digits:
+
+>>>
+>>> format(0.1, '.17f')
+'0.10000000000000001'
+The fractions and decimal modules make these calculations easy:
+
+>>>
+>>> from decimal import Decimal
+>>> from fractions import Fraction
+
+>>> Fraction.from_float(0.1)
+Fraction(3602879701896397, 36028797018963968)
+
+>>> (0.1).as_integer_ratio()
+(3602879701896397, 36028797018963968)
+
+>>> Decimal.from_float(0.1)
+Decimal('0.1000000000000000055511151231257827021181583404541015625')
+
+>>> format(Decimal.from_float(0.1), '.17')
+'0.10000000000000001'
