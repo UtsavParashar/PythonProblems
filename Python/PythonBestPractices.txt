@@ -50,8 +50,24 @@ In general we need to learn to make right decision when we are designing a piece
 
 General Rule - Provide methods in the class where mostly the data/information is present.
 
-Exception Handling Tips in Python:
-----------------------------------
+The Factory Pattern in Python:
+-----------------------------
+The Factory pattern is a design classic from the gang of four design classic book.
+The goal of the pattern is to help write code that separates creation from use.
+In other words, you should create your objects in different place from where you use them.
+This is very helpful bcoz then the code that you write doesn't have to know anything about how the object are created when you use them.
+That means at a later stage if we decide to change those objects with other object, we don't have to change the original code.
+What the factory does is that it takes care of the creation of object for you so that you can use those objects without knowing the specifics.
+
+Hence we can create Factory class which can provide us the objects which we need.
+
+
+
+
+
+
+
+
 
 
 
