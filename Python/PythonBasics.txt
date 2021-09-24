@@ -3258,10 +3258,10 @@ print(re.match('this', r'i am a this person')) / None
 Since output of the match function in match object hence we use group() to get the value.
 print(re.match('this', r'this i am a this person').group())
 
-re.search() --> matches the single occurence of the pattern in complete string.
+re.search() --> matches the single occurrence of the pattern in complete string.
 print(re.search('this', r'i am a this person').group())
 
-re.findall() --> It will return all the occurence of the pattern in the string. I will recommend you to always use re.findall() as it can work like both re.search() and re.match().
+re.findall() --> It will return all the occurrence of the pattern in the string. I will recommend you to always use re.findall() as it can work like both re.search() and re.match().
 print(re.findall('this', r'this i am a this person'))
 
 Special sequences in regex
@@ -3306,7 +3306,7 @@ Select the range within these sets
 s="rohan and rohit published a paper 123"
 re.findall("[1-9]\d+", s)
 
-[^abc] -- characters other than abc in teh string
+[^abc] -- characters other than abc in the string
 
 
 -------------------------------------------------------
