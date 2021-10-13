@@ -12193,7 +12193,8 @@ assert pd.Timestamp(d_2038, tz=DST) == pd.Timestamp(d_2038, tz="GMT")
 
 Under the hood, all timestamps are stored in UTC. Values from a time zone aware DatetimeIndex or Timestamp will have their fields (day, hour, minute, etc.) localized to the time zone. However, timestamps with the same UTC value are still considered to be equal even if they are in different time zones:
 rng_eastern = rng_utc.tz_convert("US/Eastern")
-rng_berlin = rng_utc.tz_convert("Europe/Berlin"
+rng_berlin = rng_utc.tz_convert("Europe/Berlin")
+rng_japan = rng_utc.tz_convert("Japan")
 rng_eastern[2]
 rng_berlin[2]
 rng_eastern[2] == rng_berlin[2]
