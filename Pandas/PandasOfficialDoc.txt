@@ -10989,7 +10989,7 @@ pd.to_datetime([1349720105, 1349806505, 1349892905,
                 1349979305, 1350065705], unit="s")
 pd.to_datetime([1349720105100, 1349720105200, 1349720105300,
                 1349720105400,1349720105500], unit='ms')
-pd.to_datetime([1618866007161886600, 1618866007161886601], unit='ns')
+pd.to_datetime([1618866007161886600, 1618866007161886601], unit='ns') # remove dots if present
 pd.to_datetime([1618866007161886600, 1618866007161886601]) ### Default of unit is ns
 
 Note: The unit parameter does not use the same strings as the format parameter that was discussed above).The available units are listed on the documentation for pandas.to_datetime(). -- https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
