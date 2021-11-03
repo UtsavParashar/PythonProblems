@@ -1955,7 +1955,7 @@ data = MyStruct.pack(23, False, 42.1)
 print(data) # b'\x17\x00\x00\x00\x00\x00\x00\x00ff(B'
 
 # Data blobs can be unpacked again using unpack
-MyStruct.unpack(data) # (23, False, 42.099998474121094)
+MyStruct.unpack(data) # (23, False, 42.099998474121094) # multi unpack
 
 types.SimpleNamespace – Fancy Attribute Access
 ===============================================
