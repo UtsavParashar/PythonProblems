@@ -664,12 +664,12 @@ class Car:
         self.milage = milage
 class AlwaysWhiteCar(Car):
     def __init__(self, *args, **kwargs):
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.color = 'White'
-        
-AlwaysWhiteCar('Green', 12).color  
 
-The AlwaysWhiteCar constructor simply passes on all arguments to its parent class and then overrides an internal attribute. This means if the parent class constructor changes, there’s a good chance that AlwaysBlueCar would still function as intended.
+AlwaysWhiteCar('Green', 12).color # White
+
+The AlwaysWhiteCar constructor simply passes on all arguments to its parent class and then overrides an internal attribute. This means if the parent class constructor changes, there’s a good chance that AlwaysWhiteCar would still function as intended.
 
 The downside here is that the AlwaysWhiteCar constructor now has a rather unhelpful signature—we don’t know what arguments it expects without looking up the parent class.
 
@@ -680,7 +680,7 @@ One more scenario where this technique is potentially helpful is writing wrapper
 And, if we can do it without having to copy and paste the original function’s signature, that might be more maintainable:
 import functools
 def trace(f):
-    functools.wraps(f)
+    @functools.wraps(f)
     def decorated_function(*args, **kwargs):
         print(f, args, kwargs)
         result = f(*args, **kwargs)
@@ -1464,7 +1464,7 @@ tf_quant_finance.experimental.instruments.InterestRateMarket(
 
 Another Simple example which makes sense:
 since college name will be same for all students hence getCollegeName is class method
-since each student has his own instance hence getStidentsNameMarks is instace
+since each student has his own instance hence getStudentsNameMarks is instance
 since static method does a static method i.e convert marks to grades
 
 class College:
@@ -1973,10 +1973,10 @@ print (car1) # namespace(automatic=False, color='red', milage='21.1')
 
 ## Instance support attribute access and are mutable
 print (car1.color) # 'red'
-car1.atomatic = True
-print(car1.automatic) # False
+car1.automatic = True
+print(car1.automatic) # True
 car1.windshield = 'broken'
-print(car1) #namespace(automatic=False, color='red', milage='21.1', windshield='broken')
+print(car1) #namespace(automatic=True, color='red', milage='21.1', windshield='broken')
 
 Key Takeaways from dict, custom class, tuple, namedtuple, NamedTuple, Struct, SimpleNamespace:
 ----------------------------------------------------------------------------------------------
@@ -1999,14 +1999,14 @@ If you’re looking for a safe default choice, my general recommendation for imp
 @property decorator:
 --------------------
 Whenever we write a custom class over which we want to have complete control we should use @property decorator.
-It provides the benifits of data hiding and abstraction through setters and getters.
+It provides the benefits of data hiding and abstraction through setters and getters.
 
 In Python, getters and setters are not the same as those in other object-oriented programming languages. Basically, the main purpose of using getters and setters in object-oriented programs is to ensure data encapsulation. Private variables in python are not actually hidden fields like in other object oriented languages. Getters and Setters in python are often used when:
 
 We use getters & setters to add validation logic around getting and setting a value.
 To avoid direct access of a class field i.e. private variables cannot be accessed directly or modified by external user.
 
-We also have property method which provides the same benifits but is not highly used.
+We also have property method which provides the same benefits but is not highly used.
 
 Example using property function:
 class Geek:
