@@ -30,7 +30,7 @@ val_data = input_sequences[train_size:]
 latent_dim = 10
 
 # Encoder
-encoder_inputs = keras.Input(shape=(sequence_length + 1,))
+encoder_inputs = keras.Input(shape=(sequence_length + 1, 1))
 encoder = layers.LSTM(latent_dim, return_sequences=False)(encoder_inputs)
 
 # Decoder
