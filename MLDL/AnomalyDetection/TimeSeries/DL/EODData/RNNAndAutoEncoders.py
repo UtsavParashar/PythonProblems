@@ -26,6 +26,10 @@ train_size = int(train_ratio * len(input_sequences))
 train_data = input_sequences[:train_size]
 val_data = input_sequences[train_size:]
 
+# Reshape the data to match the expected input shape of the model
+train_data = np.reshape(train_data, (train_data.shape[0], train_data.shape[1], 1))
+val_data = np.reshape(val_data, (val_data.shape[0], val_data.shape[1], 1))
+
 # Define the RNN-Autoencoder model
 latent_dim = 10
 
