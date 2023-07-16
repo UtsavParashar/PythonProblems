@@ -1,11 +1,10 @@
 import tensorflow as tf
-import tensorflow_probability as tfp
 
 def generate_synthetic_data(real_data):
   """Generates synthetic data that is similar to the real data."""
-  model = tfp.generative_models.GaussianProcessRegressionModel(
-      train_points=real_data)
-  synthetic_data = model.sample(1000)
+  mean = tf.reduce_mean(real_data, axis=0)
+  stddev = tf.math.reduce_std(real_data, axis=0)
+  synthetic_data = tf.random.normal([1000, 2], mean=mean, stddev=stddev)
   return synthetic_data
 
 def train_anomaly_detection_model(synthetic_data):
@@ -29,7 +28,9 @@ def detect_anomalies(real_data, model):
 
 def main():
   """Generates synthetic data, trains a machine learning model, and detects anomalies."""
-  real_data = tf.random.normal([1000, 1])
+  real_data = tf.random.normal([1000, 2])
+  # The first dimension is the date and the second dimension is the int type.
+
   synthetic_data = generate_synthetic_data(real_data)
   model = train_anomaly_detection_model(synthetic_data)
   anomalies = detect_anomalies(real_data, model)
