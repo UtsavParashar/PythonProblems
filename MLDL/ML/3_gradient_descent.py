@@ -20,7 +20,7 @@ def gradient_descent(x, y):
         print(f'iteration - {i} --> m - {m_curr}, c - {c_curr} and cost {cost} ')
 
         # Stop iteration if the steps have reduced substancially
-        if (cost - prev_cost) < 1e-25:
+        if (cost - prev_cost) < 1e-20:
             break
 
 x = np.array([1, 2, 3, 4, 5])
