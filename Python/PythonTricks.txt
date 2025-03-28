@@ -156,11 +156,11 @@ Underscores, Dunders and More.
 ------------------------------
 Single and Double underscores have a meaning in python variables and method. Some of that meaning is merely by convention and intended as a hint to the programmer and some of it is enforced by python interpreter.
 There could be 5 types of variables or methods with underscores:
-1. Single leading underscore - _var
-2. Single trailing underscore - var_
-3. Double leading underscores - __var
-4. Double leading and trailing underscores - __var__
-5. Single underscore - _
+1. Single leading underscore - _var -- private
+2. Single trailing underscore - var_ -- already used
+3. Double leading underscores - __var -- Name mangling to protect from child class overriding the attributes
+4. Double leading and trailing underscores - __var__ - dunder or magic methods
+5. Single underscore - _ - temperory variable
 
 1. Single leading underscore - It has a meaning by convention, it is a hint to the programmer that the variable is private i.e it is used for internal purpose only.
 The underscore prefix is meant as a hint to tell other programmers that a variable or method starting with a single underscore is intended for internal use. This convention is defined in pep8 - https://pep8.org/
