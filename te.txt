@@ -1,3 +1,2 @@
-Thank you for writing to us. We are in receipt of your query. You can check the status of your query on or after 2 working days (excluding Saturdays, Sundays and public holidays).
-
-The Reference number of your query is	I210500536
+Format all code according to PEP8 and present it within markdown code blocks (python ... ).
+Do not hallucinate — if unsure or missing context, ask clarifying questions instead of assuming details.
