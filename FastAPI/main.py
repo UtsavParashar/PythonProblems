@@ -1,19 +1,31 @@
-from fastapi import FastAPI, Path, Query
+from fastapi import FastAPI, Path, Query, Body
+from typing import List
 import uvicorn
+from pydantic import BaseModel, Field
 app = FastAPI()
 
-@app.get("/")
-async def index():
-    return [{"message": "FastAPI"}, 
-            {"new_msg": "Test"}]
 
-@app.get('/hello/{name}/{age}')
-async def hello(*, name:str=Path(..., min_length=3, max_length=10),
-                age:int=Path(..., gt=10, le=100),
-                percent: float=Query(..., ge=0, le=100)):
-    return {'hello': name.capitalize(),
-            'aged persons': age,
-            'secured pecentage': percent}
+class Student(BaseModel):
+    id: int
+    name: str = Field(None, title='name of the student', max_length=10)
+    subjects: List[str] = []
+
+
+@app.post('/students/')
+async def student_data(name: str = Body(...),
+                       marks: int = Body(...)):
+    return {"name": name,
+            "marks": marks}
+
+@app.post('/students/{college}')
+async def student_coll_data(college: str,
+                            age: int,
+                            student: Student):
+    retval = {"college": college,
+              "age": age,
+              **student.model_dump()}
+    return retval
+
 
 # python -m uvicorn main:app --reload
 
