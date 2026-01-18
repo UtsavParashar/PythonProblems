@@ -1,2 +1,0 @@
-Format all code according to PEP8 and present it within markdown code blocks (python ... ).
-Do not hallucinate — if unsure or missing context, ask clarifying questions instead of assuming details.
