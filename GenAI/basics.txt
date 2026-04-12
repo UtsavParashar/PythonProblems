@@ -1,0 +1,18 @@
+CONTEXT WINDOW - 
+
+Prompt - 
+
+-- System Prompt
+    - Core Identity + Global Rules
+    - Model Specific Instructions
+    - Tool Use Instructions
+    - Output Format Instructions
+
+-- User Prompt I
+    - Env Info
+    - Workspace Info -> Proj architecture
+
+-- User Prompt II
+    - Context Info - Current DateTime, List of Open Terminals etc
+    - Editor Context - Files added to the chat
+    - User Prompt - "Prompt..."
